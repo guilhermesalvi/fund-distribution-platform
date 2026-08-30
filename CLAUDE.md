@@ -17,7 +17,7 @@ Conventional Commits, com o template:
 
 Regras:
 
-- Máximo de **50 caracteres** na linha inteira, incluindo `<type>: `.
+- Máximo de **60 caracteres** na linha inteira, incluindo `<type>: `. O GitHub trunca o título do commit a partir de 72 caracteres; 60 mantém folga sem afrouxar a disciplina.
 - Sem escopo — nada de `feat(api):`.
 - Sem ponto final.
 - Sem corpo (header) e sem rodapé (footer). A mensagem é uma única linha.

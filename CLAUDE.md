@@ -52,6 +52,7 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/AppHost` — Aspire AppHost (SDK `Aspire.AppHost.Sdk`). Ponto de entrada para rodar a plataforma localmente.
 - `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP e health checks. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`.
 - `src/Offering`, `src/DemandConsolidation`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
+- `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
 
 ## Build e testes
@@ -66,5 +67,5 @@ Valide os dois antes de encerrar qualquer mudança em código.
 ## Convenções de projeto
 
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
-- Os serviços compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated (ver `AppJsonSerializerContext` em cada `Program.cs`), e bibliotecas novas precisam ser compatíveis com AOT e trimming.
-- Um serviço novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost.
+- Os serviços de API compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated (ver `AppJsonSerializerContext` em cada `Program.cs`), e bibliotecas novas precisam ser compatíveis com AOT e trimming.
+- Um serviço de API novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost. Um worker novo segue `src/DataMigration`.

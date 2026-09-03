@@ -44,3 +44,27 @@ O critério de agrupamento é o **motivo da mudança**, não o tipo de arquivo.
 - Arquivos alterados por motivos diferentes vão em commits diferentes, mesmo que estejam no mesmo diretório ou tenham sido tocados na mesma sessão de trabalho.
 - Cada commit deve deixar o repositório em estado consistente: compilando e com os testes passando.
 - Na dúvida sobre o `<type>` de um commit que mistura camadas, use o tipo do motivo da mudança — o refactor que também ajustou testes é `refactor`, não `test`.
+
+## Estrutura da solução
+
+Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
+
+- `src/AppHost` — Aspire AppHost (SDK `Aspire.AppHost.Sdk`). Ponto de entrada para rodar a plataforma localmente.
+- `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP e health checks. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`.
+- `src/Offering`, `src/DemandConsolidation`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
+- `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
+
+## Build e testes
+
+```
+dotnet build FundDistributionPlatform.slnx
+dotnet test FundDistributionPlatform.slnx
+```
+
+Valide os dois antes de encerrar qualquer mudança em código.
+
+## Convenções de projeto
+
+- Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
+- Os serviços compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated (ver `AppJsonSerializerContext` em cada `Program.cs`), e bibliotecas novas precisam ser compatíveis com AOT e trimming.
+- Um serviço novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost.

@@ -3,15 +3,15 @@ var builder = DistributedApplication.CreateBuilder(args);
 builder.AddProject<Projects.DataMigration>("data-migration");
 
 builder.AddProject<Projects.Offering>("offering")
-    .WithHttpHealthCheck();
+    .WithHttpHealthCheck("/health");
 
 builder.AddProject<Projects.DemandConsolidation>("demand-consolidation")
-    .WithHttpHealthCheck();
+    .WithHttpHealthCheck("/health");
 
 builder.AddProject<Projects.ReservationBook>("reservation-book")
-    .WithHttpHealthCheck();
+    .WithHttpHealthCheck("/health");
 
 builder.AddProject<Projects.Allocation>("allocation")
-    .WithHttpHealthCheck();
+    .WithHttpHealthCheck("/health");
 
 builder.Build().Run();

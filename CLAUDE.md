@@ -66,6 +66,7 @@ Valide os dois antes de encerrar qualquer mudança em código.
 
 ## Convenções de projeto
 
+- Propriedades comuns a todos os projetos (`TargetFramework`, `Nullable`, `ImplicitUsings`) ficam em `Directory.Build.props`; os csproj não as repetem.
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
 - Os serviços de API compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated, declarado no módulo de feature que possui os tipos, e bibliotecas novas precisam ser compatíveis com AOT e trimming.
 - Versionamento de API via `Asp.Versioning.Http`, lido do segmento de URL, registrado por `AddApiDefaults()` do `ServiceDefaults`. Cada módulo de feature mapeia seu grupo em `NewVersionedApi("<Nome>").MapGroup("/api/v{version:apiVersion}/<recurso>").HasApiVersion(1, 0)`. Todo grupo declara sua versão; não há endpoint sem versão nem versão assumida por default.

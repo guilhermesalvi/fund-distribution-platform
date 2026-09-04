@@ -14,6 +14,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.AddDefaultApiVersioning();
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
@@ -32,7 +34,9 @@ Todo[] sampleTodos =
     new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
 ];
 
-var todosApi = app.MapGroup("/todos");
+var todosApi = app.NewVersionedApi("Todos")
+    .MapGroup("/api/v{version:apiVersion}/todos")
+    .HasApiVersion(1, 0);
 todosApi.MapGet("/", () => sampleTodos)
         .WithName("GetTodos");
 

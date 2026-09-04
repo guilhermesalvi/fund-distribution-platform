@@ -52,16 +52,26 @@ dotnet test FundDistributionPlatform.slnx
 
 ## Estrutura do repositório
 
-```
-src/AppHost               Aspire AppHost; ponto de entrada local
-src/ServiceDefaults       OpenTelemetry, service discovery, resiliência, health checks, versionamento, ProblemDetails, OpenAPI
-src/Offering              API
-src/DemandConsolidation   API
-src/ReservationBook       API
-src/Allocation            API
-src/DataMigration         Worker
-tests/UnitTests           xUnit
-tests/IntegrationTests    xUnit
+```text
+.
+├── .claude/
+│   └── rules/                        # regras por área: composição do Program.cs, tracing
+├── src/
+│   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
+│   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
+│   │                                 # versionamento, ProblemDetails, OpenAPI
+│   ├── Offering/                     # API
+│   ├── DemandConsolidation/          # API
+│   ├── ReservationBook/              # API
+│   ├── Allocation/                   # API
+│   └── DataMigration/                # Worker
+├── tests/
+│   ├── UnitTests/                    # xUnit
+│   └── IntegrationTests/             # xUnit
+├── CLAUDE.md                         # convenções do repositório
+├── Directory.Build.props             # propriedades comuns a todos os projetos
+├── Directory.Packages.props          # versões de pacote (Central Package Management)
+└── FundDistributionPlatform.slnx
 ```
 
 Os serviços de API compilam com Native AOT (`PublishAot=true`) e globalização invariante.

@@ -1,9 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-DataMigration-0be21745-0416-47f4-9f36-4348de5a295f</UserSecretsId>
   </PropertyGroup>
 

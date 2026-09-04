@@ -50,7 +50,7 @@ O critério de agrupamento é o **motivo da mudança**, não o tipo de arquivo.
 Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 
 - `src/AppHost` — Aspire AppHost (SDK `Aspire.AppHost.Sdk`). Ponto de entrada para rodar a plataforma localmente.
-- `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP e health checks. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`.
+- `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP, health checks e validação do container. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`. Serviços de API chamam também `AddApiDefaults()` / `UseApiDefaults()`: versionamento, ProblemDetails e OpenAPI.
 - `src/Offering`, `src/DemandConsolidation`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
@@ -68,7 +68,7 @@ Valide os dois antes de encerrar qualquer mudança em código.
 
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
 - Os serviços de API compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated, declarado no módulo de feature que possui os tipos, e bibliotecas novas precisam ser compatíveis com AOT e trimming.
-- Versionamento de API via `Asp.Versioning.Http`, lido do segmento de URL. Cada serviço chama `AddDefaultApiVersioning()` do `ServiceDefaults`, e cada módulo de feature mapeia seu grupo em `NewVersionedApi("<Nome>").MapGroup("/api/v{version:apiVersion}/<recurso>").HasApiVersion(1, 0)`. Todo grupo declara sua versão; não há endpoint sem versão nem versão assumida por default.
-- `Program.cs` é composição pura: cada linha é uma chamada de extensão (`Add*` antes do `Build()`, `Use*`/`Map*` depois). Nenhum tipo, dado, endpoint, lambda ou `JsonSerializerContext` é declarado nele.
+- Versionamento de API via `Asp.Versioning.Http`, lido do segmento de URL, registrado por `AddApiDefaults()` do `ServiceDefaults`. Cada módulo de feature mapeia seu grupo em `NewVersionedApi("<Nome>").MapGroup("/api/v{version:apiVersion}/<recurso>").HasApiVersion(1, 0)`. Todo grupo declara sua versão; não há endpoint sem versão nem versão assumida por default.
+- `Program.cs` é composição pura: cada linha é uma chamada de extensão (`Add*` antes do `Build()`, `Use*`/`Map*` depois). Nenhum tipo, dado, endpoint, lambda, `if` ou `JsonSerializerContext` é declarado nele; o que é comum a todo serviço vive no `ServiceDefaults`.
 - `Asp.Versioning.OpenApi` não entra: depende de `Asp.Versioning.Mvc.ApiExplorer`, que não é compatível com AOT. O documento OpenAPI é o do `Microsoft.AspNetCore.OpenApi` puro.
-- Um serviço de API novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, `AddDefaultApiVersioning()`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost. Um worker novo segue `src/DataMigration`.
+- Um serviço de API novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, `AddServiceDefaults()` + `AddApiDefaults()`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost. Um worker novo segue `src/DataMigration`.

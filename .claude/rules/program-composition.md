@@ -17,28 +17,21 @@ using ServiceDefaults;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddDefaultApiVersioning();
-builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.AddApiDefaults();
 builder.AddOfferings();            // um Add<Feature>() por módulo
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
-app.MapDefaultEndpoints();
+app.UseApiDefaults();
 app.MapOfferingEndpoints();        // um Map<Feature>Endpoints() por módulo
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 app.Run();
 ```
 
-- Nenhum tipo, dado, endpoint, lambda ou `JsonSerializerContext` é declarado em `Program.cs`. O que precisa de configuração vira método de extensão: transversal em `ServiceDefaults`, específico da feature no módulo dela.
-- `UseExceptionHandler()` sem argumento depende de `AddProblemDetails()`; sem o serviço registrado o host falha na inicialização. Os dois entram e saem juntos.
-- Validação do container (`ValidateOnBuild`, `ValidateScopes`) já vem de `AddServiceDefaults()` em todo ambiente. Não repetir no serviço.
+- Nenhum tipo, dado, endpoint, lambda, `if` ou `JsonSerializerContext` é declarado em `Program.cs`. O que precisa de configuração vira método de extensão: transversal em `ServiceDefaults`, específico da feature no módulo dela.
+- `AddServiceDefaults()` vale para qualquer host: OpenTelemetry, health checks, service discovery, resiliência HTTP e validação do container (`ValidateOnBuild`, `ValidateScopes`) em todo ambiente.
+- `AddApiDefaults()` / `UseApiDefaults()` valem só para API: versionamento por segmento de URL, `AddProblemDetails()` + `UseExceptionHandler()`, endpoints de health e `MapOpenApi()` em Development. `UseExceptionHandler()` é o middleware mais externo e depende do `AddProblemDetails()`; por isso os dois ficam juntos no `ServiceDefaults`, não no serviço.
+- Uma política nova que valha para todo serviço entra nesses métodos, não em cada `Program.cs`.
 - Worker segue o mesmo princípio com `Host.CreateApplicationBuilder`: `AddServiceDefaults()`, `AddHostedService<T>()`, `Build()`, `Run()`.
 
 ## Módulo de feature

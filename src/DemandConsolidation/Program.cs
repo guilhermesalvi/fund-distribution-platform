@@ -3,18 +3,10 @@ using ServiceDefaults;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddDefaultApiVersioning();
-builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.AddApiDefaults();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
-app.MapDefaultEndpoints();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseApiDefaults();
 
 app.Run();

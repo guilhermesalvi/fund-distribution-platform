@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/prd/">
+    <File Path="docs/prd/0001-offering-offer-lifecycle.md" />
+    <File Path="docs/prd/0002-reservation-book-reservation-lifecycle.md" />
+    <File Path="docs/prd/0003-allocation-book-processing.md" />
+  </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />

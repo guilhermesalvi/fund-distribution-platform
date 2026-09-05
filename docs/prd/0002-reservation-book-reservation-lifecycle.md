@@ -125,7 +125,7 @@ Eventos consumidos:
 | `OfferPublished` | Offering | Passa a aceitar reservas para a oferta, com seus limites, período e opções aceitas |
 | `OfferClosed` | Offering | Congela o livro (FR-13) |
 | `OfferRevoked` | Offering | Reservas ativas passam a Sem efeito (FR-16) |
-| `OfferCancelled` | Offering | Reservas ativas passam a Sem efeito (FR-16) |
+| `OfferLapsed` | Offering | Reservas ativas passam a Sem efeito (FR-16) |
 | `BookProcessed` | Allocation | Aplica status e quantidade alocada por reserva (FR-15) |
 
 ## Non-functional Requirements

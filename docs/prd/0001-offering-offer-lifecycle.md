@@ -11,7 +11,7 @@
 
 ## Resumo Executivo
 
-A plataforma cobre a janela entre a publicação de uma oferta de cotas de fundo fechado e o resultado da alocação. Tudo nessa janela depende de uma definição de oferta estável e de um estado de oferta inequívoco: preço por cota, quantidade base, montante mínimo, limites por investidor, período de reserva e opções de condicionamento não mudam depois da publicação; o estado avança por transições explícitas, de Draft a Aberta, Fechada, Alocada e Encerrada, ou aos terminais Revogada e Cancelada. O contexto Offering é o dono da definição e do ciclo de vida. Métrica primária: nenhuma oferta publicada com atributo inválido, nenhuma alteração de atributo após a publicação e nenhuma transição de estado fora das permitidas.
+A plataforma cobre a janela entre a publicação de uma oferta de cotas de fundo fechado e o resultado da alocação. Tudo nessa janela depende de uma definição de oferta estável e de um estado de oferta inequívoco: preço por cota, quantidade base, montante mínimo, limites por investidor, período de reserva e opções de condicionamento não mudam depois da publicação; o estado avança por transições explícitas, de Draft a Aberta, Fechada, Formada e Encerrada, ou aos terminais Revogada e Não formada. O contexto Offering é o dono da definição e do ciclo de vida. Métrica primária: nenhuma oferta publicada com atributo inválido, nenhuma alteração de atributo após a publicação e nenhuma transição de estado fora das permitidas.
 
 ## Alinhamento Estratégico
 
@@ -53,15 +53,15 @@ Tornar a oferta um agregado com definição imutável após a publicação e uma
 |---|---|---|---|---|
 | Draft | minuta, em elaboração | `Draft` | criação | publicar → Aberta; descartar |
 | Aberta | oferta a mercado, em período de reserva | `Open` | publicação | fechar → Fechada; revogar → Revogada |
-| Fechada | período de reserva encerrado, livro fechado | `Closed` | fechamento explícito | livro processado com oferta formada → Alocada; livro processado com mínimo não atingido → Cancelada; revogar → Revogada |
-| Alocada | alocação concluída, em liquidação | `Allocated` | desfecho do livro: formada e alocada | encerrar → Encerrada; revogar → Revogada |
-| Cancelada | oferta não formada (art. 73, § 3º) | `Cancelled` | desfecho do livro: montante mínimo não atingido | terminal |
+| Fechada | período de reserva encerrado, livro fechado | `Closed` | fechamento explícito | livro processado com oferta formada → Formada; livro processado com mínimo não atingido → Não formada; revogar → Revogada |
+| Formada | oferta formada, montante mínimo atingido; alocação concluída, em liquidação | `Unconditional` | desfecho do livro: formada e alocada | encerrar → Encerrada; revogar → Revogada |
+| Não formada | oferta não formada (art. 73, § 3º) | `Lapsed` | desfecho do livro: montante mínimo não atingido | terminal |
 | Revogada | revogação da oferta (arts. 67, III, e 68) | `Revoked` | decisão explícita do operador | terminal |
 | Encerrada | anúncio de encerramento (art. 76) | `Completed` | ação explícita do operador após a liquidação, fora do escopo | terminal |
 
 - **Draft** aceita atributos incompletos ou inconsistentes, é editável e descartável, não aceita reservas e não é visível aos demais contextos como oferta.
 - **Publicação** valida o conjunto completo de atributos como uma unidade; rejeição relata todas as violações. Aprovada, a oferta passa a Aberta e seus atributos ficam imutáveis até o fim da vida.
-- **Estados posteriores** mudam apenas por transições da tabela. Fechar, revogar e encerrar são ações explícitas do operador; Alocada e Cancelada são os dois desfechos possíveis de um único processamento do livro, produzido pelo Allocation.
+- **Estados posteriores** mudam apenas por transições da tabela. Fechar, revogar e encerrar são ações explícitas do operador; Formada e Não formada são os dois desfechos possíveis de um único processamento do livro, produzido pelo Allocation.
 
 A oferta publicada carrega a identificação das cotas (fundo, classe, subclasse opcional, número da emissão) e as definições de que os demais contextos dependem: preço por cota, quantidade base, montante mínimo, investimento mínimo e máximo por investidor em cotas, período de reserva e o conjunto de opções de condicionamento aceitas. A semântica das três opções de condicionamento é definida neste contexto e aplicada no Allocation.
 
@@ -80,10 +80,10 @@ Termos canônicos definidos pelo autor. Os cinco últimos pertencem ao Reservati
 | Oferta publicada | Oferta que saiu de Draft. Atributos imutáveis; o estado avança pela máquina de estados. |
 | Aberta | Oferta publicada que aceita reservas durante o período de reserva. |
 | Fechada | Oferta cujo período de reserva foi encerrado pelo operador; não aceita reservas; aguarda o processamento do livro. |
-| Alocada | Oferta formada cujo livro foi processado e a alocação concluída. |
-| Cancelada | Oferta cujo livro foi processado com demanda abaixo do montante mínimo; não se forma, nada é alocado. |
+| Formada | Oferta cujo livro foi processado com o montante mínimo atingido e a alocação concluída; em liquidação. Em inglês, `Unconditional`: a condição da oferta (o mínimo) foi satisfeita. Não confundir com as opções de condicionamento da reserva (art. 74), que são condições do investidor, não da oferta. |
+| Não formada | Oferta cujo livro foi processado com demanda abaixo do montante mínimo; nada é alocado e os valores são restituídos. Em inglês, `Lapsed`: a oferta caduca por condição não cumprida. |
 | Revogada | Oferta encerrada por decisão explícita do operador antes de encerrar; reservas e alocações perdem efeito. |
-| Encerrada | Oferta alocada cuja liquidação terminou; estado terminal de sucesso. |
+| Encerrada | Oferta formada cuja liquidação terminou; estado terminal de sucesso. |
 | Preço por cota | Valor unitário fixo da cota na oferta. |
 | Quantidade base | Quantidade de cotas inicialmente ofertada. |
 | Montante mínimo | Quantidade de cotas abaixo da qual a oferta não se forma. Sempre presente e sempre menor ou igual à quantidade base. |
@@ -111,11 +111,11 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 - **FR-06 (Must)** As únicas transições de estado são as da tabela da Solução Proposta. Qualquer outra é rejeitada, informando o estado corrente e a transição tentada.
 - **FR-07 (Must)** Fechar é ação explícita do operador sobre uma oferta Aberta. [PREMISSA] É permitida a qualquer momento a partir do início do período de reserva, o que admite encerramento antecipado.
 - **FR-08 (Must)** Uma oferta Aberta cujo período de reserva terminou não aceita reservas, mesmo antes de o operador fechá-la. A regra de recusa é do ReservationBook; a condição é definida aqui.
-- **FR-09 (Must)** Uma oferta Fechada passa a Cancelada quando o desfecho do livro informa que as cotas efetivamente distribuídas ficaram abaixo do montante mínimo.
-- **FR-10 (Must)** Uma oferta Fechada passa a Alocada quando o desfecho do livro informa que a oferta se formou e a alocação foi concluída.
+- **FR-09 (Must)** Uma oferta Fechada passa a Não formada quando o desfecho do livro informa que as cotas efetivamente distribuídas ficaram abaixo do montante mínimo.
+- **FR-10 (Must)** Uma oferta Fechada passa a Formada quando o desfecho do livro informa que a oferta se formou e a alocação foi concluída.
 - **FR-11 (Must)** O desfecho do livro só é aceito para oferta Fechada. Recebido em qualquer outro estado, inclusive Revogada, é ignorado sem alterar a oferta e fica registrado como descartado.
-- **FR-12 (Must)** Revogar é ação explícita do operador, permitida em Aberta, Fechada e Alocada. Draft não é revogado, é descartado. Estados terminais não são revogados.
-- **FR-13 (Should)** [PREMISSA] Encerrar é ação explícita do operador sobre uma oferta Alocada, registrando o fim da liquidação, que ocorre fora da plataforma.
+- **FR-12 (Must)** Revogar é ação explícita do operador, permitida em Aberta, Fechada e Formada. Draft não é revogado, é descartado. Estados terminais não são revogados.
+- **FR-13 (Should)** [PREMISSA] Encerrar é ação explícita do operador sobre uma oferta Formada, registrando o fim da liquidação, que ocorre fora da plataforma.
 - **FR-14 (Must)** Somente ofertas fora de Draft são apresentadas aos demais contextos, sempre com o estado corrente. Drafts não são visíveis como oferta.
 
 ### Atributos e validação na publicação
@@ -135,7 +135,7 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 
 ### Semântica das opções de condicionamento
 
-Definidas aqui; aplicadas pelo Allocation. Abaixo do montante mínimo a oferta não se forma, passa a Cancelada e nenhuma opção se aplica.
+Definidas aqui; aplicadas pelo Allocation. Abaixo do montante mínimo a oferta não se forma, passa a Não formada e nenhuma opção se aplica.
 
 - **FR-27 (Must)** *Condicionada à colocação total da quantidade base.* Em distribuição parcial, a reserva é cancelada e o investidor não recebe cotas.
 - **FR-28 (Must)** *Condicionada ao montante mínimo, recebendo a totalidade.* Em distribuição parcial, o investidor recebe a quantidade integral reservada.
@@ -150,13 +150,13 @@ Contratos de domínio entre contextos; o mecanismo de transporte é decisão de 
 |---|---|---|---|
 | `OfferPublished` | Offering | ReservationBook, Allocation | Publicação aprovada; oferta passa a Aberta |
 | `OfferClosed` | Offering | ReservationBook, Allocation | Operador fecha o período de reserva; Allocation inicia o processamento do livro |
-| `OfferAllocated` | Offering | ReservationBook | Desfecho do livro com oferta formada |
-| `OfferCancelled` | Offering | ReservationBook | Desfecho do livro com mínimo não atingido |
+| `OfferBecameUnconditional` | Offering | ReservationBook | Desfecho do livro com oferta formada |
+| `OfferLapsed` | Offering | ReservationBook | Desfecho do livro com mínimo não atingido |
 | `OfferRevoked` | Offering | ReservationBook, Allocation | Operador revoga a oferta |
 | `OfferCompleted` | Offering | ReservationBook | Operador registra o fim da liquidação |
 | `BookProcessed` | Allocation | Offering | Processamento do livro concluído; carrega o desfecho (formada e alocada, ou mínimo não atingido) e as cotas efetivamente distribuídas |
 
-`BookProcessed` é o único evento de entrada deste contexto e o único gatilho de Alocada e Cancelada. Seu contrato pertence ao PRD do Allocation; este PRD fixa que ele é consumido apenas em Fechada (FR-11).
+`BookProcessed` é o único evento de entrada deste contexto e o único gatilho de Formada e Não formada. Seu contrato pertence ao PRD do Allocation; este PRD fixa que ele é consumido apenas em Fechada (FR-11).
 
 ## Non-functional Requirements
 
@@ -167,7 +167,7 @@ Contratos de domínio entre contextos; o mecanismo de transporte é decisão de 
 
 ## Considerações Regulatórias
 
-[FATO] CVM 160, art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro, para o qual a oferta se mantém; § 3º manda restituir integralmente quando o mínimo não é atingido. O modelo adota quantidade de cotas e mapeia o § 3º no estado Cancelada.
+[FATO] CVM 160, art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro, para o qual a oferta se mantém; § 3º manda restituir integralmente quando o mínimo não é atingido. O modelo adota quantidade de cotas e mapeia o § 3º no estado Não formada.
 
 [FATO] CVM 160, art. 74: havendo possibilidade de distribuição parcial, o investidor deve ter a opção de condicionar a adesão à totalidade (inciso I) ou a quantidade maior ou igual ao mínimo (inciso II). O parágrafo único define "efetivamente distribuídos" incluindo as reservas condicionadas — o denominador do cálculo proporcional (FR-29) segue essa definição.
 
@@ -175,7 +175,7 @@ Contratos de domínio entre contextos; o mecanismo de transporte é decisão de 
 
 [FATO] CVM 160, arts. 67, III, e 68: a revogação é pedida pelo ofertante, deferida pela CVM, e torna ineficazes a oferta e as aceitações, com restituição integral. O estado Revogada modela o efeito; o deferimento pela CVM não é modelado.
 
-[FATO] CVM 160, art. 70: suspensão e cancelamento são atos da CVM por irregularidade. O termo "Cancelada" neste PRD tem outro sentido (mínimo não atingido), alinhado à linguagem dos documentos de oferta e não à do art. 70. Suspensão não é modelada.
+[FATO] CVM 160, art. 70: suspensão e cancelamento são atos da CVM por irregularidade. Por isso o estado de mínimo não atingido se chama Não formada, e não Cancelada: "cancelamento" já tem outro sentido na mesma comunidade. Suspensão não é modelada.
 
 [FATO] CVM 160, art. 76: o resultado da oferta é divulgado no anúncio de encerramento, ao fim do prazo ou com a distribuição total. O estado Encerrada corresponde a esse marco; o anúncio em si não é modelado.
 
@@ -202,8 +202,9 @@ Contratos de domínio entre contextos; o mecanismo de transporte é decisão de 
 
 - **Identificação completa das cotas na v1 sem cadastro de fundo.** *Custo:* fundo, classe, subclasse e emissão são texto ou identificador informado pelo operador, sem validação contra um cadastro; erro de digitação passa. *Razão:* é assim que a oferta se chama na vida real e evita renomear quando classes e séries entrarem; cadastro de fundo é entidade própria, fora do mínimo viável.
 - **Série fora, com caminho previsto.** *Custo:* uma emissão com várias séries não é representável hoje. *Razão:* com a identificação das cotas na oferta, séries podem entrar como "uma oferta por série, agrupadas pela emissão", sem novo nível dentro da oferta; a decisão fica adiada sem bloquear o caminho.
-- **Revogada e Cancelada como estados distintos, sem campo de motivo.** *Custo:* dois estados terminais com o mesmo efeito downstream (reservas caem, nada é alocado); todo consumidor trata os dois. *Razão:* origem e base regulatória diferem (decisão do ofertante, art. 68, versus mínimo não atingido, art. 73, § 3º); um estado genérico com motivo esconderia a distinção que o domínio faz.
-- **Estado final da oferta decidido pelo desfecho do Allocation.** *Custo:* Offering consome um evento de um contexto que lê a oferta; há um ciclo de eventos entre os dois. *Razão:* "a oferta foi cancelada por não atingir o mínimo" e "a oferta foi alocada" são fatos sobre a oferta na linguagem do domínio, e um único ponto de leitura para o estado vale mais que a aciclicidade estrita. O ciclo é contido por FR-11: um único evento de entrada, aceito em um único estado. Ver Ponto de Maior Fragilidade.
+- **Revogada e Não formada como estados distintos, sem campo de motivo.** *Custo:* dois estados terminais com o mesmo efeito downstream (reservas caem, nada é alocado); todo consumidor trata os dois. *Razão:* origem e base regulatória diferem (decisão do ofertante, art. 68, versus mínimo não atingido, art. 73, § 3º); um estado genérico com motivo esconderia a distinção que o domínio faz.
+- **Identificadores `Unconditional` e `Lapsed` para Formada e Não formada.** *Custo:* `Unconditional` convive com as opções de condicionamento da reserva (art. 74) e pode ser lido como "sem condicionamento"; o glossário separa os dois sentidos. *Razão:* é o par que a comunidade anglófona usa para o mesmo conceito: a oferta "becomes unconditional" quando suas condições são satisfeitas e "lapses" quando não são (UK Takeover Code, Rule 31.2; prospectos de IPO da HKEX, seção "Structure of the Global Offering"). `Formed`/`NotFormed` seriam tradução literal sem significado naquela comunidade.
+- **Estado final da oferta decidido pelo desfecho do Allocation.** *Custo:* Offering consome um evento de um contexto que lê a oferta; há um ciclo de eventos entre os dois. *Razão:* "a oferta não se formou" e "a oferta se formou e foi alocada" são fatos sobre a oferta na linguagem do domínio, e um único ponto de leitura para o estado vale mais que a aciclicidade estrita. O ciclo é contido por FR-11: um único evento de entrada, aceito em um único estado. Ver Ponto de Maior Fragilidade.
 - **Fechamento explícito, não derivado do fim do período.** *Custo:* uma oferta cujo período terminou fica Aberta até o operador agir, exigindo a regra FR-08 no ReservationBook. *Razão:* encerramento antecipado por excesso de demanda é prática comum e exige ação explícita; derivar por relógio impediria isso.
 - **Encerrada por ação do operador, sem liquidação modelada.** *Custo:* o estado depende de uma informação externa que a plataforma não verifica. *Razão:* liquidação está fora do projeto por definição; o estado existe para o ciclo ter terminal de sucesso alinhado ao vocabulário de mercado.
 - **Montante mínimo em cotas, não em moeda.** *Custo:* diverge da linguagem dos documentos de oferta, que costumam expressar o mínimo em reais; a conversão fica a cargo de quem cadastra. *Razão:* com preço fixo por cota as duas formas são equivalentes, e a forma em cotas elimina arredondamento na decisão de distribuição parcial e no cálculo proporcional.
@@ -234,11 +235,11 @@ Projeto sem uso em produção; as métricas são de correção e de contrato, ve
 - **Dado** uma oferta em qualquer estado fora de Draft, **quando** qualquer atributo é alterado, **então** a alteração é rejeitada e a definição consultada em seguida é idêntica à publicada.
 - **Dado** um Draft com todos os atributos válidos, **quando** outro contexto consulta ofertas, **então** o Draft não aparece.
 - **Dado** uma oferta Aberta dentro do período de reserva, **quando** o operador fecha, **então** a oferta passa a Fechada.
-- **Dado** uma oferta Fechada, **quando** chega o desfecho do livro com 500 cotas efetivamente distribuídas e montante mínimo 600, **então** a oferta passa a Cancelada.
-- **Dado** uma oferta Fechada, **quando** chega o desfecho do livro com 700 cotas efetivamente distribuídas, montante mínimo 600 e alocação concluída, **então** a oferta passa a Alocada.
+- **Dado** uma oferta Fechada, **quando** chega o desfecho do livro com 500 cotas efetivamente distribuídas e montante mínimo 600, **então** a oferta passa a Não formada.
+- **Dado** uma oferta Fechada, **quando** chega o desfecho do livro com 700 cotas efetivamente distribuídas, montante mínimo 600 e alocação concluída, **então** a oferta passa a Formada.
 - **Dado** uma oferta Revogada, **quando** chega um desfecho do livro, **então** a oferta permanece Revogada e o desfecho fica registrado como descartado.
-- **Dado** uma oferta Alocada, **quando** o operador revoga, **então** a oferta passa a Revogada; **quando** o operador encerra, **então** passa a Encerrada.
-- **Dado** uma oferta Cancelada, Revogada ou Encerrada, **quando** qualquer transição é tentada, **então** é rejeitada informando o estado corrente.
+- **Dado** uma oferta Formada, **quando** o operador revoga, **então** a oferta passa a Revogada; **quando** o operador encerra, **então** passa a Encerrada.
+- **Dado** uma oferta Não formada, Revogada ou Encerrada, **quando** qualquer transição é tentada, **então** é rejeitada informando o estado corrente.
 - **Dado** um Draft, **quando** o operador tenta revogar ou fechar, **então** a transição é rejeitada.
 - **Dado** uma oferta com montante mínimo igual à quantidade base e conjunto de opções vazio, **quando** o operador publica, **então** a publicação é aceita e a oferta é apresentada como não admitindo distribuição parcial.
 - **Dado** uma oferta com montante mínimo menor que a quantidade base e conjunto de opções vazio, **quando** o operador publica, **então** a publicação é rejeitada por FR-26.
@@ -249,7 +250,7 @@ Projeto sem uso em produção; as métricas são de correção e de contrato, ve
 | Item | Tipo | Impacto |
 |---|---|---|
 | ReservationBook consome estado, período de reserva, limites por investidor e conjunto de opções aceitas | Acoplamento entre contextos | Alto — só aceita reserva em oferta Aberta dentro do período; sua autonomia depende de a definição não mudar |
-| Allocation consome a oferta e o livro fechado e devolve `BookProcessed` | Acoplamento bidirecional | Alto — o desfecho dispara Alocada ou Cancelada; contrato do evento a definir no PRD do Allocation |
+| Allocation consome a oferta e o livro fechado e devolve `BookProcessed` | Acoplamento bidirecional | Alto — o desfecho dispara Formada ou Não formada; contrato do evento a definir no PRD do Allocation |
 | Allocation aplica a semântica de FR-27 a FR-29 | Acoplamento entre contextos | Alto — divergência de interpretação produz alocação errada; a semântica é deste PRD |
 | Revogação durante o processamento do livro | Risco de consistência | Contido por FR-11 (desfecho descartado fora de Fechada); resta ao Allocation decidir se interrompe o processamento ao receber `OfferRevoked` |
 | Leitura do art. 74 sobre obrigatoriedade das opções 1 e 2 | Risco regulatório | Pode transformar o conjunto configurável em regra fixa e eliminar FR-26 |
@@ -268,7 +269,7 @@ Projeto sem uso em produção; as métricas são de correção e de contrato, ve
 
 ## Ponto de Maior Fragilidade
 
-A decisão de **o Offering ser dono dos desfechos Alocada e Cancelada, consumindo `BookProcessed` do Allocation**, em vez de terminar seu ciclo em Fechada e deixar o desfecho como leitura do Allocation.
+A decisão de **o Offering ser dono dos desfechos Formada e Não formada, consumindo `BookProcessed` do Allocation**, em vez de terminar seu ciclo em Fechada e deixar o desfecho como leitura do Allocation.
 
 *Vetor de ataque:* um revisor cético aponta que o Offering é declarado raiz de dependência e, ainda assim, reage a um evento do contexto que o consome. Mesmo contido por FR-11, o ciclo cria dois lugares onde o desfecho do livro existe (no Allocation, como resultado; no Offering, como estado), e a regra "descartar fora de Fechada" pode esconder um processamento que rodou sobre uma oferta já revogada, com alocações calculadas que ninguém invalidou. A alternativa acíclica é mais simples de raciocinar: Offering termina em Fechada ou Revogada, Allocation expõe "formada e alocada" ou "não formada", e quem precisa do quadro completo compõe as duas leituras.
 

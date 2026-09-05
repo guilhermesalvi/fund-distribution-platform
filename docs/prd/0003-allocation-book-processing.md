@@ -66,7 +66,7 @@ Mecanismo de execução, forma de leitura do livro e transporte do resultado sã
 | Demanda efetiva | Demanda total após a vedação a pessoas vinculadas. Base da formação, do condicionamento e do rateio. |
 | Excesso de demanda | Demanda efetiva acima da quantidade base. |
 | Excesso superior a um terço | Demanda total maior que a quantidade base multiplicada por quatro terços. Gatilho da vedação do art. 56. |
-| Formação | Demanda efetiva maior ou igual ao montante mínimo. Oferta formada segue para alocação; não formada é cancelada. |
+| Formação | Demanda efetiva maior ou igual ao montante mínimo. Oferta formada segue para alocação; não formada não aloca nada e os valores são restituídos. |
 | Cotas efetivamente distribuídas | Menor valor entre demanda efetiva e quantidade base, apurado antes do condicionamento (art. 74, parágrafo único). |
 | Distribuição parcial | Demanda efetiva entre o montante mínimo e a quantidade base, exclusive esta. |
 | Condicionamento | Regra por reserva em distribuição parcial: colocação total (cancela), mínimo com totalidade (integral), mínimo com proporcional (truncado). Definido no PRD do Offering. |
@@ -236,7 +236,7 @@ Em todos os cenários, `B = 1000` e `M = 600`, salvo indicação.
 
 A decisão de **processar o livro automaticamente no fechamento e emitir o resultado sem revisão do operador**.
 
-*Vetor de ataque:* um revisor cético aponta que, na vida real, o coordenador revisa o livro antes de divulgar a alocação, e que o modelo não tem nenhum ponto entre Fechada e Alocada para corrigir uma reserva indevida, uma declaração de vínculo errada ou um investidor que não deveria estar no livro. Com o processamento automático, a única correção é revogar a oferta inteira, o que pune todos os investidores por um erro de uma reserva. O custo de estar errado é alto: entra um estado de alocação proposta, uma aprovação explícita e a possibilidade de ajuste, e a máquina de estados do Offering ganha um passo.
+*Vetor de ataque:* um revisor cético aponta que, na vida real, o coordenador revisa o livro antes de divulgar a alocação, e que o modelo não tem nenhum ponto entre Fechada e Formada para corrigir uma reserva indevida, uma declaração de vínculo errada ou um investidor que não deveria estar no livro. Com o processamento automático, a única correção é revogar a oferta inteira, o que pune todos os investidores por um erro de uma reserva. O custo de estar errado é alto: entra um estado de alocação proposta, uma aprovação explícita e a possibilidade de ajuste, e a máquina de estados do Offering ganha um passo.
 
 *Desafie antes de aprovar:* o determinismo sem intervenção é o que o modelo quer demonstrar, ou é uma simplificação que vai cair no primeiro cenário de erro no livro? Se for o segundo, é mais barato colocar o passo de aprovação agora, sem ajuste discricionário, do que reabrir as três máquinas de estado depois.
 

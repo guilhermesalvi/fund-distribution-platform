@@ -5,9 +5,6 @@ builder.AddProject<Projects.DataMigration>("data-migration");
 builder.AddProject<Projects.Offering>("offering")
     .WithHttpHealthCheck("/health");
 
-builder.AddProject<Projects.DemandConsolidation>("demand-consolidation")
-    .WithHttpHealthCheck("/health");
-
 builder.AddProject<Projects.ReservationBook>("reservation-book")
     .WithHttpHealthCheck("/health");
 

@@ -11,7 +11,6 @@
     <Project Path="src/Allocation/Allocation.csproj" />
     <Project Path="src/AppHost/AppHost.csproj" />
     <Project Path="src/DataMigration/DataMigration.csproj" />
-    <Project Path="src/DemandConsolidation/DemandConsolidation.csproj" />
     <Project Path="src/Offering/Offering.csproj" />
     <Project Path="src/ReservationBook/ReservationBook.csproj" />
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />

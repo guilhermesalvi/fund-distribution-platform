@@ -2,12 +2,11 @@
 
 <!-- TODO: parágrafo sobre o domínio -->
 
-Plataforma composta por quatro serviços, um por contexto de domínio, e um worker de migração de dados:
+Plataforma composta por três serviços, um por contexto de domínio, e um worker de migração de dados:
 
 | Projeto | Tipo | Responsabilidade |
 | --- | --- | --- |
 | `Offering` | API | <!-- TODO --> |
-| `DemandConsolidation` | API | <!-- TODO --> |
 | `ReservationBook` | API | <!-- TODO --> |
 | `Allocation` | API | <!-- TODO --> |
 | `DataMigration` | Worker | Migração de dados. Não expõe HTTP. |
@@ -23,14 +22,13 @@ Plataforma composta por quatro serviços, um por contexto de domínio, e um work
 aspire run --apphost src/AppHost/AppHost.csproj
 ```
 
-O comando compila a solução, sobe os cinco projetos e abre o dashboard do Aspire em `https://localhost:17150`. O dashboard mostra logs, traces e métricas de todos os serviços.
+O comando compila a solução, sobe os quatro projetos e abre o dashboard do Aspire em `https://localhost:17150`. O dashboard mostra logs, traces e métricas de todos os serviços.
 
 Portas dos serviços em desenvolvimento:
 
 | Serviço | URL |
 | --- | --- |
 | Offering | `http://localhost:5084` |
-| DemandConsolidation | `http://localhost:5268` |
 | ReservationBook | `http://localhost:5129` |
 | Allocation | `http://localhost:5288` |
 
@@ -61,7 +59,6 @@ dotnet test FundDistributionPlatform.slnx
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
 │   │                                 # versionamento, ProblemDetails, OpenAPI
 │   ├── Offering/                     # API
-│   ├── DemandConsolidation/          # API
 │   ├── ReservationBook/              # API
 │   ├── Allocation/                   # API
 │   └── DataMigration/                # Worker

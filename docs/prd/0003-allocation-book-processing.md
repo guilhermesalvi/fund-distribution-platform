@@ -244,5 +244,5 @@ A decisão de **processar o livro automaticamente no fechamento e emitir o resul
 
 - [Resolução CVM 160 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 49, 56, 73, 74 e 75.
 - [Instrução CVM 400 (revogada)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º, origem da distinção totalidade/proporcional.
-- [PRD 0001 — Cadastro e Ciclo de Vida da Oferta](../offering/0001-offer-lifecycle.md) — definição da oferta, estados e semântica das opções de condicionamento.
-- [PRD 0002 — Livro de Reservas](../reservation-book/0002-reservation-lifecycle.md) — livro fechado, declarações e status por reserva.
+- [PRD 0001 — Cadastro e Ciclo de Vida da Oferta](0001-offering-offer-lifecycle.md) — definição da oferta, estados e semântica das opções de condicionamento.
+- [PRD 0002 — Livro de Reservas](0002-reservation-book-reservation-lifecycle.md) — livro fechado, declarações e status por reserva.

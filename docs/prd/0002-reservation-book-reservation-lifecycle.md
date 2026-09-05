@@ -235,5 +235,5 @@ A decisão de **permitir alteração e cancelamento da reserva até o fechamento
 
 - [Resolução CVM 160 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 2º (X, XI, XVI), 56, 64, 65, 69 e 75.
 - [Resolução CVM 30](https://conteudo.cvm.gov.br/legislacao/resolucoes/resol030.html) — definição de investidor profissional e qualificado.
-- [PRD 0001 — Cadastro e Ciclo de Vida da Oferta](../offering/0001-offer-lifecycle.md) — definição da oferta, estados e opções de condicionamento.
-- [PRD 0003 — Processamento do Livro e Alocação](../allocation/0003-book-processing.md) — vedação, formação, condicionamento, rateio e contrato de `BookProcessed`.
+- [PRD 0001 — Cadastro e Ciclo de Vida da Oferta](0001-offering-offer-lifecycle.md) — definição da oferta, estados e opções de condicionamento.
+- [PRD 0003 — Processamento do Livro e Alocação](0003-allocation-book-processing.md) — vedação, formação, condicionamento, rateio e contrato de `BookProcessed`.

@@ -279,5 +279,5 @@ A decisão de **o Offering ser dono dos desfechos Alocada e Cancelada, consumind
 - [Resolução CVM 160 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 50, 57, 65, 67, 68, 70, 73, 74, 75 e 76.
 - [Resolução CVM 175 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol175consolid.pdf) — art. 5º, §§ 5º e 7º.
 - [Instrução CVM 400 (revogada)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º, origem da distinção totalidade/proporcional.
-- [PRD 0002 — Livro de Reservas](../reservation-book/0002-reservation-lifecycle.md) — regras de reserva e status por reserva após o processamento.
-- [PRD 0003 — Processamento do Livro e Alocação](../allocation/0003-book-processing.md) — contrato de `BookProcessed` e semântica aplicada no fechamento.
+- [PRD 0002 — Livro de Reservas](0002-reservation-book-reservation-lifecycle.md) — regras de reserva e status por reserva após o processamento.
+- [PRD 0003 — Processamento do Livro e Alocação](0003-allocation-book-processing.md) — contrato de `BookProcessed` e semântica aplicada no fechamento.

@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/.claude/" />
+  <Folder Name="/.claude/rules/">
+    <File Path=".claude/rules/program-composition.md" />
+    <File Path=".claude/rules/tracing.md" />
+  </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/prd/">
     <File Path="docs/prd/0000-platform-overview.md" />

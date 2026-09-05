@@ -55,6 +55,19 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
 
+### Arquivos no `.slnx`
+
+Todo arquivo versionado entra no `.slnx`, espelhando o layout das pastas em disco. *Princípio:* o `.slnx` é a visão do repositório no Solution Explorer; artefato fora dele é invisível para quem navega pela IDE.
+
+- Cada diretório vira `<Folder Name="/caminho/completo/">`, com o caminho desde a raiz e barras no início e no fim. Diretório intermediário sem arquivo próprio é declarado vazio (`<Folder Name="/docs/" />`) antes dos filhos.
+- Arquivo não-projeto entra como `<File Path="caminho/relativo/arquivo.md" />` dentro da pasta que corresponde ao seu diretório.
+- Projeto (`.csproj`) entra como `<Project Path="..." />` na pasta do diretório que o contém (`/src/`, `/tests/`), sem pasta própria por projeto.
+- Arquivo na raiz do repositório entra em `<Folder Name="/SolutionItems/">`, exceto o próprio `.slnx`.
+- Arquivo ignorado pelo git (`bin/`, `obj/`, `.idea/`) não entra.
+- Pastas e arquivos em ordem alfabética, sem distinção de maiúsculas.
+
+Ao criar, mover ou remover um arquivo — inclusive `.md` em `docs/` ou `.claude/` — a mudança no `.slnx` vai no mesmo commit, porque tem o mesmo motivo.
+
 ## Build e testes
 
 ```

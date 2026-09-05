@@ -45,7 +45,7 @@ Consumidor (tratado como usuário de plataforma): o Allocation lê o livro fecha
 Tornar a reserva um agregado próprio, com o livro de uma oferta sendo o conjunto de suas reservas:
 
 - **Registro** aceito só contra oferta Aberta, dentro do período de reserva, com quantidade dentro dos limites, declarações obrigatórias e opção de condicionamento pertencente ao conjunto aceito pela oferta. Um investidor pode ter várias reservas ativas na mesma oferta; o investimento máximo vale para a soma delas, e categoria e vínculo são os mesmos em todas.
-- **Alteração e cancelamento** pelo investidor enquanto a oferta está Aberta e dentro do período. Depois disso, a reserva é irrevogável. O instante do registro não muda com a alteração.
+- **Alteração e cancelamento** pelo investidor enquanto a oferta está Aberta e dentro do período. Depois disso, a reserva é irrevogável. O instante e a ordem do registro não mudam com a alteração.
 - **Congelamento** no fechamento da oferta: nenhuma reserva entra, muda ou sai.
 - **Status por reserva** após o processamento, derivado do resultado do Allocation, sem alterar a quantidade reservada.
 
@@ -54,12 +54,12 @@ Tornar a reserva um agregado próprio, com o livro de uma oferta sendo o conjunt
 | Ativa | `Active` | Reserva válida, aguardando o fechamento ou o processamento |
 | Cancelada pelo investidor | `Withdrawn` | Cancelada antes do fechamento; não entra no livro fechado |
 | Atendida | `Filled` | Recebeu a quantidade integral reservada |
-| Atendida parcialmente | `PartiallyFilled` | Recebeu menos que a quantidade reservada, inclusive zero, por rateio ou por condicionamento proporcional |
+| Atendida parcialmente | `PartiallyFilled` | Quantidade determinada por rateio ou por condicionamento proporcional: em regra menor que a reservada, inclusive zero; pode igualar a reservada no limite do resto do arredondamento (PRD 0003, FR-18). O status segue a regra aplicada, não a quantidade (PRD 0003, FR-24) |
 | Não atendida por condicionamento | `CancelledByCondition` | Oferta em distribuição parcial e reserva condicionada à colocação total |
 | Excluída por vinculação | `ExcludedRelatedParty` | Excluída pela vedação a pessoas vinculadas |
-| Sem efeito | `Void` | Oferta revogada ou não formada; a reserva perde efeito |
+| Sem efeito | `Void` | Oferta revogada ou não formada; a reserva perde efeito, inclusive um resultado já aplicado, e a quantidade alocada vigente é zero |
 
-Quantidade reservada, declarações e opção de condicionamento são imutáveis a partir do fechamento. O que o investidor recebeu vive no Allocation; o livro mostra o status e a quantidade alocada como leitura derivada.
+Quantidade reservada, declarações e opção de condicionamento são imutáveis a partir do fechamento. O que o investidor recebeu vive no Allocation; o livro mostra o status e a quantidade alocada como leitura derivada. Revogação da oferta é a única transição que sai de um status de resultado, e leva a Sem efeito.
 
 Mecanismo de persistência, forma de exposição e experiência de registro são downstream e fora deste documento.
 
@@ -73,11 +73,12 @@ Mecanismo de persistência, forma de exposição e experiência de registro são
 | Reserva | Pedido de compra de uma quantidade de cotas de uma oferta Aberta por um investidor, com declaração de categoria, de vinculação e opção de condicionamento. |
 | Livro de reservas | Conjunto das reservas de uma oferta. Livro fechado: as reservas ativas no instante do fechamento da oferta. |
 | Posição do investidor | Soma das quantidades das reservas ativas de um investidor em uma oferta. Limitada pelo investimento máximo por investidor. |
-| Instante do registro | Momento em que a reserva foi aceita. Imutável; alteração não o muda. Usado pelo Allocation como desempate. |
+| Instante do registro | Momento em que a reserva foi aceita. Imutável; alteração não o muda. |
+| Ordem de registro | Posição da reserva na sequência de aceitação do livro da oferta. Total e imutável: duas reservas do mesmo livro nunca ocupam a mesma posição, ainda que aceitas no mesmo instante. Usada pelo Allocation como desempate. |
 | Condicionamento | Condição declarada pelo investidor para manter a reserva caso a oferta feche em distribuição parcial. |
 | Opção de condicionamento | Uma das três formas de condicionamento definidas no PRD do Offering; a reserva escolhe uma entre as aceitas pela oferta. |
 | Quantidade reservada | Cotas pedidas na reserva. Imutável a partir do fechamento. |
-| Quantidade alocada | Cotas recebidas no processamento do livro. Definida pelo Allocation; lida aqui. |
+| Quantidade alocada | Cotas recebidas no processamento do livro. Definida pelo Allocation; lida aqui. Zero quando a reserva está Sem efeito. |
 | Demanda acumulada | Soma das quantidades das reservas ativas de uma oferta em um instante. |
 
 ## Functional Requirements
@@ -86,7 +87,7 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 
 ### Registro
 
-- **FR-01 (Must)** Reserva só é aceita contra oferta em estado Aberta e com o instante do registro dentro do período de reserva da oferta.
+- **FR-01 (Must)** Reserva só é aceita contra oferta em estado Aberta e com o instante do registro dentro do período de reserva da oferta (intervalo fechado; PRD 0001, glossário).
 - **FR-02 (Must)** O investidor da reserva deve existir. Não há criação de investidor por este contexto.
 - **FR-03 (Must)** Quantidade reservada inteira e maior ou igual ao investimento mínimo por investidor da oferta.
 - **FR-04 (Must)** A posição do investidor na oferta, incluindo a reserva sendo registrada ou alterada, é menor ou igual ao investimento máximo por investidor da oferta.
@@ -98,18 +99,18 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 
 ### Alteração e cancelamento
 
-- **FR-10 (Must)** O investidor pode alterar quantidade, declarações e opção de condicionamento de uma reserva ativa enquanto a oferta está Aberta e dentro do período de reserva. A alteração é validada pelas mesmas regras do registro. Alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, e cada uma registra a mudança no histórico.
-- **FR-11 (Must)** O investidor pode cancelar uma reserva ativa nas mesmas condições. A reserva passa a Cancelada pelo investidor e não entra no livro fechado. As demais reservas ativas do investidor não são afetadas.
+- **FR-10 (Must)** O investidor, por meio do operador, pode alterar quantidade, declarações e opção de condicionamento de uma reserva ativa enquanto a oferta está Aberta e dentro do período de reserva. A alteração é validada pelas mesmas regras do registro. Alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, e cada uma registra a mudança no histórico.
+- **FR-11 (Must)** O investidor, por meio do operador, pode cancelar uma reserva ativa nas mesmas condições. A reserva passa a Cancelada pelo investidor e não entra no livro fechado. As demais reservas ativas do investidor não são afetadas.
 - **FR-12 (Must)** Fora de oferta Aberta ou fora do período de reserva, alteração e cancelamento são rejeitados. A reserva é irrevogável a partir daí.
 - **FR-13 (Must)** Toda alteração e cancelamento preserva o histórico: quem, quando e o que mudou.
-- **FR-14 (Must)** O instante do registro é imutável. Nenhuma alteração o modifica.
+- **FR-14 (Must)** O instante e a ordem do registro são imutáveis; nenhuma alteração os modifica. A ordem de registro é total no livro da oferta: duas reservas nunca compartilham a posição, ainda que aceitas no mesmo instante.
 
 ### Fechamento e resultado
 
 - **FR-15 (Must)** No fechamento da oferta, o livro congela: as reservas ativas naquele instante formam o livro fechado, e nenhuma reserva entra, muda ou sai depois.
-- **FR-16 (Must)** O livro fechado é consultável pelo Allocation com todas as reservas ativas, cada uma com investidor, quantidade, declarações, opção de condicionamento e instante do registro.
-- **FR-17 (Must)** O resultado do processamento, recebido do Allocation, atualiza o status e a quantidade alocada de cada reserva do livro fechado. Quantidade reservada, declarações e opção não mudam.
-- **FR-18 (Must)** Quando a oferta é revogada ou não se forma, todas as reservas ativas passam a Sem efeito.
+- **FR-16 (Must)** O livro fechado é consultável pelo Allocation com todas as reservas ativas, cada uma com investidor, quantidade, declarações, opção de condicionamento, instante e ordem do registro.
+- **FR-17 (Must)** O resultado do processamento, recebido do Allocation, atualiza o status e a quantidade alocada de cada reserva do livro fechado. O status deriva do motivo do resultado (PRD 0003, FR-25): atendida integralmente → Atendida; atendida parcialmente por proporcional ou por rateio → Atendida parcialmente; não atendida por condicionamento → Não atendida por condicionamento; excluída por vinculação → Excluída por vinculação; oferta não formada → Sem efeito. Quantidade reservada, declarações e opção não mudam.
+- **FR-18 (Must)** Quando a oferta é revogada, toda reserva da oferta que não esteja Cancelada pelo investidor passa a Sem efeito, qualquer que seja o status corrente, inclusive um status de resultado já aplicado; reserva já Sem efeito permanece. A quantidade alocada vigente passa a zero, e o resultado aplicado antes fica preservado no histórico (FR-13, NFR-03). Oferta não formada chega pelo resultado por reserva (FR-17), não por evento próprio.
 - **FR-19 (Must)** O resultado só é aplicado a reservas do livro fechado da oferta correspondente. Resultado para reserva inexistente, cancelada pelo investidor ou já com status terminal é rejeitado e registrado.
 
 ### Consulta
@@ -127,9 +128,10 @@ Eventos consumidos:
 |---|---|---|
 | `OfferPublished` | Offering | Passa a aceitar reservas para a oferta, com seus limites, período e opções aceitas |
 | `OfferClosed` | Offering | Congela o livro (FR-15) |
-| `OfferRevoked` | Offering | Reservas ativas passam a Sem efeito (FR-18) |
-| `OfferLapsed` | Offering | Reservas ativas passam a Sem efeito (FR-18) |
-| `BookProcessed` | Allocation | Aplica status e quantidade alocada por reserva (FR-17) |
+| `OfferRevoked` | Offering | Reservas passam a Sem efeito, antes ou depois do resultado (FR-18) |
+| `BookProcessed` | Allocation | Aplica status e quantidade alocada por reserva, inclusive Sem efeito em oferta não formada (FR-17) |
+
+Formada, Não formada e Encerrada não geram evento na v1 (PRD 0001, Domain Events): o desfecho não formada chega por `BookProcessed`, e o estado da oferta é consultado no Offering quando preciso.
 
 ## Non-functional Requirements
 
@@ -177,8 +179,8 @@ Texto consolidado das Resoluções CVM 160 e CVM 30 lido em 2026-09-05; artigos 
 - **Alteração e cancelamento livres até o fechamento.** *Custo:* a demanda acumulada durante o período não é compromisso; o operador que decide fechar antecipadamente com base nela pode ver o livro encolher antes do fechamento. Diverge da letra do art. 65, § 4º. *Razão:* a plataforma modela o livro da corretora, não o do coordenador; a irrevogabilidade que o Allocation exige é a do livro fechado. [PREMISSA] Na corretora, a reserva do cliente é ajustável até o fechamento do livro interno, e o pedido formal ao coordenador é o consolidado. Não verificada em fonte primária; de baixo impacto, porque a decisão se sustenta na fronteira do modelo mesmo sem ela.
 - **Categoria e vínculo como declarações na reserva, únicas por investidor em cada oferta.** *Custo:* o mesmo investidor pode declarar categorias diferentes em ofertas diferentes; nada impede uma declaração falsa; alterar a declaração em uma reserva cascateia para as outras. *Razão:* é assim que a norma trata (declaração no pedido de reserva; termo de investidor qualificado); evita cadastro de investidor no MVP; a unicidade por oferta impede um investidor metade vinculado no mesmo livro.
 - **Várias reservas ativas por investidor por oferta, com limite máximo sobre a soma.** *Custo:* registro e alteração leem as demais reservas do investidor; o rateio é por reserva, e um investidor que fraciona a posição em várias reservas aumenta suas chances no resto do arredondamento (uma cota por reserva). *Razão:* representa lotes com opções de condicionamento distintas; o limite sobre a posição preserva o teto por investidor que o Offering define.
-- **Status da reserva como projeção do resultado do Allocation.** *Custo:* o desfecho de cada reserva existe em dois contextos. *Razão:* "o que aconteceu com a minha reserva" é pergunta do livro; obrigar o investidor a consultar o Allocation vaza a fronteira. A quantidade reservada nunca muda, então não há dois valores para o mesmo fato.
-- **Instante do registro imutável, mesmo com alteração.** *Custo:* um investidor pode reservar pouco cedo e aumentar no fim mantendo a prioridade no desempate; o ganho máximo é uma cota, e só em empate exato de fração. *Razão:* campo imutável é simples de explicar e auditar; reiniciar o instante puniria correções e exigiria regra sobre qual alteração reinicia.
+- **Status da reserva como projeção do resultado do Allocation.** *Custo:* o desfecho de cada reserva existe em dois contextos, e após revogação o resultado emitido pelo Allocation permanece enquanto o livro mostra a reserva sem efeito. *Razão:* "o que aconteceu com a minha reserva" é pergunta do livro; obrigar o investidor a consultar o Allocation vaza a fronteira. A quantidade reservada nunca muda, então não há dois valores para o mesmo fato.
+- **Instante e ordem do registro imutáveis, mesmo com alteração.** *Custo:* um investidor pode reservar pouco cedo e aumentar no fim mantendo a prioridade no desempate; o ganho máximo é uma cota, e só em empate exato de fração. *Razão:* campo imutável é simples de explicar e auditar; reiniciar a posição puniria correções e exigiria regra sobre qual alteração reinicia. A ordem, e não só o instante, é o desempate porque duas reservas podem ser aceitas no mesmo instante e o Allocation exige resultado determinístico (PRD 0003, FR-04).
 - **Sem eventos de saída na v1.** *Custo:* quem quiser reagir a reservas em tempo real não tem contrato. *Razão:* o único consumidor do livro é o Allocation, que o lê no fechamento; publicar evento sem consumidor é acoplamento implícito.
 
 ## Métricas de Sucesso
@@ -194,7 +196,7 @@ Projeto sem uso em produção; as métricas são de correção e de contrato, ve
 - O Allocation não precisa de nenhum dado de reserva além do exposto em FR-16 — verificado contra o PRD 0003 em 2026-09-05.
 
 **Guardrails:**
-- Quantidade reservada, declarações, opção e instante do registro de uma reserva do livro fechado nunca são alterados pelo resultado do processamento.
+- Quantidade reservada, declarações, opção, instante e ordem do registro de uma reserva do livro fechado nunca são alterados pelo resultado do processamento nem pela revogação.
 - Reserva cancelada pelo investidor antes do fechamento nunca recebe status de resultado.
 - Nenhuma regra de categoria é aplicada na v1; a categoria é registrada e nada mais.
 - A posição de um investidor em uma oferta nunca excede o investimento máximo por investidor.
@@ -214,11 +216,14 @@ Em todos os cenários, a oferta está Aberta dentro do período, com investiment
 - **Dado** uma oferta Aberta cujo período de reserva terminou, **quando** alguém tenta reservar, **então** é rejeitado por FR-01.
 - **Dado** uma reserva Ativa de 50 cotas registrada às 10h, **quando** o investidor altera a quantidade para 80 às 11h, **então** a alteração é aceita, validada pelos limites, o histórico registra a mudança e o instante do registro continua 10h.
 - **Dado** uma reserva Ativa, **quando** a oferta passa a Fechada e o investidor tenta cancelar, **então** é rejeitado por FR-12.
-- **Dado** uma oferta Fechada com reservas Ativas e uma Cancelada pelo investidor, **quando** o Allocation consulta o livro fechado, **então** recebe só as Ativas, com quantidade, declarações, opção e instante do registro.
+- **Dado** uma oferta Fechada com reservas Ativas e uma Cancelada pelo investidor, **quando** o Allocation consulta o livro fechado, **então** recebe só as Ativas, com quantidade, declarações, opção, instante e ordem do registro.
 - **Dado** o livro fechado, **quando** chega o resultado com uma reserva de 50 cotas alocada em 40, **então** a reserva passa a Atendida parcialmente com quantidade alocada 40 e quantidade reservada 50.
 - **Dado** o livro fechado, **quando** chega o resultado com uma reserva de 1 cota alocada em 0 por proporcional, **então** a reserva passa a Atendida parcialmente com quantidade alocada 0.
 - **Dado** o livro fechado, **quando** chega o resultado indicando exclusão por vinculação de uma reserva, **então** ela passa a Excluída por vinculação com quantidade alocada 0.
 - **Dado** uma oferta Aberta com reservas Ativas, **quando** a oferta é revogada, **então** todas passam a Sem efeito.
+- **Dado** uma oferta Formada com reservas Atendida (50 alocadas 50), Atendida parcialmente (50 alocadas 40) e uma Cancelada pelo investidor, **quando** a oferta é revogada, **então** as duas primeiras passam a Sem efeito com quantidade alocada 0 e o resultado anterior no histórico; a Cancelada pelo investidor não muda.
+- **Dado** o livro fechado, **quando** chega o resultado com oferta não formada, **então** todas as reservas do livro fechado passam a Sem efeito com quantidade alocada 0.
+- **Dado** duas reservas aceitas no mesmo instante, **quando** o Allocation consulta o livro fechado, **então** recebe ordens de registro distintas para as duas.
 - **Dado** um resultado para reserva Cancelada pelo investidor, **quando** é recebido, **então** é rejeitado e registrado, sem alterar a reserva.
 - **Dado** uma oferta Aberta com reservas ativas de 50, 400 e 30 cotas, **quando** o operador consulta o livro, **então** vê demanda acumulada 480 e as três reservas com status Ativa.
 
@@ -227,7 +232,7 @@ Em todos os cenários, a oferta está Aberta dentro do período, com investiment
 | Item | Tipo | Impacto |
 |---|---|---|
 | Offering: definição da oferta, estado e eventos de ciclo de vida | Acoplamento entre contextos | Alto — toda validação de reserva depende da definição publicada; congelamento depende de `OfferClosed` |
-| Allocation lê o livro fechado e devolve `BookProcessed` com resultado por reserva | Acoplamento bidirecional | Alto — contrato de leitura (FR-16) e de resultado (FR-17) fechados em conjunto com o PRD 0003; o desempate cronológico usa o instante de FR-14 |
+| Allocation lê o livro fechado e devolve `BookProcessed` com resultado por reserva | Acoplamento bidirecional | Alto — contrato de leitura (FR-16) e de resultado (FR-17) fechados em conjunto com o PRD 0003; o desempate usa a ordem de registro de FR-14 |
 | Seed de investidores | Dependência de dados | Sem investidores carregados, nenhuma reserva é possível |
 | Declarações não verificadas | Risco de dados | Categoria ou vínculo falsos passam; efeito no MVP limitado à vedação do art. 56 |
 | Alteração livre até o fechamento | Risco de comportamento | Demanda acumulada pode encolher antes do fechamento antecipado |
@@ -239,7 +244,9 @@ Nenhuma em aberto. Decisões tomadas em 2026-09-05 pelo autor, registradas aqui 
 
 - **Quem registra a reserva:** o operador, em nome do investidor. Sem identidade de investidor na v1.
 - **Reservas por investidor por oferta:** várias. Investimento máximo vale sobre a posição; categoria e vínculo únicos por oferta. FR-04, FR-07, FR-10.
-- **Instante para desempate:** o do registro original, imutável. FR-14.
+- **Desempate no Allocation:** ordem de registro original, total e imutável; o instante não basta porque duas reservas podem ser aceitas no mesmo instante. FR-14.
+- **Revogação após o processamento:** reservas com resultado aplicado passam a Sem efeito com quantidade alocada zero e histórico preservado. FR-18.
+- **Oferta não formada:** aplicada pelo resultado por reserva de `BookProcessed`; sem evento próprio. FR-17.
 - **Demanda acumulada visível ao operador:** obrigatória. FR-20 é Must.
 - **Leitura do livro fechado pelo Allocation:** delegada a ADR; este PRD exige apenas NFR-02 e FR-16.
 

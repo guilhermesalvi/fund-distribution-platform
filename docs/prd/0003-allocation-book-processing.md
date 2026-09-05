@@ -32,7 +32,7 @@ Allocation é o núcleo do domínio: é onde as regras da CVM 160 sobre distribu
 
 Sem um processamento único e determinístico, cada leitura do livro produziria um resultado diferente, e nenhum contexto poderia confiar no desfecho. Sem regras precisas para vedação, formação, condicionamento e rateio, os exemplos de borda (exclusão que derruba a demanda abaixo da base, truncamento que deixa resto, condição que cancela reservas depois da formação) ficam a critério de quem implementa.
 
-[FATO] As cotas efetivamente distribuídas são apuradas antes de aplicar o condicionamento e não são recalculadas depois: a formação e o denominador do proporcional consideram todas as reservas do livro fechado, inclusive as que a condição de colocação total vai cancelar. É a leitura literal do art. 74, parágrafo único, e a única que o texto admite: o parágrafo existe para quebrar a circularidade entre "quanto foi distribuído" e "quais condições se cumprem". Consequência aceita: a oferta pode se formar e ser alocada com soma final abaixo do montante mínimo, e os investidores da opção 1 são restituídos (art. 73, § 4º).
+[FATO] As cotas efetivamente distribuídas são apuradas antes de aplicar o condicionamento e não são recalculadas depois: a formação e o numerador do proporcional consideram todas as reservas do livro fechado, inclusive as que a condição de colocação total vai cancelar. É a leitura literal do art. 74, parágrafo único, e a única que o texto admite: o parágrafo existe para quebrar a circularidade entre "quanto foi distribuído" e "quais condições se cumprem". Consequência aceita: a oferta pode se formar e ser alocada com soma final abaixo do montante mínimo, e os investidores da opção 1 são restituídos (art. 73, § 4º).
 
 ## Usuário-alvo / JTBD
 
@@ -83,8 +83,8 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 ### Gatilho e entrada
 
 - **FR-01 (Must)** O processamento inicia com o fechamento da oferta e usa como entrada exclusiva a definição da oferta publicada e o livro fechado.
-- **FR-02 (Must)** Cada oferta é processada uma única vez. Um segundo processamento da mesma oferta é rejeitado.
-- **FR-03 (Must)** Se a oferta for revogada antes de o processamento concluir, ele é interrompido e nenhum resultado é emitido.
+- **FR-02 (Must)** Cada oferta produz no máximo um `BookProcessed`. Depois de emitido, novo processamento da mesma oferta é rejeitado. Um processamento que terminou sem emitir resultado (NFR-02) pode ser repetido e, por FR-04, produz o resultado que o original produziria.
+- **FR-03 (Must)** Se a oferta for revogada antes de o processamento concluir, ele é interrompido e nenhum resultado é emitido. Revogação depois da emissão não altera o resultado emitido; seu efeito sobre as reservas é do PRD 0002 (FR-18).
 - **FR-04 (Must)** O processamento é determinístico: a mesma oferta e o mesmo livro fechado produzem exatamente o mesmo resultado.
 
 ### Consolidação e vedação
@@ -102,18 +102,18 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 ### Distribuição parcial (`M ≤ D' < B`)
 
 - **FR-11 (Must)** Reserva com opção de colocação total recebe zero, com motivo de não atendida por condicionamento.
-- **FR-12 (Must)** Reserva com opção de mínimo recebendo a totalidade recebe `q`.
+- **FR-12 (Must)** Reserva com opção de mínimo recebendo a totalidade recebe `q`, com motivo de atendida integralmente.
 - **FR-13 (Must)** Reserva com opção de mínimo recebendo o proporcional recebe a parte inteira de `q × E / B`. Zero é resultado válido.
 - **FR-14 (Must)** Em oferta que não admite distribuição parcial (`M = B`), este ramo não ocorre: `D' < B` implica `D' < M` e a oferta não se forma.
 
 ### Colocação integral (`D' = B`)
 
-- **FR-15 (Must)** Cada reserva não excluída recebe `q`.
+- **FR-15 (Must)** Cada reserva não excluída recebe `q`, com motivo de atendida integralmente; a opção de condicionamento é ignorada.
 
 ### Excesso de demanda (`D' > B`)
 
-- **FR-16 (Must)** Cada reserva do conjunto rateado recebe a parte inteira de `q × R / Dr`, onde `R` é a quantidade rateada e `Dr` a soma de `q` do conjunto rateado. No caso geral, o conjunto rateado é o das reservas não excluídas, `R = B` e `Dr = D'`.
-- **FR-17 (Must)** O resto do arredondamento, `R` menos a soma de FR-16, é distribuído uma cota por reserva do conjunto rateado, em ordem decrescente da parte fracionária de `q × R / Dr`. Empate é desfeito pelo instante do registro da reserva, mais antiga primeiro; o instante é imutável (PRD 0002, FR-14).
+- **FR-16 (Must)** Cada reserva do conjunto rateado recebe a parte inteira de `q × R / Dr`, onde `R` é a quantidade rateada e `Dr` a soma de `q` do conjunto rateado. No caso geral, o conjunto rateado é o das reservas não excluídas, `R = B` e `Dr = D'`. O motivo é atendida parcialmente por rateio, mesmo quando FR-17 leva a quantidade a `q` (FR-24).
+- **FR-17 (Must)** O resto do arredondamento, `R` menos a soma de FR-16, é distribuído uma cota por reserva do conjunto rateado, em ordem decrescente da parte fracionária de `q × R / Dr`. Empate é desfeito pela ordem de registro da reserva, mais antiga primeiro; a ordem é total e imutável, e distingue reservas aceitas no mesmo instante (PRD 0002, FR-14).
 - **FR-18 (Must)** Nenhuma reserva recebe mais que `q`; se a distribuição do resto alcançar esse limite em uma reserva, a cota vai para a próxima na ordem.
 - **FR-19 (Must)** A soma das quantidades alocadas em excesso de demanda é exatamente `B`.
 - **FR-20 (Must)** O condicionamento não se aplica em excesso de demanda; a opção declarada é ignorada.
@@ -123,7 +123,7 @@ Regras de negócio; cada uma é uma condição verificável, não um fluxo de in
 
 - **FR-22 (Must)** Toda quantidade alocada é inteira e maior ou igual a zero.
 - **FR-23 (Must)** Em qualquer ramo, a soma das quantidades alocadas é menor ou igual a `B`.
-- **FR-24 (Must)** Investimento mínimo e máximo por investidor valem para a reserva, não para a alocação: rateio e proporcional podem alocar abaixo do mínimo por investidor, inclusive zero. O motivo do resultado é a regra aplicada, não a quantidade.
+- **FR-24 (Must)** Investimento mínimo por reserva e máximo por posição do investidor valem no registro (PRD 0002, FR-03 e FR-04), não na alocação: rateio e proporcional podem alocar abaixo do mínimo por investidor, inclusive zero. O motivo do resultado é a regra aplicada, não a quantidade.
 - **FR-25 (Must)** O resultado por reserva carrega quantidade alocada e um motivo entre: atendida integralmente, atendida parcialmente por proporcional, atendida parcialmente por rateio, não atendida por condicionamento, excluída por vinculação, oferta não formada.
 - **FR-26 (Must)** O desfecho da oferta carrega `D`, `Dn`, `D'`, `E`, o ramo aplicado (inclusive colocação limitada) e a lista de resultados por reserva, e é emitido uma única vez como `BookProcessed`.
 
@@ -164,7 +164,7 @@ Texto consolidado da Resolução CVM 160 lido em 2026-09-05; artigos citados con
 
 [FATO] CVM 160, art. 75: a seção de distribuição parcial não se aplica a ofertas exclusivas para investidores profissionais. Não modelado; a categoria declarada não altera o condicionamento na v1.
 
-[FATO] CVM 160, art. 49, III: o plano de distribuição fixa as regras de rateio, com tratamento equitativo. O critério da v1 (proporcional com resto por maior fração e desempate cronológico) é uma escolha do modelo, não uma imposição da norma. Prioridade por lote mínimo, tratamento especial de reservas pequenas e outros critérios do plano são não-objetivos.
+[FATO] CVM 160, art. 49, III: o plano de distribuição fixa as regras de rateio, com tratamento equitativo. O critério da v1 (proporcional com resto por maior fração e desempate pela ordem de registro) é uma escolha do modelo, não uma imposição da norma. Prioridade por lote mínimo, tratamento especial de reservas pequenas e outros critérios do plano são não-objetivos.
 
 ## Não-objetivos
 
@@ -181,7 +181,7 @@ Texto consolidado da Resolução CVM 160 lido em 2026-09-05; artigos citados con
 ## Trade-offs Declarados
 
 - **Processamento automático no fechamento, sem revisão do operador.** *Custo:* não há como corrigir um livro com erro (reserva indevida, declaração errada) entre o fechamento e o resultado; a saída é revogar a oferta. *Razão:* revisão manual abre espaço para alocação discricionária, que está fora do escopo; uma aprovação sem poder de ajuste equivale a "Formada, depois revogar", que o PRD 0001 (FR-12) já permite, e custaria um estado a mais sem capacidade nova. Ver Ponto de Maior Fragilidade.
-- **Resto do arredondamento por maior parte fracionária, desempate cronológico.** *Custo:* reservas grandes tendem a ficar com o resto; um investidor que fraciona a posição em várias reservas aumenta suas chances, porque o resto vai uma cota por reserva; o critério não está nos documentos típicos de oferta. *Razão:* é o arredondamento que minimiza o desvio total em relação ao proporcional exato (método dos maiores restos), atende o tratamento equitativo do art. 49, III, e o desempate cronológico é determinístico e auditável.
+- **Resto do arredondamento por maior parte fracionária, desempate pela ordem de registro.** *Custo:* reservas grandes tendem a ficar com o resto; um investidor que fraciona a posição em várias reservas aumenta suas chances, porque o resto vai uma cota por reserva; o critério não está nos documentos típicos de oferta. *Razão:* é o arredondamento que minimiza o desvio total em relação ao proporcional exato (método dos maiores restos), atende o tratamento equitativo do art. 49, III, e o desempate pela ordem de registro é determinístico e auditável.
 - **Limites por investidor valem só para a reserva.** *Custo:* um investidor pode receber uma cota, ou nenhuma, quando o investimento mínimo era dez. *Razão:* é o comportamento real do rateio; impor o mínimo na alocação exigiria excluir reservas pequenas, o que é critério de rateio distinto e fora do escopo.
 - **Um único critério de rateio.** *Custo:* ofertas cujo plano de distribuição prevê outro critério não são representáveis. *Razão:* proporcional é o padrão de varejo; os demais estão na tabela de extensões.
 - **Vedação aplicada antes da formação.** *Custo:* nenhum; pela exceção do § 1º, III, a exclusão nunca leva a demanda abaixo de `B`, então não altera a formação. *Razão:* segue a ordem lógica da norma e evita excluir reservas de uma oferta que não vai se formar.
@@ -220,7 +220,10 @@ Em todos os cenários, `B = 1000` e `M = 600`, salvo indicação. Letras identif
 - **Dado** reservas A 1000 e C 1000 registradas nessa ordem, **quando** processado, **então** rateio 500 e 500, sem resto; se fossem A 1000 e C 999, A 500 (500,25), C 499 (499,75), resto 1 vai para C (maior fração) → 500 e 500.
 - **Dado** reservas A 500 e C 500 registradas nessa ordem e `B = 999`, **quando** processado, **então** A 499 (499,5), C 499 (499,5), frações iguais, resto 1 vai para A (registro mais antigo) → A 500, C 499.
 - **Dado** um investidor com duas reservas, A1 300 (opção 1) e A2 200 (opção 2), e outro com C 200 (opção 2), **quando** processado, **então** `D' = 700`, distribuição parcial, A1 recebe 0 por condicionamento, A2 recebe 200 e C recebe 200; cada reserva tem resultado próprio.
+- **Dado** reservas A 500 e C 500 aceitas no mesmo instante, com A anterior a C na ordem de registro, e `B = 999`, **quando** processado, **então** o resultado é o mesmo do cenário anterior: A 500, C 499.
 - **Dado** `M = B = 1000` e reservas somando 900, **quando** processado, **então** oferta não formada.
+- **Dado** um livro fechado sem reservas, **quando** processado, **então** `D = D' = 0 < M`, oferta não formada, desfecho não formada sem resultados por reserva.
+- **Dado** um processamento interrompido por falha antes de emitir resultado, **quando** é repetido, **então** emite o `BookProcessed` que o original produziria.
 - **Dado** um processamento em curso, **quando** a oferta é revogada, **então** nenhum `BookProcessed` é emitido.
 - **Dado** uma oferta já processada, **quando** um novo processamento é solicitado, **então** é rejeitado.
 
@@ -229,7 +232,7 @@ Em todos os cenários, `B = 1000` e `M = 600`, salvo indicação. Letras identif
 | Item | Tipo | Impacto |
 |---|---|---|
 | Offering: definição da oferta, `OfferClosed`, `OfferRevoked`; consome `BookProcessed` | Acoplamento bidirecional | Alto — sem definição não há processamento; o desfecho muda o estado da oferta |
-| ReservationBook: leitura do livro fechado com instante de registro imutável; consome `BookProcessed` | Acoplamento bidirecional | Alto — o desempate cronológico depende de FR-14 do PRD 0002 |
+| ReservationBook: leitura do livro fechado com ordem de registro total e imutável; consome `BookProcessed` | Acoplamento bidirecional | Alto — o desempate depende da ordem de registro de FR-14 do PRD 0002 |
 | Critério de resto do arredondamento | Risco de desenho | Escolha do modelo, não da norma; pode divergir do plano de distribuição de uma oferta real |
 | Processamento sem revisão | Risco operacional | Erro no livro só se corrige por revogação |
 | Leitura do livro fechado | Decisão delegada a ADR | Precisa satisfazer NFR-02 do PRD 0002; até o ADR, o contrato é semântico |
@@ -238,9 +241,10 @@ Em todos os cenários, `B = 1000` e `M = 600`, salvo indicação. Letras identif
 
 Nenhuma em aberto. Decisões tomadas em 2026-09-05 pelo autor, registradas aqui para rastreabilidade:
 
-- **Regra do resto do arredondamento:** maior parte fracionária, desempate pelo instante do registro. FR-17. O termo "sobras" foi substituído por colidir com sobras de subscrição.
+- **Regra do resto do arredondamento:** maior parte fracionária, desempate pela ordem de registro. FR-17. O termo "sobras" foi substituído por colidir com sobras de subscrição.
 - **Alocação abaixo do investimento mínimo por investidor:** permitida, inclusive zero. FR-24.
-- **Instante para desempate:** o do registro original, imutável (PRD 0002, FR-14).
+- **Desempate:** ordem de registro original, total e imutável (PRD 0002, FR-14); instantes iguais não geram indeterminação.
+- **Repetição após falha:** permitida enquanto nenhum `BookProcessed` foi emitido. FR-02.
 - **Aprovação do resultado pelo operador:** não; processamento automático. Trade-offs.
 - **Colocação limitada do art. 56, § 3º:** modelada. FR-07 e FR-21 substituem a regra anterior, em que as vinculadas participavam do rateio normalmente.
 - **Leitura do livro fechado:** delegada a ADR; este PRD depende de NFR-02 do PRD 0002.
@@ -258,4 +262,4 @@ A decisão de **processar o livro automaticamente no fechamento e emitir o resul
 - [Resolução CVM 160 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 49, 56, 65, 73, 74 e 75. Texto lido em 2026-09-05.
 - [Instrução CVM 400 (revogada)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º, origem da distinção totalidade/proporcional.
 - [PRD 0001 — Cadastro e Ciclo de Vida da Oferta](0001-offering-offer-lifecycle.md) — definição da oferta, estados e semântica das opções de condicionamento.
-- [PRD 0002 — Livro de Reservas](0002-reservation-book-reservation-lifecycle.md) — livro fechado, declarações, instante do registro e status por reserva.
+- [PRD 0002 — Livro de Reservas](0002-reservation-book-reservation-lifecycle.md) — livro fechado, declarações, ordem do registro e status por reserva.

@@ -74,7 +74,8 @@ Cada `AD-NNN` é um arquivo `docs/adr/NNNN-<slug>.md` com o mesmo número (aloca
 
 | | |
 |---|---|
-| **Status** | Proposta / Ativa / Substituída por AD-NNN / Obsoleta |
+| **Status** | Proposta / Ativa / Substituída por NNNN / Obsoleta |
+| **Substitui** | NNNN, só quando substitui outra ADR |
 | **Data** | 2026-09-05 |
 | **Participantes** | quem decidiu; quem foi consultado |
 | **Origem** | changes/0001-partial-reservation/design.md |
@@ -99,7 +100,7 @@ Cada `AD-NNN` é um arquivo `docs/adr/NNNN-<slug>.md` com o mesmo número (aloca
 
 - **Registrar:** próximo número; status `Ativa`; linha no índice com link e origem; racional resumido na entrada de ciclo correspondente.
 - **Conformar:** todo Design lê as ativas antes de projetar. Decisão ativa é restrição.
-- **Superseder:** nova ADR com o racional; a antiga muda o status para `Substituída por AD-NNN`. Nunca apague, nunca edite a antiga além do status.
+- **Superseder:** nova ADR com o racional e `| **Substitui** | NNNN |` no header (número do arquivo da antiga); a antiga muda o status para `Substituída por NNNN` (número do arquivo da nova). Os dois lados são obrigatórios: `seq.py check /docs/adr` lê só essas duas linhas do header e reporta relação não recíproca como HARD. Nunca apague, nunca edite a antiga além do status. No índice de `project-memory.md`, a coluna Status usa o ID da decisão (`Substituída por AD-NNN`).
 - **Regra nova cita a decisão:** regra de projeto que a mudança cria ou altera (CLAUDE.md, rules, linter custom) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada; as duas coisas custam. Regra existente sem porquê não é apagada por isso: é reportada como trabalho separado (seção 5).
 - Gatilho explícito: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
 

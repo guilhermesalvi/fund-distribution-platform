@@ -153,7 +153,7 @@ Tabela vazia é o estado normal. Preenchida sem justificativa concreta é o sina
 
 | | |
 |---|---|
-| **Status** | Rascunho / Aprovado |
+| **Status** | Rascunho / Aprovado / Em andamento / Concluído |
 | **Autor** | [nome] |
 | **Data** | AAAA-MM-DD |
 | **Spec** | ./spec.md |

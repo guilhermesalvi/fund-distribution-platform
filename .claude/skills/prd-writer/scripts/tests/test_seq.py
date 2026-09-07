@@ -166,6 +166,38 @@ class SupersedesTests(SeqCase):
         self.assertEqual(rc, 1, out)
 
 
+    def test_prose_substitui_with_number_is_not_a_marker(self):
+        self.write("0001-onb-x.md", header() + "\n[FATO] O cadastro digital substitui o fluxo em papel de 2019.\n")
+        self.write("0002-onb-y.md")
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("supersedes", out)
+        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out.strip(), "0003-onb-z")
+
+    def test_marker_forms_with_and_without_bold(self):
+        self.write("0001-onb-x.md", header(status="**Substituído por 0002**"))
+        self.write("0002-onb-x.md", header(extra="| Supersedes | 0001 |\n"))
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+
+
+class ExtensionCaseTests(SeqCase):
+    def test_upper_case_md_counts_as_prd(self):
+        self.write("0001-onb-x.MD")
+        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "y", "--layout", "flat")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out.strip(), "0002-onb-y")
+
+
+class NoArgsTests(SeqCase):
+    def test_no_args_prints_docstring_and_exits_2(self):
+        rc, out = self.run_seq()
+        self.assertEqual(rc, 2)
+        self.assertIn("seq.py - ", out)
+
+
 class ContractTests(SeqCase):
     def test_kind_change_rejected(self):
         rc, out = self.run_seq("check", self.root, "--kind", "change")

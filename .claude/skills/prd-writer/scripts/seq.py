@@ -39,15 +39,18 @@ WARN (legado).
 `check` (exit 1 em HARD):
   HARD  numero duplicado (global na raiz); prefixo numerico fora do formato;
         slug fora do kebab-case; arquivo e diretorio com o mesmo nome;
-        substituicao: `Substitui NNNN`/`Supersedes NNNN` apontando para
-        numero inexistente ou nao anterior ao proprio; `Substituido por
-        NNNN`/`Superseded by NNNN` apontando para numero inexistente;
-        relacao nao reciproca (um lado declara e o outro nao); ciclo.
+        substituicao: `| **Substitui** | NNNN |` (ou Supersedes/Replaces)
+        apontando para numero inexistente ou nao anterior ao proprio; Status
+        `Substituido por NNNN`/`Superseded by NNNN` apontando para numero
+        inexistente; relacao nao reciproca (um lado declara e o outro nao);
+        ciclo.
   WARN  lacuna na sequencia; candidato sem numero (legado); mesmo slug em
         dois numeros sem marcacao de substituicao; layouts flat e nested
         coexistindo. A sequencia pode comecar em 0000 ou 0001.
 Os marcadores de substituicao sao lidos nas primeiras 40 linhas do
-`.md` (plano) ou do `prd.md` (pasta).
+`.md` (plano) ou do `prd.md` (pasta), so na forma de linha da tabela do
+header; "substitui" em prosa nao conta. A extensao `.md` e aceita em
+qualquer caixa (`.MD`), como no lint_prd.py.
 
 `next` roda todas as checagens de `check` e se recusa a alocar sobre HARD.
 Imprime o proximo numero (`NNNN-<slug>` com --slug; path completo relativo
@@ -65,17 +68,22 @@ import os
 import re
 import sys
 
-NUMBERED = re.compile(r"^(\d+)-(.*?)(\.md)?$")
+NUMBERED = re.compile(r"^(\d+)-(.*?)(\.md)?$", re.IGNORECASE)
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 WIDTH = 4
 NOT_PRD = ("README.md", "assets", "archive")
 
-# marcadores de precedencia lidos nas primeiras linhas do artefato
+# Marcadores de precedencia, lidos nas primeiras linhas do artefato e so na
+# forma do header (output.md, Header): a linha de tabela `| **Substitui** |
+# NNNN |` e o Status `Substituido por NNNN`. Prosa com o verbo "substitui"
+# seguido de um numero nao e marcador (mesma leitura do lint_prd.py).
 SUPERSEDES = re.compile(
-    r"\b(supersedes|substitui|replaces)\b[^0-9\n]{0,40}(\d{4})", re.IGNORECASE)
+    r"^\|\s*\*{0,2}\s*(supersedes|substitui|replaces)\s*\*{0,2}\s*\|\s*\*{0,2}\s*(\d{4})\b",
+    re.IGNORECASE | re.MULTILINE)
 SUPERSEDED_BY = re.compile(
-    r"\b(superseded[- ]by|substitu[ií]d[oa] por|replaced by)\b[^0-9\n]{0,40}(\d{4})",
-    re.IGNORECASE)
+    r"^\|\s*\*{0,2}\s*status\s*\*{0,2}\s*\|\s*\*{0,2}\s*"
+    r"(superseded[- ]by|substitu[ií]d[oa] por|replaced by)\s+(\d{4})\b",
+    re.IGNORECASE | re.MULTILINE)
 HEADER_SCAN_LINES = 40
 
 
@@ -147,13 +155,14 @@ def collect(root, rep):
                 continue
             path = os.path.join(parent, name)
             is_dir = os.path.isdir(path)
-            if not is_dir and not name.endswith(".md"):
+            is_md = name.lower().endswith(".md")
+            if not is_dir and not is_md:
                 continue
             if parent == root and is_dir and not NUMBERED.match(name):
                 continue  # pasta de dominio: ja e um parent em candidate_dirs
             m = NUMBERED.match(name)
             if not m:
-                stem = name[:-3] if name.endswith(".md") else name
+                stem = name[:-3] if is_md else name
                 entries.append(Entry(path, None, stem, is_dir))
                 continue
             digits, slug, _ = m.groups()
@@ -241,7 +250,7 @@ def check_supersedes(entries, by_num, rep):
         doc = e.doc
         if not doc:
             continue
-        head = "".join(read_head(doc))
+        head = "\n".join(l.rstrip("\n") for l in read_head(doc))
         supersedes.setdefault(e.number, set())
         superseded_by.setdefault(e.number, set())
         for _, target in SUPERSEDES.findall(head):
@@ -420,6 +429,10 @@ def cmd_next(args):
 
 
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if not argv:
+        print(__doc__, file=sys.stderr)
+        return 2
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)

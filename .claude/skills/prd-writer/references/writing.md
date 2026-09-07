@@ -69,7 +69,7 @@ Aplicável quando o time opera em DDD ou tem vocabulário de domínio explícito
 - Definição: `- **OFF-01 (Must)** condição.` MoSCoW (Must, Should, Could, Won't) dentro dos parênteses. NFR sem MoSCoW.
 - Toda citação resolve para uma definição em algum PRD da pasta; ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio.
 - Rótulo de transição ou de ramo em diagrama cita o ID, não reescreve a condição (Diagramas).
-- PRD com spec derivada (`/docs/specs`, skill `spec-driven`): cada requisito EARS da spec cita o ID deste PRD ao fim da linha. Antes de alterar ou remover um FR, procure o ID em `/docs/specs` e liste as specs afetadas ao apresentar; o linter da spec confere que o ID existe, não que o texto continua o mesmo.
+- PRD com spec derivada (`/docs/specs`, skill `spec-driven`): cada requisito EARS da spec cita o ID deste PRD ao fim da linha. Antes de alterar ou remover um FR, procure o ID em `/docs/specs` e liste as specs afetadas ao apresentar; o linter da spec confere que cada ID citado existe e, pelo `prd-rev`, que o arquivo do PRD não mudou desde a spec (qualquer alteração é HARD), mas não diz qual FR mudou: liste as specs cujo `prd-rev` aponta para o PRD tocado e re-derive.
 
 ## PRD 0000
 

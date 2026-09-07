@@ -4,9 +4,9 @@ Passo 6 do workflow. Revisão é parte da entrega: nenhum PRD sai sem ela. São 
 
 ## Passada mecânica
 
-Rode os scripts da tabela do SKILL.md depois de gravar o arquivo. Eles checam o que a auto-revisão da LLM faz mal: conformidade que sofre drift ao longo do documento (header, tags, seções do tier, IDs, fatos duplicados, placeholders, léxico). O que cada um checa está no docstring do script (`python scripts/<nome>.py` sem argumentos).
+Rode os scripts da tabela do SKILL.md depois de gravar o arquivo. Eles checam o que a auto-revisão da LLM faz mal: conformidade que sofre drift ao longo do documento (header, tags, seções do tier, IDs, fatos duplicados, placeholders, léxico). O que cada um checa está no docstring do script, impresso quando o script roda sem argumentos (`python scripts/<nome>.py`).
 
-- `HARD`: violação mecânica. Corrija e rode de novo; nunca apresente PRD com HARD pendente.
+- `HARD`: violação mecânica. Corrija e rode de novo; nunca apresente PRD com HARD pendente. `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid indisponível): não é violação do documento, mas também nunca é sucesso; `lint_mermaid.py` sozinho sai com exit 3 nesse caso.
 - `WARN`: heurística com risco de falso-positivo. Julgue, não obedeça cego. WARN recorrente em várias seções do tier é sinal de tier superdimensionado; reveja a declaração antes de ignorar uma por uma.
 - Todo bloco ```` ```mermaid ```` passa por parse (`lint_mermaid.py`, chamado pelo `lint_prd.py`). Bloco que não passou, fence sem fechamento ou parser indisponível é HARD: diagrama não validado é diagrama não entregue, porque o leitor só descobre o erro ao renderizar. Parser indisponível não se resolve sozinho: o linter nunca instala nada; `python scripts/lint_mermaid.py --setup` instala com autorização do usuário, e sem ela o PRD é apresentado como falha de validação (SKILL.md, Princípios). O parse garante que o diagrama renderiza, não que a estrutura do PRD está conforme; isso é o restante do `lint_prd.py`.
 - Linter verde significa esqueleto conforme, não PRD bom. As passadas seguintes cobrem o que nenhum check determinístico alcança e não são opcionais.

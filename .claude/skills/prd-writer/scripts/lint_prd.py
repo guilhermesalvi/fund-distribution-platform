@@ -39,8 +39,9 @@ Checagens por arquivo:
   `- **X-nn (Must)**` / `- **X-NFR-nn**` com o prefixo declarado;
   `FR-nn`/`NFR-nn` sem prefixo; "decisoes tomadas" em Perguntas em Aberto;
   link Markdown `[texto](destino)` para arquivo local que nao resolve (destino
-  relativo a pasta do PRD, ancora removida; URL com esquema e ancora pura
-  ficam fora); parse de todo bloco ```mermaid (lint_mermaid.py).
+  relativo so a pasta do PRD, `/docs/...` a partir da raiz do repositorio,
+  ancora removida; URL com esquema e ancora pura ficam fora); parse de todo
+  bloco ```mermaid (lint_mermaid.py).
   Linhas dentro de bloco de codigo (``` ou ~~~, 3+ caracteres; fecha com o
   mesmo caractere e comprimento >= abertura) sao ignoradas para headings,
   definicoes, citacoes, tags e placeholders. Blocos ```mermaid continuam
@@ -324,29 +325,48 @@ def is_prd_path(path):
     return bool(NUMBERED_MD.match(base))
 
 
-MD_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)")  # destino em <...> (com espacos) ou sem espacos
 URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
 CODE_SPAN = re.compile(r"`[^`]*`")
 
 
+def repo_root_for(path):
+    """Primeiro ancestral do arquivo que contem `docs/`, ou None."""
+    cur = os.path.dirname(os.path.abspath(path))
+    while True:
+        if os.path.isdir(os.path.join(cur, "docs")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return None
+        cur = parent
+
+
 def local_link_findings(doc):
     """(linha_1based, destino, path_procurado) para cada link Markdown local
-    que nao resolve a partir da pasta do documento. URL e ancora pura ficam
-    fora; bloco de codigo e code span tambem."""
+    que nao resolve: destino relativo so a partir da pasta do documento (como
+    o GitHub renderiza), `/docs/...` a partir da raiz do repositorio. URL e
+    ancora pura ficam fora; bloco de codigo e code span tambem."""
     base = os.path.dirname(os.path.abspath(doc.path))
     out = []
     for i, raw in enumerate(doc.lines):
         if not doc.visible(i):
             continue
         for m in MD_LINK.finditer(CODE_SPAN.sub("", raw)):
-            target = m.group(1)
-            if URL_SCHEME.match(target) or target.startswith("#"):
+            target = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
+            if not target or URL_SCHEME.match(target) or target.startswith("#"):
                 continue
             rel = target.split("#", 1)[0]
             if not rel:
                 continue
-            expected = os.path.normpath(os.path.join(base, rel))
-            if not os.path.exists(expected):
+            if rel.startswith("/"):
+                root = repo_root_for(doc.path)
+                expected = os.path.normpath(os.path.join(root, rel.lstrip("/"))) if root else f"<raiz>{rel}"
+                ok = root is not None and os.path.exists(expected)
+            else:
+                expected = os.path.normpath(os.path.join(base, rel))
+                ok = os.path.exists(expected)
+            if not ok:
                 out.append((i + 1, target, expected))
     return out
 

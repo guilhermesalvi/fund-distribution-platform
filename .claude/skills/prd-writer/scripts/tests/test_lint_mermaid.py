@@ -116,6 +116,40 @@ class ParserUnavailableTests(unittest.TestCase):
                 contextlib.redirect_stdout(out):
             self.assertEqual(lint_mermaid.main(["lint_mermaid.py", self.path]), 0)
 
+    def test_unavailable_findings_carry_incompleto_prefix(self):
+        with mock.patch.object(lint_mermaid, "PARSER_MARKER", self.marker):
+            findings, _ = lint_mermaid.check_files([self.path])
+        for _, _, msg in findings:
+            self.assertTrue(msg.startswith("INCOMPLETO: "), msg)
+
+    def test_parser_abort_is_exit_3_not_diagram_hard(self):
+        """node e node_modules existem, mas o processo do parser aborta:
+        validacao incompleta (exit 3), nao diagrama invalido (exit 1)."""
+        aborted = mock.Mock(returncode=1, stdout="", stderr="Error: Cannot find module 'jsdom'")
+        out = io.StringIO()
+        with mock.patch.object(lint_mermaid, "ensure_parser", return_value=None), \
+                mock.patch.object(lint_mermaid.subprocess, "run", return_value=aborted), \
+                contextlib.redirect_stdout(out):
+            code = lint_mermaid.main(["lint_mermaid.py", self.path])
+        self.assertEqual(code, 3, out.getvalue())
+        self.assertIn("INCOMPLETO: bloco mermaid 1 NAO validado", out.getvalue())
+        self.assertIn("--setup", out.getvalue())
+
+    def test_missing_path_is_usage(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code = lint_mermaid.main(["lint_mermaid.py", os.path.join(self.tmp.name, "nope.md")])
+        self.assertEqual(code, 2)
+        self.assertIn("path inexistente", err.getvalue())
+        self.assertNotIn("Traceback", err.getvalue())
+
+    def test_unknown_flag_is_usage(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code = lint_mermaid.main(["lint_mermaid.py", "--bogus"])
+        self.assertEqual(code, 2)
+        self.assertIn("opcao desconhecida", err.getvalue())
+
     def test_unclosed_fence_is_hard_without_parser(self):
         with open(self.path, "w", encoding="utf-8") as f:
             f.write("```mermaid\nflowchart TD\n A-->B\n")

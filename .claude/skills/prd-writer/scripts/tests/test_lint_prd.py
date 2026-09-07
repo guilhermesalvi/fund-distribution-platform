@@ -499,12 +499,92 @@ class LocalLinkTests(LintCase):
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
 
+    def test_root_relative_link_resolves_from_repo_root(self):
+        self.write("0001-onb-x.md", prd(body_extra="\nVeja [spec](/docs/prd/0002-oth-y.md) e [x](/docs/nope.md).\n"))
+        self.write("0002-oth-y.md", prd(prefix="OTH"))
+        self.write("0000-overview.md", overview(("ONB", "OTH")))
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1)
+        self.assert_hard(out, "link '/docs/nope.md' nao resolve")
+        self.assertNotIn("0002-oth-y.md' nao resolve", out)
+
+    def test_angle_bracket_link_with_space_is_checked(self):
+        self.write("notas/ata reuniao.md", "# Ata\n")
+        self.write("0001-onb-x.md", prd(body_extra="\nVeja [ata](<notas/ata reuniao.md>) e [x](<notas/nao existe.md>).\n"))
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1)
+        self.assert_hard(out, "link 'notas/nao existe.md' nao resolve")
+        self.assertNotIn("ata reuniao.md' nao resolve", out)
+
     def test_url_anchor_code_span_and_fence_are_ignored(self):
         body = ("\nFontes: [CVM](https://example.org/a.pdf), [sec](#contexto), `[x](nao/existe.md)`\n\n"
                 "```markdown\n[y](nao/existe/tambem.md)\n```\n")
         self.write("0001-onb-x.md", prd(body_extra=body))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
+
+
+class DocumentedHardRulesTests(LintCase):
+    """Uma prova positiva por regra HARD que a documentacao apresenta como gate
+    (SKILL.md, Scripts; writing.md, Tier / IDs / Convencao de confianca;
+    review.md, Passada mecanica): uma edicao de regex no linter nao pode
+    desligar a regra com a suite verde."""
+
+    def hard_for(self, text, needle, extra_files=()):
+        self.write("0001-onb-x.md", text)
+        for rel, content in extra_files:
+            self.write(rel, content)
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, needle)
+
+    def test_missing_tier_comment(self):
+        self.hard_for(prd().replace("<!-- prd-tier: media -->\n", ""), "comentario de tier ausente")
+
+    def test_invalid_tier_value(self):
+        self.hard_for(prd(tier="gigante"), "tier 'gigante' invalido")
+
+    def test_header_not_a_table(self):
+        text = prd().replace("| | |\n|---|---|\n| **Status** | Rascunho |\n| **Autor** | A. Souza |\n| **Data** | 2026-09-05 |\n",
+                             "**Status:** Rascunho  \n**Autor:** A. Souza  \n**Data:** 2026-09-05\n")
+        self.hard_for(text, "header nao esta em tabela markdown")
+
+    def test_missing_weakest_point_section(self):
+        self.hard_for(prd().replace("## Ponto de Maior Fragilidade\n\ndecisao.\n", ""),
+                      "secao 'Ponto de Maior Fragilidade' ausente")
+
+    def test_blocking_section_missing_for_tier(self):
+        self.hard_for(prd().replace("## Contexto e Problema\n", "## Cenario\n"), "secao obrigatoria ausente")
+
+    def test_explicit_high_confidence_is_noise(self):
+        self.hard_for(prd(header_extra="| **Confiança** | Alta |"), "Confianca 'Alta/High' explicita e ruido")
+
+    def test_critical_premise_without_if_false_clause(self):
+        self.hard_for(prd(body_extra="\n[PREMISSA-CRÍTICA] o parceiro entrega o arquivo diariamente.\n"),
+                      "uma [PREMISSA-CRÍTICA] nao preserva a clausula 'se falsa")
+
+    def test_misspelled_confidence_tag(self):
+        self.hard_for(prd(body_extra="\n[PREMISA] algo.\n"), "token entre colchetes nao reconhecido: '[PREMISA]'")
+
+    def test_placeholder_in_body(self):
+        self.hard_for(prd(body_extra="\nLimite: TBD.\n"), "placeholder nao preenchido no corpo")
+
+    def test_bare_fr_id_without_context_prefix(self):
+        self.hard_for(prd(body_extra="\nVeja FR-03.\n"), "ID sem prefixo de contexto: 'FR-03'")
+
+    def test_citation_without_definition(self):
+        self.hard_for(prd(body_extra="\nDepende de ONB-77.\n"), "citacao de ONB-77 nao resolve para nenhuma definicao")
+
+    def test_duplicated_id_across_prds(self):
+        self.hard_for(prd(), "ID ONB-01 definido mais de uma vez",
+                      extra_files=(("0002-onb-y.md", prd(title="Feature Y")),))
+
+    def test_identical_fact_in_two_prds(self):
+        a = prd().replace("[FATO] problema do Feature X (fato", "[FATO] o mercado exige liquidacao em D+2 (fato")
+        b = prd(prefix="OTH", title="Feature Y")
+        b = b.replace(b.split("[FATO] ")[1].split("\n")[0], "o mercado exige liquidacao em D+2 (fato" + a.split("(fato")[1].split("\n")[0])
+        self.write("0000-overview.md", overview(("ONB", "OTH")))
+        self.hard_for(a, "[FATO] identico", extra_files=(("0002-oth-y.md", b),))
 
 
 if __name__ == "__main__":

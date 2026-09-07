@@ -16,9 +16,12 @@ Setup e validacao sao separados:
   - `--setup` instala as dependencias do parser (`npm ci` em mermaid-parser/),
     imprimindo o comando antes de executar. E o unico modo que acessa a rede.
   - A validacao (qualquer outra chamada) NUNCA instala nem acessa a rede. Sem
-    `node` ou sem `node_modules`, cada bloco vira HARD "parser indisponivel" e
-    o exit code e 3, para o chamador distinguir "parser indisponivel" de
-    "diagrama invalido".
+    `node`, sem `node_modules`, ou com o parser abortando (instalacao
+    incompleta, Node incompativel), cada bloco vira HARD com prefixo
+    `INCOMPLETO:` ("NAO validado - parser indisponivel") e o exit code e 3,
+    para o chamador distinguir "parser indisponivel" de "diagrama invalido".
+    O prefixo INCOMPLETO marca validacao que nao pode ser feita, nunca
+    sucesso (mesma semantica dos linters da skill spec-driven).
 
 Extracao de fences (subconjunto do CommonMark, com uma excecao deliberada):
 
@@ -47,7 +50,8 @@ Offering`, que precisa FALHAR (`off` e palavra reservada).
 
 Saida: linhas `HARD  <arquivo>  L<linha>: bloco mermaid N: <mensagem>`.
 Exit 0 se todos os blocos passaram, 1 se houver HARD de diagrama, 2 em erro de
-uso, 3 se o parser estiver indisponivel (com HARD por bloco).
+uso (opcao desconhecida, path inexistente), 3 se o parser estiver
+indisponivel (com HARD INCOMPLETO por bloco).
 
 Importavel: `check_files(paths) -> (findings, blocks_checked)` onde findings e
 uma lista de (path, line, msg). lint_prd.py usa essa funcao; bloco nao parseado
@@ -72,6 +76,9 @@ FENCE_ANY = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 MERMAID_INFO = re.compile(r"^\s*mermaid\b", re.IGNORECASE)
 
 EXIT_OK, EXIT_HARD, EXIT_USAGE, EXIT_PARSER_UNAVAILABLE = 0, 1, 2, 3
+# Prefixo de finding que marca validacao incompleta (parser indisponivel),
+# distinta de diagrama invalido. Quem consome findings (lint_prd.py) o exibe.
+INCOMPLETE_PREFIX = "INCOMPLETO: "
 
 
 class ParserUnavailable(Exception):
@@ -216,7 +223,7 @@ def check_files(paths):
     try:
         results = parse_blocks(flat)
     except ParserUnavailable as e:
-        findings.extend((p, line, f"bloco mermaid {idx} NAO validado - {e}")
+        findings.extend((p, line, f"{INCOMPLETE_PREFIX}bloco mermaid {idx} NAO validado - {e}")
                         for p, blocks in per_file.items() for idx, line, _ in blocks
                         if (p, line) not in unclosed)
         return findings, n_blocks
@@ -336,6 +343,13 @@ def main(argv):
         return self_test()
     if argv[1] == "--setup":
         return setup_parser()
+    for a in argv[1:]:
+        if a.startswith("-"):
+            print(f"lint_mermaid: opcao desconhecida '{a}' (aceitas: --self-test, --setup)", file=sys.stderr)
+            return EXIT_USAGE
+        if not os.path.exists(a):
+            print(f"lint_mermaid: path inexistente '{a}'", file=sys.stderr)
+            return EXIT_USAGE
     paths = collect_md(argv[1:])
     if not paths:
         print("lint_mermaid: nenhum .md encontrado", file=sys.stderr)
@@ -344,7 +358,7 @@ def main(argv):
     for p, line, msg in findings:
         print(f"HARD  {p}  L{line}: {msg}")
     print("-" * 60)
-    if n and not parser_available():
+    if any(msg.startswith(INCOMPLETE_PREFIX) for _, _, msg in findings):
         print(f"{len(findings)} HARD em {n} bloco(s) mermaid. {SETUP_HINT}. "
               "Diagrama nao validado e diagrama nao entregue.")
         return EXIT_PARSER_UNAVAILABLE

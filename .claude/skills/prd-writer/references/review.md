@@ -1,6 +1,6 @@
 # Revisão
 
-Passo 6 do workflow. Revisão é parte da entrega: nenhum PRD sai sem ela. Uma passada mecânica, uma passada "uma regra, um lugar" e três passadas de julgamento. Falha em qualquer uma → ajuste antes de apresentar.
+Passo 6 do workflow. Revisão é parte da entrega: nenhum PRD sai sem ela. São uma passada mecânica, uma passada "uma regra, um lugar" e três passadas de julgamento. Falha em qualquer uma exige ajuste antes de apresentar.
 
 ## Passada mecânica
 
@@ -23,11 +23,11 @@ Aplica writing.md, Uma regra, um lugar, depois do linter. Para cada FR, em ordem
 
 ## Passadas de julgamento
 
-**Tier 1, rápida.** Tier declarado coerente com o critério (writing.md, Tier); toda inferência marcada (não a grafia da tag, que é do linter, mas se uma frase sem tag deveria ser `[PREMISSA]` ou `[LACUNA]`); um conceito por parágrafo; idioma conforme a precedência (SKILL.md, Princípios). Drift de geração é real: itens que exigem disciplina ao longo do documento inteiro degradam.
+**Tier 1, rápida.** Confira quatro itens: o tier declarado é coerente com o critério (writing.md, Tier); toda inferência está marcada (não a grafia da tag, que é do linter, mas se uma frase sem tag deveria ser `[PREMISSA]` ou `[LACUNA]`); há um conceito por parágrafo; o idioma segue a precedência (SKILL.md, Princípios). Drift de geração é real: itens que exigem disciplina ao longo do documento inteiro degradam.
 
 **Tier 2, detalhada.** Critérios de qualidade abaixo.
 
-**Tier 3, adversarial.** Ataque o próprio rascunho e produza o Ponto de Maior Fragilidade (writing.md). Não é busca de regra violada (Tier 1 e 2); é a pergunta "se este PRD falhar, qual decisão terá sido a causa?". A LLM se autoavalia com generosidade: resista.
+**Tier 3, adversarial.** Ataque o próprio rascunho e produza o Ponto de Maior Fragilidade (writing.md). Não é busca de regra violada, que é o trabalho dos Tiers 1 e 2; é a pergunta "se este PRD falhar, qual decisão terá sido a causa?". A LLM se autoavalia com generosidade: resista.
 
 ## Critérios de qualidade
 

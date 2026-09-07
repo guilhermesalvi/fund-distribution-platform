@@ -8,12 +8,12 @@ Prefixo quando a fonte importa:
 
 - `[FATO]`: confirmado pelo usuário ou por fonte autoritativa (regulação oficial, política formalizada, decisão registrada).
 - `[PREMISSA]`: inferido pela skill; precisa de validação.
-- `[PREMISSA-CRÍTICA]`: load-bearing; se falsa, invalida a abordagem inteira do PRD, não só um requisito. Máximo 1–3 por documento, porque se tudo é crítico nada é. Declarada uma vez, na seção a que pertence, com a cláusula "se falsa, …" e o plano de validação na mesma linha; Perguntas em Aberto a lista como blocker por referência (Seções), sem repetir o texto, para que o leitor a encontre ao fim sem que ela exista em dois lugares.
+- `[PREMISSA-CRÍTICA]`: load-bearing; se falsa, invalida a abordagem inteira do PRD, não só um requisito. Máximo 1–3 por documento, porque se tudo é crítico nada é. Declarada uma vez, na seção a que pertence, com a cláusula "se falsa, …" e o plano de validação na mesma linha. Perguntas em Aberto a lista como blocker por referência (Seções), sem repetir o texto: o leitor a encontra ao fim sem que ela exista em dois lugares.
 - `[LACUNA]`: informação insuficiente para preencher com substância.
 
 Nunca preencha com especulação sem tag: lacuna é informação, exponha.
 
-Campo Confiança do header: **Alta** sem `[LACUNA]` material nem `[PREMISSA-CRÍTICA]` pendente, omitida porque declarar Alta é ruído; **Média** com lacunas ou premissas que não bloqueiam e toda `[PREMISSA-CRÍTICA]` com plano de validação; **Baixa** com `[PREMISSA-CRÍTICA]` sem plano ou múltiplas `[LACUNA]` bloqueando escopo, métrica ou viabilidade.
+O campo Confiança do header tem três valores. **Alta**: não há `[LACUNA]` material nem `[PREMISSA-CRÍTICA]` pendente; o campo é omitido, porque declarar Alta é ruído. **Média**: há lacunas ou premissas que não bloqueiam, e toda `[PREMISSA-CRÍTICA]` tem plano de validação. **Baixa**: há `[PREMISSA-CRÍTICA]` sem plano, ou múltiplas `[LACUNA]` bloqueando escopo, métrica ou viabilidade.
 
 Confiança e Status andam juntos: Rascunho admite `[LACUNA]` material e Confiança Baixa; Em Revisão e Aprovado exigem Média ou Alta (output.md, Header). Não converta `[LACUNA]` em `[PREMISSA]` para subir a Confiança: rascunho que diz o que falta é entregável; rascunho que esconde não é.
 
@@ -36,9 +36,9 @@ Tamanho: tier complexa fica em até 3500–4000 palavras. Linhas não são a mé
 
 Aplicável quando o time opera em DDD ou tem vocabulário de domínio explícito. Fora disso, capability vs feature e problem space vs solution space continuam universais; Bounded Context, Ubiquitous Language e Domain Events usam o rótulo do time (módulo, área, integração).
 
-**Problem space vs solution space.** O PRD diz o que precisa acontecer no negócio, não como o software é construído. Descrição de tecnologia, arquitetura ou implementação → reescreva um nível acima.
+**Problem space vs solution space.** O PRD diz o que precisa acontecer no negócio, não como o software é construído. Quando aparece descrição de tecnologia, arquitetura ou implementação, reescreva um nível acima.
 
-**Capability test.** Aplique à Solução Proposta, à frase de solução do Resumo Executivo e a cada FR. Não nomear: UI (telas, wizards, modais, dashboards), serviços e módulos, mecanismos técnicos (banco, fila, cache, event bus, webhook), padrão específico de UX, stack ou vendor. Se nomeado, reescreva como mudança de comportamento observável, não mecanismo. Exceção: quando o ponto do PRD é a mudança de UX ou de interface pública, essa categoria é a capability e pode ser nomeada; componente, protocolo e schema continuam downstream.
+**Capability test.** Aplique à Solução Proposta, à frase de solução do Resumo Executivo e a cada FR. O texto não nomeia UI (telas, wizards, modais, dashboards), serviços e módulos, mecanismos técnicos (banco, fila, cache, event bus, webhook), padrão específico de UX, stack ou vendor. Se algum foi nomeado, reescreva como mudança de comportamento observável, não mecanismo. Exceção: quando o ponto do PRD é a mudança de UX ou de interface pública, essa categoria é a capability e pode ser nomeada; componente, protocolo e schema continuam downstream.
 
 | Mecanismo | Capability |
 |---|---|
@@ -47,13 +47,13 @@ Aplicável quando o time opera em DDD ou tem vocabulário de domínio explícito
 | Sistema exibe modal de confirmação antes da exclusão | Exclusão de registro ativo exige confirmação explícita do usuário |
 | Sistema publica na fila de auditoria a cada mudança de estado | Toda mudança de estado é auditável, com quem mudou e quando |
 
-**Ubiquitous Language.** Termos dos especialistas de domínio, não jargão genérico; o significado importa mais que a palavra, e o idioma não importa. Nomes concorrentes para o mesmo conceito dentro de um contexto → `[LACUNA]`, alinhe antes de redigir; entre especialistas de áreas diferentes é sinal de fronteira, não de lacuna (Bounded Context).
+**Ubiquitous Language.** Termos dos especialistas de domínio, não jargão genérico; o significado importa mais que a palavra, e o idioma não importa. Nomes concorrentes para o mesmo conceito dentro de um contexto viram `[LACUNA]`: alinhe antes de redigir. Entre especialistas de áreas diferentes, o mesmo conflito é sinal de fronteira, não de lacuna (Bounded Context).
 
 **Subdomínio.** Core (diferencial competitivo): rigor máximo, critérios precisos, não-objetivos explícitos, questione se a solução preserva o diferencial. Supporting: PRD padrão. Generic: questione comprar, contratar ou reusar; pode virar não-objetivo.
 
-**Bounded Context como âncora de escopo.** A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes (paciente, cliente e vida para a mesma pessoa), são indício de contextos distintos, não prova; a evidência vem da passada de termos da ontologia (intake.md) e a fronteira se confirma quando as regras e os motivos de mudança também divergem. A feature tem um contexto originário, nomeado no header. Vários contextos tocados → o originário é dono da decisão; os outros entram em Dependências e Riscos com o impacto na autonomia declarado. Escopo cruzando contextos sem origem clara é risco: force a discussão antes de redigir. Mais de um contexto com PRD próprio → PRD 0000.
+**Bounded Context como âncora de escopo.** A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes (paciente, cliente e vida para a mesma pessoa), são indício de contextos distintos, não prova. A evidência vem da passada de termos da ontologia (intake.md), e a fronteira se confirma quando as regras e os motivos de mudança também divergem. A feature tem um contexto originário, nomeado no header. Quando vários contextos são tocados, o originário é dono da decisão e os outros entram em Dependências e Riscos com o impacto na autonomia declarado. Escopo cruzando contextos sem origem clara é risco: force a discussão antes de redigir. Mais de um contexto com PRD próprio exige o PRD 0000.
 
-**Domain Events.** Evento é o reconhecimento de uma operação que mudou o estado e interessa a outro contexto; é contrato de domínio, não detalhe de implementação, e mal documentado é acoplamento implícito. Evento, transição da máquina de estados e FR de transição saem da mesma pergunta, feita por atributo: em que cenário muda, quem dispara, quem precisa saber (intake.md, Ontologia, passada 7). O catálogo vive no PRD 0000; cada PRD declara só o que produz e consome (tabela Seções).
+**Domain Events.** Evento é o reconhecimento de uma operação que mudou o estado e interessa a outro contexto. É contrato de domínio, não detalhe de implementação; mal documentado, vira acoplamento implícito. Evento, transição da máquina de estados e FR de transição saem da mesma pergunta, feita por atributo: em que cenário muda, quem dispara, quem precisa saber (intake.md, Ontologia, passada 7). O catálogo vive no PRD 0000; cada PRD declara só o que produz e consome (tabela Seções).
 
 ## Uma regra, um lugar
 
@@ -88,13 +88,13 @@ Cada PRD referencia o 0000 na linha de prefixo do header em vez de repetir prop�
 
 ## Diagramas
 
-Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2`, uma tabela estado, identificador, significado. A mesma coluna Identificador vale para toda enumeração que o código vai carregar (motivo de resultado, categoria, tipo de declaração): a tabela fica junto do FR que a define ou no Glossário, porque a spec usa esse identificador nos requisitos EARS (skill `spec-driven`, specify.md, Origem e modo) e nome inventado na spec é decisão de linguagem tomada fora do PRD.
+Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2` vai uma tabela com estado, identificador e significado. A mesma coluna Identificador vale para toda enumeração que o código vai carregar (motivo de resultado, categoria, tipo de declaração). Essa tabela fica junto do FR que a define ou no Glossário, porque a spec usa esse identificador nos requisitos EARS (skill `spec-driven`, specify.md, Origem e modo), e nome inventado na spec é decisão de linguagem tomada fora do PRD.
 
 Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off`, `end`, `on` e derivadas falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra); use o nome completo. Todo bloco passa por parse antes de apresentar (review.md, Passada mecânica).
 
 ## Seções
 
-Bloqueantes em qualquer tier de profundidade (HARD no linter): Contexto e Problema, Usuário-alvo, Solução Proposta, Ponto de Maior Fragilidade; o PRD 0000 (`overview`) tem as seções da tabela PRD 0000 e não tem Ponto de Maior Fragilidade. As demais são esperadas a partir do tier indicado (WARN se ausentes) ou condicionais; omissão deliberada é legítima.
+Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linter): Contexto e Problema, Usuário-alvo, Solução Proposta e Ponto de Maior Fragilidade. O PRD 0000 (`overview`) tem as seções da tabela PRD 0000 e não tem Ponto de Maior Fragilidade. As demais são esperadas a partir do tier indicado (WARN se ausentes) ou condicionais; omissão deliberada é legítima.
 
 | Seção | Entra quando | Forma |
 |---|---|---|
@@ -122,7 +122,7 @@ Bloqueantes em qualquer tier de profundidade (HARD no linter): Contexto e Proble
 
 Todo PRD termina nomeando uma decisão: a decisão de julgamento mais contestável, a que um revisor cético e competente atacaria primeiro.
 
-Distinta das tags de confiança: `[PREMISSA-CRÍTICA]` é crença que pode ser falsa (risco factual) e é a única coisa chamada load-bearing; `[LACUNA]` é informação que falta (risco de cobertura); o ponto de maior fragilidade é decisão especificada, baseada em `[FATO]`, sem lacuna, e ainda assim possivelmente errada (risco de julgamento): corte de escopo, threshold, priorização de trade-off, escolha de usuário-alvo.
+É distinta das tags de confiança. `[PREMISSA-CRÍTICA]` é crença que pode ser falsa (risco factual) e é a única coisa chamada load-bearing. `[LACUNA]` é informação que falta (risco de cobertura). O ponto de maior fragilidade é decisão especificada, baseada em `[FATO]`, sem lacuna, e ainda assim possivelmente errada (risco de julgamento): corte de escopo, threshold, priorização de trade-off, escolha de usuário-alvo.
 
 - Exatamente uma, última seção de conteúdo, depois de Perguntas em Aberto; só Referências vem depois.
 - Forma: a decisão; o vetor de ataque concreto de um cético; o convite ao autor para desafiá-la antes de aprovar.
@@ -156,7 +156,7 @@ Tom direto, preciso, orientado a decisão; sem linguagem genérica ("melhorar ex
 - Voz declarativa e ativa: "o sistema bloqueia a ativação", não "seria bloqueado".
 - Sem hedging ("provavelmente", "talvez", "poderia", "na verdade", "muito").
 - Sem meta-narração ("este PRD descreve", "vamos discutir", "é importante notar"): o título já diz o que é.
-- Sem qualificador redundante nem filler: "de modo a" → "para"; "devido ao fato de que" → "porque"; "com zero X necessário" → "sem X".
+- Sem qualificador redundante nem filler: "de modo a" vira "para"; "devido ao fato de que" vira "porque"; "com zero X necessário" vira "sem X".
 - Um conceito por parágrafo; dois parágrafos adjacentes sobre o mesmo ponto se fundem.
 - Preserve o contexto de decisão: Razão do trade-off, racional do guardrail e "se falsa" da `[PREMISSA-CRÍTICA]` carregam sinal.
 - Hierarquia: `#` título, `##` seções, `###` subseções; lista para requisitos e critérios; tabela para comparação, dependência, cenário numérico.

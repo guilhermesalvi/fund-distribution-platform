@@ -4,13 +4,13 @@
 
 Leia até o fim antes de agir.
 
-**Pule** conforme SKILL.md, Tiers; as tasks ficam implícitas nos passos inline do Execute, e a válvula de segurança reabre esta fase se a lista crescer.
+**Pule** conforme SKILL.md, Tiers. As tasks ficam implícitas nos passos inline do Execute, e a válvula de segurança reabre esta fase se a lista crescer.
 
 ---
 
 ## 1. Ler o design e a spec
 
-Tasks derivam do `design.md` (estrutura, arquivos, interfaces) e apontam para a `spec.md` (IDs). Sem design (tier Medium sem risco), derive da spec e da base e registre a estrutura mínima em `## Estrutura` no próprio `tasks.md`: arquivos, componentes e o que reusa, em até dez linhas (modes.md); o Verify compara o eixo 2 com essa seção.
+Tasks derivam do `design.md` (estrutura, arquivos, interfaces) e apontam para a `spec.md` (IDs). Sem design (tier Medium sem risco), derive da spec e da base e registre a estrutura mínima em `## Estrutura` no próprio `tasks.md`: arquivos, componentes e o que reusa, em até dez linhas (modes.md). O Verify compara o eixo 2 com essa seção.
 
 ---
 
@@ -18,13 +18,13 @@ Tasks derivam do `design.md` (estrutura, arquivos, interfaces) e apontam para a 
 
 Antes de qualquer task, descubra como este repositório testa. Não invente comandos nem presuma ecossistema.
 
-**Passo 0 — guias do projeto.** Procure padrões documentados: `AGENTS.md`, `CLAUDE.md` ou equivalente; `CONTRIBUTING.md`; `docs/` sobre testes; thresholds de cobertura em config de runner ou CI. Guia encontrado → a expectativa de cobertura obedece a ele; cite os arquivos. Nenhum → aplique o **default forte** abaixo.
+**Passo 0 — guias do projeto.** Procure padrões documentados: `AGENTS.md`, `CLAUDE.md` ou equivalente; `CONTRIBUTING.md`; `docs/` sobre testes; thresholds de cobertura em config de runner ou CI. Se encontrar guia, a expectativa de cobertura obedece a ele; cite os arquivos. Se não encontrar nenhum, aplique o **default forte** abaixo.
 
 **Passo 1 — amostra de testes existentes.** Localize 5–10 arquivos de teste; mapeie camada exercitada e nível (unit, integration, e2e); extraia estilo, localização, framework. Use como **piso** (nunca menos rigoroso que o existente na mesma camada), nunca como teto — o teto vem da spec.
 
 **Passo 2 — comandos do repositório.** Extraia de manifests, config e CI (`*.csproj`/`*.sln` + `dotnet test`, `package.json`, `Makefile`, `pyproject.toml`, workflows). Capture também lint/format/typecheck: o gate Build roda tudo.
 
-Sem teste algum no repo → pergunte: tipos de teste e comandos.
+Se o repositório não tem teste algum, pergunte ao usuário os tipos de teste e os comandos.
 
 **Default forte** (sem guia):
 
@@ -64,7 +64,7 @@ Renderize **exatamente** estas duas seções em `tasks.md` (o Execute e o Verify
 
 **Uma task = um entregável coeso, verificável e integrável:** um componente, uma função, um endpoint, um handler, com o que ele precisa para ser verificado e integrado na mesma task: implementação, teste co-locado (seção 2), configuração ou registro indispensável (DI, rota, migration) e a atualização de `tasks.md` e da rastreabilidade. "Implementar autenticação" não é task; "criar `ReservationService.Confirm` com idempotência, testes e registro no módulo" é.
 
-Granularidade: um entregável com seus arquivos ✅; dois entregáveis independentes na mesma task ❌ divida, porque gate, evidência e commit deixam de apontar para uma coisa só. Número de arquivos não decide: implementação, teste e registro moram em arquivos diferentes por convenção do repositório. `Onde` lista todos os arquivos que a task cria ou modifica; o linter avisa quando não reconhece nenhum path.
+Granularidade: um entregável com seus arquivos é aprovado. Dois entregáveis independentes na mesma task é reprovado: divida, porque gate, evidência e commit deixam de apontar para uma coisa só. Número de arquivos não decide: implementação, teste e registro moram em arquivos diferentes por convenção do repositório. `Onde` lista todos os arquivos que a task cria ou modifica; o linter avisa quando não reconhece nenhum path.
 
 Cada task carrega:
 
@@ -89,27 +89,27 @@ Cada task carrega:
 
 ## 4. Fases e dependências
 
-Agrupe tasks em fases ordenadas; fases executam em sequência, tasks em ordem dentro da fase. Fase é unidade de coesão e dependência (fundação → domínio → adapters → integração), não de tamanho. Fase muito grande (>10 tasks) se divide numa costura real de dependência, não num índice arbitrário — exceto quando é uma cadeia única que não se separa.
+Agrupe tasks em fases ordenadas; fases executam em sequência, tasks em ordem dentro da fase. Fase é unidade de coesão e dependência (fundação, depois domínio, depois adapters, depois integração), não de tamanho. Fase muito grande (mais de 10 tasks) se divide numa costura real de dependência, não num índice arbitrário — exceto quando é uma cadeia única que não se separa.
 
-Dependência aponta só para trás ou para a mesma fase; dentro da fase, a ordem do plano é a ordem executável. São `HARD` no linter: dependência para fase posterior, ciclo, task fora do Plano de execução, task citada no plano sem corpo e Mapa de execução divergente do plano; plano, mapa e lista citam o mesmo conjunto de tasks.
+Dependência aponta só para trás ou para a mesma fase; dentro da fase, a ordem do plano é a ordem executável. São `HARD` no linter: dependência para fase posterior, ciclo, task fora do Plano de execução, task citada no plano sem corpo e Mapa de execução divergente do plano. Plano, mapa e lista citam o mesmo conjunto de tasks.
 
 ---
 
 ## 5. Validar antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>` (SKILL.md, Gates), com `--commit-max-len` e `--commit-no-scope` quando o repositório restringe mais que Conventional Commits; requisito da spec sem task é código que não vai existir.
+Rode `lint_tasks.py <tasks.md> --spec <spec.md>` (SKILL.md, Gates), com `--commit-max-len` e `--commit-no-scope` quando o repositório restringe mais que Conventional Commits. Requisito da spec sem task é código que não vai existir.
 
 Depois, as três checagens de julgamento, com as tabelas incluídas no output:
 
-**Granularidade** — cada task é um entregável só, com seus arquivos? Tabela task → entregável → arquivos → ✅/❌.
+**Granularidade** — cada task é um entregável só, com seus arquivos? Tabela com as colunas Task, Entregável, Arquivos e Status.
 
-**Co-localização de teste** — para cada task, a camada criada/modificada tem tipo exigido na matriz? O campo `Tests` bate? Task que cria múltiplas camadas usa o tipo mais alto. Tabela task → camada → matriz exige → task diz → ✅/❌.
+**Co-localização de teste** — para cada task, a camada criada/modificada tem tipo exigido na matriz? O campo `Tests` bate? Task que cria múltiplas camadas usa o tipo mais alto. Tabela com as colunas Task, Camada, Matriz exige, Task diz e Status.
 
 **Consistência de tipos** — nomes, assinaturas e tipos usados no `Consome` de uma task batem com o `Produz` da task anterior e com o design? `ConfirmReservation` na T3 e `ConfirmReserve` na T7 é bug de plano.
 
-Qualquer ❌ → reestruture antes de apresentar. Não mostre tasks falhando e peça aprovação.
+Qualquer item reprovado exige reestruturar antes de apresentar. Não mostre tasks falhando e peça aprovação.
 
-Matriz e comandos são provisórios até o usuário aprovar as tasks; então viram autoritativos. Apresente e pare (SKILL.md, gate de aprovação).
+Matriz e comandos são provisórios até o usuário aprovar as tasks; então viram autoritativos. Apresente e pare (SKILL.md, Aprovações e autorizações).
 
 ---
 

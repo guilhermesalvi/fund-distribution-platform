@@ -109,7 +109,7 @@ Cada `AD-NNN` é um arquivo `docs/adr/NNNN-<slug>.md` com o mesmo número (aloca
 
 Ao pedido ("pausa", "vou parar", "encerra a sessão") ou quando o contexto está perto do limite:
 
-1. Termine a task em andamento se faltam minutos; senão, **não commite parcial** — registre no Handoff o que está incompleto e o estado dos arquivos.
+1. Termine a task em andamento se faltam minutos. Se falta mais que isso, **não commite parcial**: registre no Handoff o que está incompleto e o estado dos arquivos.
 2. Atualize `## Handoff`: mudança, branch, última task concluída com hash (ou "sem commit" e o estado dos arquivos), próxima task e dependências, bloqueios (`[PREMISSA-CRÍTICA]` pendente, lacuna, gate falhando), data/hora.
 3. Escreva a entrada de ciclo no Histórico se houve sinal.
 4. Confirme em uma linha o que foi registrado.
@@ -126,7 +126,7 @@ Ao pedido ("retoma", "continua de onde paramos", "onde estávamos"):
    - `git status --porcelain`: mudanças não commitadas que o Handoff não menciona?
    - `git log --oneline -10`: commits depois do hash registrado?
    - `tasks.md`: tasks marcadas concluídas coincidem com os commits? Sem commits autorizados, coincidem com o `git status --porcelain`?
-3. Divergência → a evidência vence; diga o que difere e proponha a reconciliação. `git status` e commits são indício de progresso, não prova de conclusão: task só conta como concluída com gate verde registrado (tasks.md marcado ou plano inline) e evidência.
+3. Quando há divergência, a evidência vence: diga o que difere e proponha a reconciliação. `git status` e commits são indício de progresso, não prova de conclusão: task só conta como concluída com gate verde registrado (tasks.md marcado ou plano inline) e evidência.
 4. Proponha o próximo passo (task, gate pendente, premissa a validar) **antes** de escrever código. Espere confirmação.
 
 Nunca retome executando por cima de estado desconhecido.
@@ -140,7 +140,7 @@ Depois do Verifier em PASS, dos desvios resolvidos (modes.md, Desvios) e da apro
 1. **Fundir o delta na spec viva** com `apply_delta.py apply <changes/NNNN-slug/spec.md>` (SKILL.md, Gates; `--create` para capability nova ou baseline de modo código). O script é o único que escreve nas suas regiões: lista de `## Requisitos`, campo Data e tabela de `## Histórico de revisões` (uma linha por mudança, identidade `NNNN-<slug>`, todos os IDs afetados explícitos); ele valida tudo antes de escrever, recusa `Antes:` divergente do texto vigente (alteração concorrente) e não reaplica delta já registrado.
 
    Fica com você, depois do merge, nas regiões do autor: **Propósito** (o `--create` copia o Contexto do delta — reescreva no escopo da capability), **Glossário** e a tabela **Domain Events**, que exige payload semântico e consumidores. O script avisa quando um requisito publica evento; não inventa a linha.
-2. **Rastreabilidade** do delta: todos os IDs em `Verified`; Status do delta, do design e das tasks → `Concluído`.
+2. **Rastreabilidade** do delta: todos os IDs em `Verified`; Status do delta, do design e das tasks passa a `Concluído`.
 3. **Desvios:** já resolvidos antes do PASS final: desvio que muda comportamento voltou ao artefato de origem, foi reaprovado e reverificado, e só então entra no delta aplicado; desvio sem mudança de comportamento ficou em `## Desvios` com justificativa. O arquivamento não ajusta a spec ao código, e exclusão registrada na memória não é prova de conformidade. Nenhum desvio sobrevive sem destino.
 4. **Memória:** entrada de ciclo `archive`; decisões de projeto que nasceram no design promovidas a `AD-NNN` se ainda não foram.
 5. Rode `apply_delta.py check <delta>` e depois `lint_spec.py` na spec viva, que precisa passar como spec, não só o delta (SKILL.md, Gates). Sobre delta já superado por mudanças posteriores, `check` audita só a linha do histórico e os REMOVED; nunca reaplique delta antigo para "corrigir" divergência causada por evolução legítima.

@@ -33,11 +33,15 @@ Regras transversais:
 
 ## 2. Estados e transições
 
-**PRD** (prd-writer, output.md, Header): Rascunho → Em Revisão → Aprovado → Substituído por NNNN. Só o usuário aprova. Alteração material em PRD Aprovado (regra, escopo, contrato) volta a Em Revisão e invalida a aprovação das specs que citam os IDs tocados; correção editorial não muda Status. A revisão consumida pela spec é registrada em `prd-rev` (seção 3).
+| Artefato | Caminho normal | Saídas |
+|---|---|---|
+| **PRD** (prd-writer, output.md, Header) | Rascunho → Em Revisão → Aprovado → Substituído por NNNN | — |
+| **Delta, design, tasks** | Rascunho → Aprovado → Em andamento → Concluído | Rascunho → Descartado (spike) ou Bloqueado (decisão material pendente, com o item que bloqueia) |
+| **Rastreabilidade por requisito** | Pending → In Design → In Tasks → Implementing → Verified | qualquer estado → Removed (REMOVED, com razão) ou Blocked (depende de decisão pendente) |
 
-**Delta, design, tasks:** Rascunho → Aprovado → Em andamento → Concluído; Rascunho → Descartado (spike) ou Bloqueado (decisão material pendente, com o item que bloqueia). Alteração material em artefato Aprovado → Rascunho, e os artefatos a jusante que dependem do trecho alterado voltam a Rascunho; correção editorial mantém o Status.
+Só o usuário aprova. Alteração material em PRD Aprovado (regra, escopo, contrato) volta a Em Revisão e invalida a aprovação das specs que citam os IDs tocados; correção editorial não muda Status. A revisão consumida pela spec é registrada em `prd-rev` (seção 3).
 
-**Rastreabilidade por requisito:** Pending → In Design → In Tasks → Implementing → Verified; qualquer estado → Removed (REMOVED, com razão) ou Blocked (depende de decisão pendente). Verified só pelo Verifier.
+Alteração material em delta, design ou tasks Aprovado volta o artefato a Rascunho, e os artefatos a jusante que dependem do trecho alterado voltam a Rascunho também; correção editorial mantém o Status. Verified só pelo Verifier.
 
 **Analyze** (verify.md, seção 1), severidade e efeito:
 
@@ -52,15 +56,15 @@ Regras transversais:
 
 **Verify** (verify.md): PASS, FAIL ou BLOCKED (verificação incompleta: dependência indisponível, gate não executável, sensor impossível), com o motivo. PASS exige conformidade sem gap, gate verde, sensor sem sobrevivente quando obrigatório e UAT sem Bloqueante/Maior quando houver. FAIL gera tasks de correção (máximo 3 iterações). BLOCKED é entregável e não fecha a mudança.
 
-**Arquivamento** (memory.md, seção 5): só após Verify PASS, desvios resolvidos (seção 4) e aprovação de conteúdo do fechamento pelo usuário (SKILL.md, Aprovações e autorizações); delta, design e tasks → Concluído; spec viva atualizada pelo script; histórico com uma linha por mudança.
+**Arquivamento** (memory.md, seção 5): só após Verify PASS, desvios resolvidos (seção 4) e aprovação de conteúdo do fechamento pelo usuário (SKILL.md, Aprovações e autorizações); delta, design e tasks passam a Concluído; spec viva atualizada pelo script; histórico com uma linha por mudança.
 
-Distinções que os relatórios preservam: **documento válido** (linter sem HARD) ≠ **documento aprovável** (válido, revisado, sem `[LACUNA]` no caminho, Ponto de Maior Fragilidade nomeado) ≠ **implementação conforme** (Verify PASS) ≠ **verificação incompleta ou bloqueada** (BLOCKED, com motivo).
+Os relatórios preservam quatro distinções: **documento válido** (linter sem HARD) é diferente de **documento aprovável** (válido, revisado, sem `[LACUNA]` no caminho, Ponto de Maior Fragilidade nomeado), que é diferente de **implementação conforme** (Verify PASS), que é diferente de **verificação incompleta ou bloqueada** (BLOCKED, com motivo).
 
 ---
 
 ## 3. Proveniência
 
-- Cada artefato cita a revisão exata do que consumiu: o delta declara `prd:` e `prd-rev:` no comentário de máquina; design cita `spec:`; tasks citam `design:` (ou `spec:` sem design); `validation.md` cita a base do diff. `prd-rev` é `git:<hash-do-blob>` (`git hash-object <arquivo>`) quando há Git, ou `sha256:<12 hex>` do conteúdo (`lint_spec.py --print-prd-rev`) quando não há; data de calendário sozinha não identifica duas revisões do mesmo dia.
+- Cada artefato cita a revisão exata do que consumiu: o delta declara `prd:` e `prd-rev:` no comentário de máquina; design cita `spec:`; tasks citam `design:` (ou `spec:` sem design); `validation.md` cita a base do diff. `prd-rev` é `git:<hash-do-blob>` (`git hash-object <arquivo>`) quando há Git, ou `sha256:<12 hex>` do conteúdo (`lint_spec.py --print-prd-rev`) quando não há. Data de calendário sozinha não identifica duas revisões do mesmo dia.
 - `apply_delta.py apply --create` copia `prd` e `prd-rev` para a spec viva; mudanças posteriores registram no histórico a revisão do PRD que consumiram.
 - Referência a versão antiga (PRD substituído, ID Removed) resolve para o documento histórico, marcada como histórica; nunca é recriada nem reciclada.
 - Aprovação não converte premissa em fato: `[PREMISSA]` do PRD Aprovado continua `[PREMISSA]` na spec, com o plano de validação; só `[FATO]` do PRD é `[FATO]` na spec.

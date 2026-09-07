@@ -8,7 +8,7 @@ Leia até o fim antes de agir.
 
 ## 0. Layout de arquivos (spec-anchored)
 
-A spec de uma **capability** é viva e sobrevive às mudanças; cada mudança é um **delta** que se funde nela no arquivamento (memory.md, Arquivar). Capability ≈ área funcional de um bounded context (`fixed-income/bookbuilding`, `reservation-book/reservation-lifecycle`). O `<feature-slug>` da mudança é o `<feature-slug>` do PRD, sem o `<domain-slug>`, que já está no path da capability: PRD `0002-reservation-book-reservation-lifecycle.md` → `reservation-book/reservation-lifecycle/changes/NNNN-reservation-lifecycle/`.
+A spec de uma **capability** é viva e sobrevive às mudanças. Cada mudança é um **delta**, que se funde nela no arquivamento (memory.md, Arquivar). Capability corresponde, aproximadamente, a uma área funcional de um bounded context (`fixed-income/bookbuilding`, `reservation-book/reservation-lifecycle`). O `<feature-slug>` da mudança é o `<feature-slug>` do PRD, sem o `<domain-slug>`, que já está no path da capability: o PRD `0002-reservation-book-reservation-lifecycle.md` gera `reservation-book/reservation-lifecycle/changes/NNNN-reservation-lifecycle/`.
 
 ```
 /docs/specs/<domain-slug>/<capability-slug>/
@@ -22,15 +22,15 @@ A spec de uma **capability** é viva e sobrevive às mudanças; cada mudança é
 /docs/project-memory.md              # índice das AD-NNN, handoff, histórico de ciclos
 ```
 
-- **Slugs são identificadores:** inglês, kebab-case, espelhando o nome que o código usa (`PartialReservation` → `partial-reservation`). O texto segue a Precedência de idioma (SKILL.md); o path acompanha branch, classe e prefixo de ID. Termo que o código mantém em português fica como o código escreveu. A mesma regra vale para o slug do PRD, porque os dois coincidem.
-- **Mudanças são numeradas:** `changes/NNNN-<feature-slug>/`, contador de 4 dígitos global em `/docs/specs/`, alocado com `seq.py next /docs/specs --slug <feature-slug>` antes de criar o diretório, nunca lendo o diretório. O número é ordem de chegada e referência curta; quem sobrescreve quem é dito pelo delta (`MODIFIED`/`REMOVED` apontando para o ID), nunca pelo número. Contador global colide em PR paralelo: renumere o branch que entra depois; `seq.py check` acusa a duplicata.
-- A `spec.md` viva **não** é numerada (uma por capability) e **não é reescrita por geração**: o modelo escreve o delta; `apply_delta.py` funde a lista de Requisitos, a Data e o Histórico (regiões do script); Propósito, Glossário e Domain Events são do autor (memory.md, Arquivar).
-- **Crie artefatos sob demanda.** Nunca scaffolde `design.md` ou `tasks.md` vazios; ausência é o estado correto de fase pulada, e o substituto de cada artefato dispensado está em modes.md. Arquivo vazio mente sobre o processo.
-- Capability nova: delta todo `ADDED`; o arquivamento cria a spec viva. Refactor puro: `<!-- sdd: spec-delta | no-behavior-change -->`, sem requisito inventado: o Contexto declara o objetivo técnico e os IDs da spec viva que o refactor preserva (modes.md). Spike descartável: `spec-first` no comentário de máquina; não há arquivamento, e o fechamento é registrar no Contexto o que se aprendeu e o Status `Descartado` ou `Promovido a <mudança>`; diga ao usuário, porque é exceção. Modo código: o primeiro delta é a baseline (`changes/NNNN-baseline/`), todo `ADDED`, arquivado com `apply_delta.py apply --create`.
-- Não versione por timestamp no nome; git é o controle de versão. A spec viva mantém `## Histórico de revisões` ao fim, uma linha por mudança, com todos os IDs afetados explícitos (`+RSV-07, +RSV-08, ~RSV-03, -RSV-05`); ID com `-` fica aposentado para sempre.
-- Sem repositório: mesmo layout sob o diretório de saída que o ambiente indica (SKILL.md, Gates, Caminhos).
+- **Slugs são identificadores:** inglês, kebab-case, espelhando o nome que o código usa (`PartialReservation` vira `partial-reservation`). O texto segue a Precedência de idioma (SKILL.md). O path acompanha branch, classe e prefixo de ID. Termo que o código mantém em português fica como o código escreveu. A mesma regra vale para o slug do PRD, porque os dois coincidem.
+- **Mudanças são numeradas:** o diretório é `changes/NNNN-<feature-slug>/`, com contador global de 4 dígitos em `/docs/specs/`. Aloque o número com `seq.py next /docs/specs --slug <feature-slug>` antes de criar o diretório, nunca lendo o diretório. O número é ordem de chegada e referência curta. Quem sobrescreve quem é dito pelo delta (`MODIFIED`/`REMOVED` apontando para o ID), nunca pelo número. Contador global colide em PR paralelo: renumere o branch que entra depois, e `seq.py check` acusa a duplicata.
+- A `spec.md` viva **não** é numerada (uma por capability) e **não é reescrita por geração**. O modelo escreve o delta. `apply_delta.py` funde a lista de Requisitos, a Data e o Histórico, que são as regiões do script. Propósito, Glossário e Domain Events são do autor (memory.md, Arquivar).
+- **Crie artefatos sob demanda.** Nunca scaffolde `design.md` ou `tasks.md` vazios. Ausência é o estado correto de fase pulada, e o substituto de cada artefato dispensado está em modes.md. Arquivo vazio mente sobre o processo.
+- Em capability nova, o delta é todo `ADDED` e o arquivamento cria a spec viva. Em refactor puro, o comentário de máquina é `<!-- sdd: spec-delta | no-behavior-change -->` e não há requisito inventado: o Contexto declara o objetivo técnico e os IDs da spec viva que o refactor preserva (modes.md). Em spike descartável, o comentário de máquina leva `spec-first` e não há arquivamento. O fechamento do spike é registrar no Contexto o que se aprendeu e o Status `Descartado` ou `Promovido a <mudança>`; diga ao usuário, porque é exceção. Em modo código, o primeiro delta é a baseline (`changes/NNNN-baseline/`), todo `ADDED`, arquivado com `apply_delta.py apply --create`.
+- Não versione por timestamp no nome, porque git é o controle de versão. A spec viva mantém `## Histórico de revisões` ao fim, com uma linha por mudança e todos os IDs afetados explícitos (`+RSV-07, +RSV-08, ~RSV-03, -RSV-05`). ID com `-` fica aposentado para sempre.
+- Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica (SKILL.md, Gates, Caminhos).
 
-**Comentário de máquina**, primeira linha de cada artefato, antes do `#`, ASCII minúsculo independente do idioma, lido pelos linters para seções por tier e cadeia de proveniência:
+**Comentário de máquina** é a primeira linha de cada artefato, antes do `#`, em ASCII minúsculo independente do idioma. Os linters o leem para checar as seções por tier e a cadeia de proveniência:
 
 ```
 <!-- sdd: spec-delta | tier: large | capability: reservation-book/reservation-lifecycle | prd: /docs/prd/0002-reservation-book-reservation-lifecycle.md | prd-rev: git:3f9c2a1b7d0e4c5a9b8d7e6f0a1b2c3d4e5f6a7b -->
@@ -39,9 +39,9 @@ A spec de uma **capability** é viva e sobrevive às mudanças; cada mudança é
 <!-- sdd: validation | change: 0001-partial-reservation | tier: large -->
 ```
 
-`tier` ∈ {`small`, `medium`, `large`, `complex`}. `prd:` é o path do PRD relativo à raiz do repositório (omitido sem PRD); `prd-rev:` é a revisão exata consumida, `git:<hash-do-blob>` (`git hash-object <prd.md>`) ou `sha256:<12 hex>` sem Git (`lint_spec.py --print-prd-rev`), porque data sozinha não distingue duas revisões do mesmo dia (modes.md, Proveniência); `spec:`/`design:` apontam para o artefato de origem; `change:` é a identidade da mudança (`NNNN-<slug>`).
+`tier` é um de `small`, `medium`, `large` ou `complex`. `prd:` é o path do PRD relativo à raiz do repositório, omitido quando não há PRD. `prd-rev:` é a revisão exata consumida: `git:<hash-do-blob>` (`git hash-object <prd.md>`) ou, sem Git, `sha256:<12 hex>` (`lint_spec.py --print-prd-rev`), porque data sozinha não distingue duas revisões do mesmo dia (modes.md, Proveniência). `spec:` e `design:` apontam para o artefato de origem. `change:` é a identidade da mudança (`NNNN-<slug>`).
 
-**Header humano:** tabela de duas colunas logo abaixo do `#`, rótulos no idioma do artefato (Status, Autor, Data, Capability, Prefixo, Confiança quando não for Alta). Status do delta ∈ {Rascunho, Aprovado, Em andamento, Concluído, Descartado, Bloqueado} (modes.md, Estados); da spec viva, Vigente. Data em AAAA-MM-DD, data real; Autor real (placeholder é HARD); Prefixo igual ao de todos os IDs do delta. Mesma forma e mesma rubrica de Confiança do `prd-writer`. O linter casa cada heading por igualdade com os aliases PT/EN, ignorando o alias entre parênteses; seção duplicada é HARD.
+**Header humano:** tabela de duas colunas logo abaixo do `#`, com rótulos no idioma do artefato (Status, Autor, Data, Capability, Prefixo, Confiança quando não for Alta). O Status do delta é um de Rascunho, Aprovado, Em andamento, Concluído, Descartado ou Bloqueado (modes.md, Estados); o da spec viva é Vigente. A Data é real, em AAAA-MM-DD. O Autor é real; placeholder é HARD. O Prefixo é igual ao de todos os IDs do delta. Mesma forma e mesma rubrica de Confiança do `prd-writer`. O linter casa cada heading por igualdade com os aliases PT/EN, ignorando o alias entre parênteses; seção duplicada é HARD.
 
 ---
 
@@ -58,12 +58,12 @@ Decida a origem pelo sinal no pedido; cada modo muda o que é `[FATO]`:
 
 **A partir do PRD, seis regras:**
 
-- **O requisito EARS cita o ID do PRD com prefixo e nunca reescreve a regra.** A spec descreve o comportamento observável do sistema que realiza a regra (valor, status, evento, prazo); a regra em si continua no FR do PRD. A citação vai ao fim da linha, entre colchetes (`[BOOK-04]`), e a seção Rastreabilidade lista PRD → EARS. Regra reescrita passa a existir em dois lugares e diverge; o PRD deixa de ser fonte. Estado, evento e conceito usam o Identificador que o PRD fixa (coluna Identificador da tabela de estados; nome do evento no catálogo do PRD 0000); o Glossário da spec só tem termos de solution space e aponta o glossário do PRD para o resto.
+- **O requisito EARS cita o ID do PRD com prefixo e nunca reescreve a regra.** A spec descreve o comportamento observável do sistema que realiza a regra (valor, status, evento, prazo); a regra em si continua no FR do PRD. A citação vai ao fim da linha, entre colchetes (`[BOOK-04]`), e a seção Rastreabilidade lista a correspondência de cada ID do PRD para os IDs EARS. Regra reescrita passa a existir em dois lugares e diverge; o PRD deixa de ser fonte. Estado, evento e conceito usam o Identificador que o PRD fixa (coluna Identificador da tabela de estados; nome do evento no catálogo do PRD 0000); o Glossário da spec só tem termos de solution space e aponta o glossário do PRD para o resto.
 - **Lacuna ou inconsistência no PRD se corrige no PRD primeiro.** Regra de negócio ausente, ambígua ou contraditória não vira `[PREMISSA]` na spec: pare, corrija o PRD com o `prd-writer`, peça o commit do PRD quando commits estiverem autorizados e cite o hash no Contexto da spec; sem commit, cite o campo Data do PRD. `[PREMISSA]` na spec fica para decisão de solution space (formato de erro, prazo técnico, ordem de processamento) que o PRD não governa. Resolver regra na spec decide problem space sem quem é dono dele.
-- **O prefixo da spec é distinto de todo prefixo de PRD** (`RSV` para a capability, `BOOK` no PRD) e não confundível com ele (`OFR` ao lado de `OFF` convida a erro de leitura; prefira sigla de outra raiz). Os dois têm a forma `X-nn` e tasks e testes citam ambos; prefixo igual torna `BOOK-07` ambíguo. Declare no header (campo Prefixo), igual ao prefixo de todo ID ADDED/MODIFIED; `lint_spec.py` acusa colisão e divergência lendo `/docs/prd`, e citação com prefixo que nenhum PRD declara é HARD.
+- **O prefixo da spec é distinto de todo prefixo de PRD** (`RSV` para a capability, `BOOK` no PRD) e não confundível com ele (`OFR` ao lado de `OFF` convida a erro de leitura; prefira sigla de outra raiz). Os dois têm a forma `X-nn` e tasks e testes citam ambos; prefixo igual torna `BOOK-07` ambíguo. Declare-o no header (campo Prefixo), igual ao prefixo de todo ID ADDED/MODIFIED. `lint_spec.py` acusa colisão e divergência lendo `/docs/prd`; citação com prefixo que nenhum PRD declara é HARD.
 - **Maturidade do PRD.** Specify consome PRD com Status Aprovado (prd-writer, output.md, Header). PRD em Rascunho ou Em Revisão só entra com decisão explícita do usuário nesta sessão: registre no Contexto que a spec nasce de PRD não aprovado e quem autorizou, limite a Confiança a Média e liste em Perguntas em Aberto as `[LACUNA]` e `[PREMISSA-CRÍTICA]` do PRD que tocam o escopo, com dono. Mudança posterior no PRD re-deriva a spec (SKILL.md, refine o contexto).
-- **PRD 0000 e NFRs.** Quando existe PRD 0000, leia o mapa de contextos, o catálogo de eventos (produtor, consumidores, gatilho, IDs) e as Decisões delegadas a ADR: evento que a capability produz ou consome vira requisito EARS citando o ID que o governa; decisão delegada a ADR entra em Premissas e Perguntas em Aberto com dono "Design/ADR" e não se resolve na spec. NFR do PRD com resultado observável por teste (prazo, atomicidade de uma operação, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`; NFR que é atributo de qualidade sem teste direto (consistência entre consumidores, exatidão como propriedade) entra na Rastreabilidade como origem de critério de design (design.md, Critérios antes das abordagens) e na tabela de Dimensões Implícitas.
-- **Critérios de Aceitação herdados.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Testes derivados da spec): a Rastreabilidade lista cada cenário pelo nome do caso, idêntico à primeira coluna da tabela do PRD, ou citando entre parênteses o ID do FR que exercita (Dado/Quando/Então), com os IDs EARS que o cobrem; linha sem nenhum dos dois é HARD. Cenário sem requisito EARS que o cubra é lacuna da spec, não do PRD; aceitar a entrada válida e rejeitar a inválida são cenários e requisitos distintos.
+- **PRD 0000 e NFRs.** Quando existe PRD 0000, leia o mapa de contextos, o catálogo de eventos (produtor, consumidores, gatilho, IDs) e as Decisões delegadas a ADR: evento que a capability produz ou consome vira requisito EARS citando o ID que o governa. Decisão delegada a ADR entra em Premissas e Perguntas em Aberto com dono "Design/ADR" e não se resolve na spec. NFR do PRD com resultado observável por teste (prazo, atomicidade de uma operação, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto (consistência entre consumidores, exatidão como propriedade) entra na Rastreabilidade como origem de critério de design (design.md, Critérios antes das abordagens) e na tabela de Dimensões Implícitas.
+- **Critérios de Aceitação herdados.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Testes derivados da spec): a Rastreabilidade lista cada cenário pelo nome do caso, idêntico à primeira coluna da tabela do PRD, ou citando entre parênteses o ID do FR que exercita (Dado/Quando/Então), com os IDs EARS que o cobrem. Linha sem nenhum dos dois é HARD. Cenário sem requisito EARS que o cubra é lacuna da spec, não do PRD. Aceitar a entrada válida e rejeitar a inválida são cenários e requisitos distintos.
 
 Em qualquer modo, carregue antes de escrever: decisões `AD-NNN` ativas em `project-memory.md` (restringem o que a spec pode pedir) e a `spec.md` viva da capability, se existir (o delta é relativo a ela).
 
@@ -75,14 +75,14 @@ Em qualquer modo, carregue antes de escrever: decisões `AD-NNN` ativas em `proj
 
 **Você é par técnico, não entrevistador.** Comece aberto; siga a energia do usuário; desafie vagueza ("bom" é o quê? "usuários" são quem? "rápido" é quanto?). Torne o abstrato concreto: "me conduz por um uso disso".
 
-**Clarify, orçamento e priorização** (tier Complex sempre; Large quando há área cinzenta; Medium/Small pulam):
+**Clarify, orçamento e priorização** — tier Complex sempre faz esta rodada, Large só quando há área cinzenta, e Medium e Small a pulam:
 
 1. Varredura interna de cobertura, marcando cada categoria como Clara / Parcial / Ausente: escopo funcional e papéis; modelo de domínio (entidades, identidade, transições de estado, volume); fluxo de interação (jornadas, estados de erro, vazio, carregamento); atributos não funcionais (latência, escala, disponibilidade, observabilidade, segurança, regulação); integrações e falhas externas; edge cases e conflitos; restrições e alternativas rejeitadas; terminologia; sinais de conclusão (testabilidade dos critérios).
-2. Fila interna de perguntas candidatas. **Máximo 5 na rodada.** Priorize por impacto × incerteza; inclua só perguntas cuja resposta muda arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação. Exclua o que já foi respondido, preferência estilística e o que o código responde. O orçamento limita a rodada de esclarecimento; decisão material que ficou de fora continua pendente em Perguntas em Aberto, bloqueando só o que depende dela (SKILL.md, Decisão, premissa ou bloqueio), nunca vira premissa por falta de orçamento.
+2. Fila interna de perguntas candidatas. **Máximo 5 na rodada.** Priorize combinando impacto e incerteza, e inclua só perguntas cuja resposta muda arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação. Exclua o que já foi respondido, preferência estilística e o que o código responde. O orçamento limita a rodada de esclarecimento. Decisão material que ficou de fora continua pendente em Perguntas em Aberto, bloqueando só o que depende dela (SKILL.md, Decisão, premissa ou bloqueio); ela nunca vira premissa por falta de orçamento.
 3. Apresente **uma por vez**: interrogativa completa (nunca um rótulo), uma linha "por que importa", opções concretas com a recomendada primeiro e uma linha de racional. O usuário deve poder aceitar ou sobrescrever numa palavra. Ofereça "você decide" quando razoável: a resposta é delegação explícita e vira decisão (a) de SKILL.md, Decisão, premissa ou bloqueio, registrada como tal. Pergunta sem resposta não vira default: fica como (c), bloqueando só o que depende dela.
 4. Codifique cada resposta na spec **imediatamente** (requisito, assumption ou fora de escopo), não ao fim.
 
-**Guardrail de escopo.** A fronteira da mudança é fixa. Clarify esclarece *como* algo deve se comportar, nunca *se* uma nova capability entra. Sugestão de escopo novo → "isso é outra mudança; registro em Ideias Adiadas" e volte.
+**Guardrail de escopo.** A fronteira da mudança é fixa. Clarify esclarece *como* algo deve se comportar, nunca *se* uma nova capability entra. Quando surgir sugestão de escopo novo, responda "isso é outra mudança; registro em Ideias Adiadas" e volte.
 
 ---
 
@@ -103,7 +103,7 @@ Requisitos que ninguém pede e todo sistema precisa. Ao fechar o entendimento, a
 | Integridade de transição de estado | Transições válidas, guardas, estado terminal |
 | Consistência entre contextos | Evento publicado, contrato consumido, eventual vs forte |
 
-Por tier: **Large/Complex** cobrem toda dimensão, cada uma vira requisito **ou** `N/A porque [razão]`; célula em branco não existe. **Medium** cobre só as dimensões presentes no domínio da feature e colapsa o resto em `demais dimensões N/A para este escopo`. **Small** pula. O `N/A porque` é obrigatório: impede inventar requisito para preencher lista. A varredura é limitada ao escopo desta mudança.
+Por tier: **Large/Complex** cobrem toda dimensão, e cada uma vira requisito **ou** `N/A porque [razão]`. Célula em branco não existe. **Medium** cobre só as dimensões presentes no domínio da feature e colapsa o resto em `demais dimensões N/A para este escopo`. **Small** pula. O `N/A porque` é obrigatório: impede inventar requisito para preencher lista. A varredura é limitada ao escopo desta mudança.
 
 ---
 
@@ -131,7 +131,7 @@ Todo requisito segue exatamente **um** padrão EARS (*Easy Approach to Requireme
 - Todo requisito contém `SHALL` e é mensurável; o linter rejeita sem `SHALL` e avisa quando não reconhece padrão.
 - Keywords em inglês mesmo em spec em português; o corpo pode ser em português: `WHEN o investidor confirma a reserva THEN the system SHALL registrar a reserva com status Pendente em até 2s [BOOK-01]`.
 - Domain event relevante a outro contexto é requisito, não detalhe de implementação: `WHEN a reserva é confirmada THEN the system SHALL publicar ReservationConfirmed com [payload semântico]`.
-- **IDs:** `[PREFIXO]-[NN]` (`RSV-01`, `SETTLE-07`). Prefixo por capability, distinto dos prefixos de PRD (seção 1), 2+ dígitos, nunca reutilizado: ID removido morre. Todo requisito tem ID desde o rascunho; é o que rastreia até task e teste.
+- **IDs:** `[PREFIXO]-[NN]` (`RSV-01`, `SETTLE-07`). O prefixo é por capability e distinto dos prefixos de PRD (seção 1). O número tem dois ou mais dígitos e nunca é reutilizado: ID removido morre. Todo requisito tem ID desde o rascunho; é o que rastreia até task e teste.
 - **Edge cases** são requisitos Unwanted-behavior ou de fronteira, com ID como os outros; não uma lista solta.
 
 ---
@@ -146,16 +146,16 @@ A `spec.md` viva tem os requisitos vigentes; a `changes/NNNN-<feature>/spec.md` 
 | `## MODIFIED Requirements` | Requisito existente com texto novo | Reproduza o ID e o **texto completo** novo (não diff); uma linha `Antes:` com o texto anterior |
 | `## REMOVED Requirements` | ID + uma linha de razão | Requisito removido precisa de razão registrada; o ID fica aposentado e o teste correspondente é removido na task com a mesma razão |
 
-IDs são estáveis: não existe RENAMED. Mudar o significado é `MODIFIED`; substituir o conceito é `REMOVED` + `ADDED` com ID novo. `MODIFIED`/`REMOVED` apontando para ID inexistente na spec viva, `Antes:` divergente do texto vigente e seção `RENAMED` são `HARD` no linter e no `apply_delta.py`.
+IDs são estáveis: não existe RENAMED. Mudar o significado é `MODIFIED`; substituir o conceito é `REMOVED` seguido de `ADDED` com ID novo. `MODIFIED`/`REMOVED` apontando para ID inexistente na spec viva, `Antes:` divergente do texto vigente e seção `RENAMED` são `HARD` no linter e no `apply_delta.py`.
 
 ---
 
 ## 7. Gate de fechamento (antes de apresentar)
 
-A spec não é apresentável até que cada item esteja resolvido ou registrado como assumption. Large/Complex: gate completo. Medium: resolva ambiguidades óbvias, registre o resto. Small: pula.
+A spec não é apresentável até que cada item esteja resolvido ou registrado como assumption. Large e Complex fazem o gate completo. Medium resolve as ambiguidades óbvias e registra o resto. Small pula.
 
-1. **Inequivocidade e precisão.** Cada requisito tem uma única interpretação e um resultado esperado preciso. Falhou em um dos dois: resolva com o usuário, divida, ou registre como assumption com interpretação escolhida + racional.
-2. **Fechamento de perguntas e assumptions.** Toda decisão não resolvida no clarify vira (a) resolvida ou (b) assumption com default + racional na tabela. Nada segue sem marca. Assumption é só de solution space; regra de negócio volta ao PRD (seção 1).
+1. **Inequivocidade e precisão.** Cada requisito tem uma única interpretação e um resultado esperado preciso. Se falhou em um dos dois, resolva com o usuário, divida, ou registre como assumption com a interpretação escolhida e o racional.
+2. **Fechamento de perguntas e assumptions.** Toda decisão não resolvida no clarify vira (a) resolvida ou (b) assumption com default e racional na tabela. Nada segue sem marca. Assumption é só de solution space; regra de negócio volta ao PRD (seção 1).
 3. **Áreas cinzentas recusadas viram assumptions.** O que o usuário explicitamente não quis discutir ("decide você", "não importa") é registrado com o default do agente e o racional; nunca descartado em silêncio. Ausência de resposta não é recusa: a pergunta fica em Perguntas em Aberto, bloqueando só o que depende dela (SKILL.md, Decisão, premissa ou bloqueio).
 4. **Gate de lacuna** e **`[PREMISSA-CRÍTICA]`** conforme SKILL.md, Convenção de confiança; as premissas críticas ficam listadas ao fim como blockers antes de Execute.
 
@@ -167,7 +167,7 @@ Depois: `lint_spec.py` (SKILL.md, Gates). Apresente só com linter limpo e diga 
 
 ## Ponto de Maior Fragilidade
 
-`spec.md` (tier ≥ Medium) e `design.md` terminam nomeando **uma** decisão de julgamento, a que um revisor cético atacaria primeiro. Mesma regra do `prd-writer` (writing.md, Ponto de Maior Fragilidade): não é `[PREMISSA-CRÍTICA]` nem `[LACUNA]`; forma decisão, vetor de ataque, convite ao desafio; calibrada ao custo do erro (Small/Medium: duas linhas); sem auto-crítica cosmética. Na spec, tipicamente corte de escopo, limite numérico ou padrão EARS que fixa comportamento ambíguo; no design, fronteira de componente, escolha de consistência, acoplamento aceito.
+`spec.md` (tier Medium ou superior) e `design.md` terminam nomeando **uma** decisão de julgamento, a que um revisor cético atacaria primeiro. Vale a mesma regra do `prd-writer` (writing.md, Ponto de Maior Fragilidade): não é `[PREMISSA-CRÍTICA]` nem `[LACUNA]`. A forma é decisão, vetor de ataque e convite ao desafio, calibrada ao custo do erro (em Small e Medium, duas linhas), sem auto-crítica cosmética. Na spec, é tipicamente corte de escopo, limite numérico ou padrão EARS que fixa comportamento ambíguo; no design, fronteira de componente, escolha de consistência ou acoplamento aceito.
 
 ---
 
@@ -288,7 +288,7 @@ Status por requisito EARS (Pending → In Design → In Tasks → Implementing �
 [A decisão; o vetor de ataque; o convite ao desafio.]
 ```
 
-Modo código: o delta é a baseline (`changes/NNNN-baseline/spec.md`, todo ADDED, cada requisito com a evidência `file:line` do comportamento observado) e adiciona `## Divergências identificadas`: o que o código faz e parece não dever fazer, o que deveria fazer e não faz, dead code; cada item `[PREMISSA]` com a evidência (`file:line`). Arquiva-se com `apply_delta.py apply --create` (modes.md, Contrato por combinação, Modo código).
+Em modo código, o delta é a baseline (`changes/NNNN-baseline/spec.md`, todo ADDED, cada requisito com a evidência `file:line` do comportamento observado) e adiciona `## Divergências identificadas`: o que o código faz e parece não dever fazer, o que deveria fazer e não faz, e dead code. Cada item é `[PREMISSA]` com a evidência (`file:line`). Arquiva-se com `apply_delta.py apply --create` (modes.md, Contrato por combinação, Modo código).
 
 ## Template: spec viva `<capability>/spec.md`
 
@@ -333,11 +333,11 @@ Modo código: o delta é a baseline (`changes/NNNN-baseline/spec.md`, todo ADDED
 ## Critérios de qualidade (passada Tier 2)
 
 - Cada requisito é um padrão EARS, com `SHALL`, valor concreto e ID único (seção 5). Se você não consegue escrever o teste, reescreva o requisito.
-- Requisito derivado do PRD cita o ID e não reescreve a regra; nenhuma regra de negócio decidida por assumption; Status do PRD registrado; PRD 0000, NFRs e Critérios de Aceitação consumidos conforme as seis regras (seção 1).
+- Requisito derivado do PRD cita o ID e não reescreve a regra. Nenhuma regra de negócio é decidida por assumption. O Status do PRD está registrado, e PRD 0000, NFRs e Critérios de Aceitação foram consumidos conforme as seis regras (seção 1).
 - P1 é fatia vertical demonstrável, não "só backend" (seção 4).
 - Dimensões implícitas cobertas ou `N/A porque`; nenhuma inventada (seção 3).
 - Toda inferência marcada; modo código nunca promove inferência a `[FATO]` (seção 1).
-- Gate de fechamento cumprido (seção 7); Fora de Escopo presente quando há risco de creep; Ideias Adiadas capturam o que foi cortado no clarify.
+- Gate de fechamento cumprido (seção 7). Fora de Escopo presente quando há risco de creep. Ideias Adiadas capturam o que foi cortado no clarify.
 - Delta aponta só para IDs existentes; capability nova é toda ADDED (seção 6).
-- Ponto de Maior Fragilidade presente em tier ≥ Medium (seção acima).
+- Ponto de Maior Fragilidade presente em tier Medium ou superior (seção acima).
 - A spec reduz improviso no Design: se o Design vai precisar decidir comportamento, a spec ficou incompleta.

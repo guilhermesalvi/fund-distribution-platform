@@ -4,7 +4,7 @@
 
 Leia até o fim antes de agir.
 
-**Pule ou encolha** conforme SKILL.md, Tiers: sem decisão arquitetural nem risco nomeado, a estrutura é dita em uma ou duas linhas do plano inline do Execute e este arquivo não é criado; com risco nomeado, duas seções curtas atacando aquele risco, não o template inteiro.
+**Pule ou encolha** conforme SKILL.md, Tiers. Sem decisão arquitetural nem risco nomeado, a estrutura é dita em uma ou duas linhas do plano inline do Execute e este arquivo não é criado. Com risco nomeado, bastam duas seções curtas atacando aquele risco, não o template inteiro.
 
 ---
 
@@ -13,7 +13,7 @@ Leia até o fim antes de agir.
 Leia, nesta ordem:
 
 1. `changes/NNNN-<feature>/spec.md` (delta) e a `spec.md` viva da capability. A spec é o contrato; o design não a reinterpreta. Se o design precisar decidir *comportamento*, volte à spec (refine o contexto, não o erro).
-2. **`project-memory.md` → Decisões `AD-NNN` ativas, obrigatório antes de qualquer escolha.** Cada decisão ativa é restrição de projeto. Conflito entre uma decisão anterior e o melhor para esta feature exige escolha explícita: conformar ou superseder (memory.md, Decisões e ADRs). Ignorar em silêncio cria inconsistência invisível entre features.
+2. **`project-memory.md`, nas Decisões `AD-NNN` ativas, obrigatório antes de qualquer escolha.** Cada decisão ativa é restrição de projeto. Conflito entre uma decisão anterior e o melhor para esta feature exige escolha explícita: conformar ou superseder (memory.md, Decisões e ADRs). Ignorar em silêncio cria inconsistência invisível entre features.
 3. PRD, quando existe: `[PREMISSA-CRÍTICA]` do PRD e Trade-offs Declarados são restrições; Dependências e Riscos do PRD alimentam a seção de riscos; NFRs do PRD são a origem primeira dos critérios de avaliação (seção 4). PRD 0000, quando existe: o mapa de contextos fixa quem é upstream e a direção de mudança de contrato; o catálogo de eventos fixa produtor e consumidores da tabela Domain Events; as Decisões delegadas a ADR são decisões deste design ou de ADR própria (memory.md, Decisões e ADRs), com a exigência que o PRD cita (NFR) como critério.
 
 ---
@@ -24,13 +24,13 @@ Leia, nesta ordem:
 
 1. Identifique módulos e arquivos diretamente relacionados ao escopo.
 2. Leia a estrutura de diretórios antes de abrir arquivos.
-3. Priorize: interfaces e contratos → entidades de domínio → serviços/casos de uso → infraestrutura.
+3. Priorize nesta ordem: interfaces e contratos, depois entidades de domínio, depois serviços e casos de uso, por último infraestrutura.
 4. Leia implementação completa só quando assinatura e nome não bastam.
 5. Declare o que foi lido e o que foi ignorado. Base extensa: "Analisei [X, Y, Z] por serem diretamente relevantes. [A, B] foram ignorados — podem conter restrições não consideradas."
 
 **Tudo que a base impõe é `[FATO]`; tudo que você inferiu do padrão é `[PREMISSA]`.** Padrão inferido de dois arquivos não é convenção do projeto.
 
-**Fontes da verdade: código e repositório.** Quem explica o sistema conta uma história; o repositório registra a que aconteceu. Antes de julgar a base, rode `python <skill-dir>/scripts/hotspots.py <repo>` (git log da janela, default 90 dias): os poucos arquivos que concentram 90% das mudanças, cruzados com o número de autores, são indício de onde o remendo se acumula e de ownership difuso, e é por ali que a leitura começa; indício não é prova: confirme com CODEOWNERS, ADRs e quem conhece a área antes de chamar de dívida. Complete com o que os pipelines de deploy dizem sobre as unidades de deploy (repositório não é deployable) e com o mapa de times (CODEOWNERS, organograma): pela Lei de Conway, a estrutura de comunicação dos times antecipa a estrutura do sistema, e serve de mapa quando o acesso ao código demora. Peça o script, não a resposta: evidência que precisa de baseline ou comparação vem de script determinístico, porque leitura estocástica muda a cada execução e não se compara.
+**Fontes da verdade: código e repositório.** Quem explica o sistema conta uma história; o repositório registra a que aconteceu. Antes de julgar a base, rode `python <skill-dir>/scripts/hotspots.py <repo>` (git log da janela, default 90 dias). Os poucos arquivos que concentram 90% das mudanças, cruzados com o número de autores, são indício de onde o remendo se acumula e de ownership difuso, e é por ali que a leitura começa. Indício não é prova: confirme com CODEOWNERS, ADRs e quem conhece a área antes de chamar de dívida. Complete com o que os pipelines de deploy dizem sobre as unidades de deploy (repositório não é deployable) e com o mapa de times (CODEOWNERS, organograma). Pela Lei de Conway, a estrutura de comunicação dos times antecipa a estrutura do sistema, e serve de mapa quando o acesso ao código demora. Peça o script, não a resposta: evidência que precisa de baseline ou comparação vem de script determinístico, porque leitura estocástica muda a cada execução e não se compara.
 
 **Suspensão de julgamento.** Preocupação classificada como dívida, hack ou fragilidade só é `[FATO]` quando acompanhada da decisão que a explica (ADR, commit, PR, pessoa); sem ela é `[PREMISSA]`. Um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época, e quem julga sem contexto propõe a refatoração que ninguém consegue fazer deploy. Learning docs (notas de exploração que você gera para si: estrutura, entry points, fluxos) ficam fora de `docs/`; documentação do projeto é a que o time consome.
 
@@ -77,7 +77,7 @@ As **quatro perguntas** de avaliação de uma decisão arquitetural:
 3. Respeita as restrições (`AD-NNN` ativas, base existente, regulação, time)?
 4. **Existe forma mais barata ou menos arriscada de fazer o mesmo?**
 
-As três primeiras o design já lê; a quarta é a que costuma ficar sem resposta e a que paga o salário do arquiteto. Complexidade se converte em custo (número de componentes × interconexões) e complexidade não justificada é custo desnecessário. Tabela por abordagem: o que é, resposta a cada critério e pergunta, custo (TCO, não só construção), risco que reduz e risco que introduz.
+As três primeiras o design já lê; a quarta é a que costuma ficar sem resposta e a que paga o salário do arquiteto. Complexidade se converte em custo (número de componentes combinado com o número de interconexões) e complexidade não justificada é custo desnecessário. Tabela por abordagem: o que é, resposta a cada critério e pergunta, custo (TCO, não só construção), risco que reduz e risco que introduz.
 
 ---
 
@@ -89,7 +89,7 @@ Ao pesquisar, projetar ou decidir, em qualquer entrada, siga a cadeia em ordem e
 2. **Docs do projeto**: README, `docs/`, `project-memory.md` (decisões `AD-NNN` ativas), PRD.
 3. **Documentação oficial** da biblioteca ou serviço (Context7 quando disponível, senão busca web em fonte primária).
 4. **Busca web**: fontes reputadas, padrões da comunidade.
-5. **Sinalize incerteza**: "não tenho certeza de X; meu raciocínio é Y, verifique". Nunca fabrique API, padrão ou comportamento: invenção propaga em cascata spec → design → tasks → código. "Não encontrei documentação" é resposta válida.
+5. **Sinalize incerteza**: "não tenho certeza de X; meu raciocínio é Y, verifique". Nunca fabrique API, padrão ou comportamento: invenção propaga em cascata, da spec ao design, do design às tasks e das tasks ao código. "Não encontrei documentação" é resposta válida.
 
 Gatilhos no design: biblioteca nova, API desconhecida, feature sensível a performance ou segurança, padrão que a base ainda não usa. Registre achados brevemente no design (uma linha com fonte).
 
@@ -103,7 +103,7 @@ Gatilhos no design: biblioteca nova, API desconhecida, feature sensível a perfo
 
 **Modelo de dados** quando a feature toca persistência: entidades, relacionamentos, invariantes, migração.
 
-**Tratamento de erro.** Tabela cenário → tratamento → impacto no usuário/consumidor. Todo `IF … THEN` da spec aparece aqui com o mecanismo escolhido.
+**Tratamento de erro.** Tabela com colunas cenário, tratamento e impacto no usuário/consumidor. Todo `IF … THEN` da spec aparece aqui com o mecanismo escolhido.
 
 ---
 
@@ -111,7 +111,7 @@ Gatilhos no design: biblioteca nova, API desconhecida, feature sensível a perfo
 
 A decisão mais cara de um design é criar uma **unidade de deploy** nova — serviço, aplicação, biblioteca versionada. Três conceitos distintos: **módulo** (fronteira de código e de dependência: assembly, pacote de linguagem, namespace com interface pública), **pacote de release** (o que é versionado e publicado: biblioteca, imagem) e **unidade de deploy** (o que sobe e cai junto: aplicação, serviço, worker). Um módulo pode viver dentro de um deployável sem release próprio; uma biblioteca é pacote de release sem deploy próprio. Toda discussão de arquitetura diz de qual dos três está falando.
 
-**Ordem de preferência, sempre nesta sequência:** mudança dentro do deployável existente → novo módulo dentro do deployável existente (monólito modular) → novo deployável. Um sistema complexo que funciona evoluiu de um simples que funcionava; decompor em serviços depois é decisão de deploy e é reversível, nascer distribuído não é.
+**Ordem de preferência, sempre nesta sequência:** primeiro, mudança dentro do deployável existente; depois, novo módulo dentro do deployável existente (monólito modular); só então, novo deployável. Um sistema complexo que funciona evoluiu de um simples que funcionava; decompor em serviços depois é decisão de deploy e é reversível, nascer distribuído não é.
 
 **O que justifica um novo deployável** é a demanda de **deploy independente**, e ela vem tipicamente de: time separado com ritmo próprio; stack diferente com time próprio em torno dela; estrangulamento de legado (time do novo e time do velho precisam de esteiras separadas). **O que raramente justifica sozinho:** escalabilidade (réplicas do monólito escalam; separar processos troca desempenho por escala), resiliência (réplicas + load balancer entregam), "separação de responsabilidades" (módulo entrega). Isolamento de falha, perfil de carga incompatível e exigência regulatória ou de segurança são justificativas legítimas quando nomeiam a falha, a carga ou a norma e mostram por que réplica ou módulo não bastam. Comunicação interprocesso custa serialização, transporte, desserialização e I/O; o ganho tem de ser expressivo o suficiente para pagar isso *e* a gestão de contrato.
 
@@ -119,12 +119,12 @@ A decisão mais cara de um design é criar uma **unidade de deploy** nova — se
 
 **Código compartilhado (REP — Reuse/Release Equivalence).** Toda unidade de reuso entre módulos é uma unidade de release, com o custo acima. Antes de propor biblioteca compartilhada, responda em ordem:
 
-1. **Estabilidade e divergência:** muda com frequência e os consumidores podem evoluir em ritmos diferentes? → replicar costuma custar menos que versionar. Muda com frequência mas os consumidores não podem divergir (regra regulatória, contrato de mensagem)? → biblioteca versionada com dono e release disciplinado. É estável? → candidata a biblioteca versionada. O critério é o custo de release contra o custo de divergência, não a frequência sozinha.
+1. **Estabilidade e divergência:** se muda com frequência e os consumidores podem evoluir em ritmos diferentes, replicar costuma custar menos que versionar. Se muda com frequência mas os consumidores não podem divergir (regra regulatória, contrato de mensagem), a resposta é biblioteca versionada com dono e release disciplinado. Se é estável, é candidata a biblioteca versionada. O critério é o custo de release contra o custo de divergência, não a frequência sozinha.
 2. **Já existe?** Problema estável e comum já tem pacote público mantido; use-o em vez de assumir versionamento interno.
 3. **Dono e escopo:** um time dono; sem lógica de negócio em biblioteca de plataforma (plataforma fornece ecossistema — CI/CD, observabilidade, mensageria —, não regra). Regra de negócio compartilhada é sinal de contexto mal delimitado ou de time de subsistema complicado, não de "utils".
 4. `Utils`/`Shared`/`Common` como destino é o cheiro da regra não aplicada: acoplamento aferente alto, dependência que arrasta 300 coisas para validar um CPF.
 
-**Fronteiras entre módulos.** Sem ciclo entre unidades que têm fronteira própria (pacote ↔ pacote, módulo ↔ módulo, serviço ↔ serviço), porque ciclo entre fronteiras impede release e teste isolados. Relação bidirecional entre classes do mesmo módulo ou agregado (navegabilidade no modelo de domínio, entidade ↔ coleção filha) é legítima enquanto fica dentro da fronteira; vira defeito quando a atravessa. Módulo é consumido **só pela sua interface pública**; nunca instancie classe interna de outro módulo. Coesão é o critério: quanto mais um módulo se resolve com o que tem dentro, melhor a fronteira.
+**Fronteiras entre módulos.** Sem ciclo entre unidades que têm fronteira própria (entre pacotes, entre módulos, entre serviços), porque ciclo entre fronteiras impede release e teste isolados. Relação bidirecional entre classes do mesmo módulo ou agregado (navegabilidade no modelo de domínio, entidade e coleção filha) é legítima enquanto fica dentro da fronteira; vira defeito quando a atravessa. Módulo é consumido **só pela sua interface pública**; nunca instancie classe interna de outro módulo. Coesão é o critério: quanto mais um módulo se resolve com o que tem dentro, melhor a fronteira.
 
 Tudo nesta seção é preferência com justificativa, não veto: decisão `AD-NNN` ativa, risco concreto nomeado ou restrição do projeto vence a preferência, e o Rastreamento de complexidade registra o porquê.
 

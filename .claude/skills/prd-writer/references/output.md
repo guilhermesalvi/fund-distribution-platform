@@ -28,13 +28,13 @@ Comece plano; migre para pasta no primeiro anexo ou decisão a persistir, porque
 
 Só `NNNN-*.md` e `NNNN-*/prd.md` são PRDs para o linter e para o índice cruzado; `decisions.md`, `assets/` e `README.md` são anexos e não entram.
 
-Sem repositório: mesmo layout sob o diretório de saída que o ambiente indica (pergunte ou anuncie; não presuma um path fixo); contador parte de `0001` (ou `0000` quando há visão geral).
+Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica (pergunte ou anuncie; não presuma um path fixo). O contador parte de `0001`, ou de `0000` quando há visão geral.
 
 ## Header
 
-Comentário de tier na primeira linha, antes do `#`, ASCII minúsculo independente do idioma, porque é tag de máquina consumida pelo linter: `<!-- prd-tier: simples | media | complexa | overview -->`. Valor conforme writing.md, Tier; `overview` é o PRD 0000. Seção esperada do tier que a convenção do projeto dispensa: `<!-- prd-tier: complexa | omit: aceitacao,dependencias -->` silencia só o WARN daquelas seções (chaves na docstring do `lint_prd.py`); HARD nunca é silenciado.
+O comentário de tier vai na primeira linha, antes do `#`, em ASCII minúsculo independente do idioma, porque é tag de máquina consumida pelo linter: `<!-- prd-tier: simples | media | complexa | overview -->`. O valor segue writing.md, Tier; `overview` é o PRD 0000. Quando a convenção do projeto dispensa uma seção esperada do tier, declare-a no comentário: `<!-- prd-tier: complexa | omit: aceitacao,dependencias -->` silencia só o WARN daquelas seções (chaves na docstring do `lint_prd.py`). HARD nunca é silenciado.
 
-Tabela de duas colunas logo abaixo do `#`, sem linha de cabeçalho semântica. Hard break por dois espaços é frágil (editores aparam trailing whitespace) e lista é enumeração de itens peer; metadata é par chave-valor e a tabela transmite isso.
+A metadata vai em tabela de duas colunas logo abaixo do `#`, sem linha de cabeçalho semântica. Hard break por dois espaços é frágil (editores aparam trailing whitespace) e lista é enumeração de itens peer; metadata é par chave-valor, e a tabela transmite isso.
 
 ```
 <!-- prd-tier: complexa -->

@@ -19,8 +19,8 @@ PDF, docx, decks, atas, briefs e PRDs antigos são ricos e não autoritativos.
 - Extraia sinais antes de perguntar: problema, evidência, usuário-alvo, direção, métricas, restrições.
 - Inferência do discovery é `[PREMISSA]` derivada do documento. `[FATO]` só para fonte autoritativa: regulação oficial, política formalizada, decisão registrada.
 - Sintetize, não reformate: reorganização cosmética produz PRD bonito e falso.
-- PRD antigo: determine se é (a) reverse PRD para incremento, (b) update que substitui, (c) inspiração. Pergunte se ambíguo.
-- Fontes conflitantes → `[LACUNA]` e pedido de reconciliação. Não escolha um lado em silêncio.
+- Diante de PRD antigo, determine se ele é (a) reverse PRD para incremento, (b) update que substitui ou (c) inspiração. Pergunte se ambíguo.
+- Fontes conflitantes viram `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
 
 ## Ontologia a partir de transcrições
 
@@ -49,7 +49,7 @@ Termos e exemplos que não estão na transcrição não entram nas tabelas; a se
 
 "Problema + solução" sem usuário-alvo não é rico: é solution-first desancorado. Trate como sinais parciais e peça o usuário primeiro.
 
-Usuário recusa discovery ("só escreve") → gere com `[LACUNA]` extensivo, Confiança `Baixa` com nota "múltiplas premissas não validadas", e ao fim liste o que precisa ser preenchido antes de qualquer próximo passo.
+Quando o usuário recusa discovery ("só escreve"), gere com `[LACUNA]` extensivo e Confiança `Baixa` com a nota "múltiplas premissas não validadas"; ao fim, liste o que precisa ser preenchido antes de qualquer próximo passo.
 
 ## Modo reverse PRD
 
@@ -59,7 +59,7 @@ Documentar o que já foi construído ("PRD do módulo X", "documente o que const
 - Derive intenção a partir de resultados (o que usuário ou negócio ganha), não de operações.
 - Intenção inferida é `[PREMISSA]`, marcada pesadamente: intenção engenheirada em reverso é frágil.
 - Comportamento sem justificativa de negócio identificável é `[LACUNA]`: expõe feature órfã (peso morto ou valor escondido).
-- Múltiplas intenções plausíveis para o mesmo comportamento → Perguntas em Aberto. Não fabrique coerência inexistente.
+- Múltiplas intenções plausíveis para o mesmo comportamento vão para Perguntas em Aberto. Não fabrique coerência inexistente.
 
 ## Modo plataforma, infra, SDK ou API como produto
 

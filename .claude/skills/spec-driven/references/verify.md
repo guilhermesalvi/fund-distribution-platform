@@ -24,13 +24,13 @@ Passada read-only sobre os artefatos que a mudança tem: `spec.md`, `design.md` 
 
 Severidade e efeito: tabela em modes.md, Estados (CRITICAL e HIGH bloqueiam Execute; HIGH admite aceite explícito do usuário registrado no relatório; MEDIUM segue com task de correção ou aceite; LOW é nota).
 
-Saída: tabela `ID | Categoria | Severidade | Localização | Resumo | Recomendação`, cobertura (% de requisitos com ≥1 task) e veredito: "Analyze limpo" é nenhum CRITICAL e nenhum HIGH sem aceite; a correção é sempre no artefato-fonte (SKILL.md, refine o contexto).
+Saída: tabela `ID | Categoria | Severidade | Localização | Resumo | Recomendação`, cobertura (% de requisitos com no mínimo uma task) e veredito: "Analyze limpo" é nenhum CRITICAL e nenhum HIGH sem aceite; a correção é sempre no artefato-fonte (SKILL.md, refine o contexto).
 
 ---
 
 ## 2. Verifier (pós-implementação)
 
-**Autor ≠ verificador, na medida do harness.** Com sub-agente disponível, o orquestrador dispara um Verifier **fresco** com este arquivo, a spec, o design (ou o plano inline), o `tasks.md` e o intervalo de diff — sem o histórico da implementação. Sem sub-agente: passada *fresh-eyes* própria depois da última task, começando por re-derivar a cobertura do zero, sem consultar as tabelas de evidência que o autor produziu; a independência é parcial e o `validation.md` diz isso no campo Verificador. O que não muda entre os dois: evidência ou zero, dois eixos, relatório.
+**Autor e verificador são pessoas (ou agentes) distintos, na medida do harness.** Com sub-agente disponível, o orquestrador dispara um Verifier **fresco** com este arquivo, a spec, o design (ou o plano inline), o `tasks.md` e o intervalo de diff — sem o histórico da implementação. Sem sub-agente, o autor faz uma passada *fresh-eyes* própria depois da última task, começando por re-derivar a cobertura do zero, sem consultar as tabelas de evidência que produziu. Nesse caso a independência é parcial e o `validation.md` diz isso no campo Verificador. O que não muda entre os dois: evidência ou zero, dois eixos, relatório.
 
 O Verifier é **read-only** sobre a árvore real: devolve o relatório ao orquestrador, que persiste `validation.md`, roda o linter e atualiza spec e tasks; o Verifier não grava nada na mudança. Mutações do sensor acontecem em scratch (worktree temporário ou cópia), nunca na árvore de trabalho.
 
@@ -51,32 +51,32 @@ Para **cada requisito** no delta (ADDED e MODIFIED) e cada edge case:
 Regras:
 
 - Onde a spec define resultado preciso, a assertion tem de mirar **exatamente** esse resultado — não basta existir assertion.
-- Onde a spec **não** define resultado preciso → ⚠️ lacuna de precisão, reportada; nunca aprovada em silêncio.
+- Onde a spec **não** define resultado preciso, o resultado é lacuna de precisão, reportada com a marca de ressalva; nunca aprovada em silêncio.
 - **Evidência ou zero:** sem `file:line`, o requisito conta como não coberto. Procure antes de declarar ausência; mostre a busca.
 - Requisitos REMOVED: confirme que o comportamento removido não existe mais (teste antigo removido com justificativa; nenhum caminho vivo).
 
 ### 2.3 Gate Build
 
-Rode o gate Build de `tasks.md` (ou do plano inline). Exit ≠ 0 → **FAIL**, pare. Gate não executável (SDK ausente, dependência indisponível) → **BLOCKED** com motivo, não FAIL. Registre comando, total, passados, falhos, pulados (cada skip justificado, em linha `Pulados:`) e exit. Teste pulado ou não executado não é evidência; PASS com zero testes executados não existe. Contagem de testes vs antes da mudança: diminuiu → investigue (só REMOVED com razão justifica); assertion enfraquecida → regressão potencial.
+Rode o gate Build de `tasks.md` (ou do plano inline). Exit diferente de 0 é **FAIL**: pare. Gate não executável (SDK ausente, dependência indisponível) é **BLOCKED** com motivo, não FAIL. Registre comando, total, passados, falhos, pulados (cada skip justificado, em linha `Pulados:`) e exit. Teste pulado ou não executado não é evidência; PASS com zero testes executados não existe. Compare a contagem de testes com a de antes da mudança: se diminuiu, investigue (só REMOVED com razão justifica). Assertion enfraquecida é regressão potencial.
 
 ### 2.4 Sensor de discriminação (tier ≥ Large; Medium quando há risco nomeado)
 
 Prova empírica de que os testes detectam regressão. Em scratch, nunca na árvore real; o isolamento vem da construção (diretório separado), não de "restaurar" depois:
 
 1. **Scratch com a versão verificada.** `git worktree add <tmp> HEAD` e, sobre ele, aplique o que ainda não está commitado e pertence à mudança (`git diff <base> > patch` + untracked copiados, ou `git stash create` só para gerar o patch, sem `stash push`); HEAD sozinho não contém implementação não commitada. Sem Git: cópia integral do diretório do projeto. Copiar só os arquivos modificados não produz ambiente executável.
-2. **Baseline verde no scratch.** Rode o gate da mudança no scratch antes de mutar; falhou → sensor **BLOCKED** (ambiente), não "sobrevivente".
-3. **Injete uma falha de comportamento por vez** no código novo, proporcional ao risco: inverta condição (`>` → `>=`), troque retorno (status errado, zero em vez de calculado), off-by-one, remova efeito colateral exigido pela spec (publicação de evento, gravação).
+2. **Baseline verde no scratch.** Rode o gate da mudança no scratch antes de mutar. Se falhou, o sensor é **BLOCKED** (ambiente), não "sobrevivente".
+3. **Injete uma falha de comportamento por vez** no código novo, proporcional ao risco: inverta condição (troque `>` por `>=`), troque retorno (status errado, zero em vez de calculado), off-by-one, remova efeito colateral exigido pela spec (publicação de evento, gravação).
 4. **Rode os testes** que cobrem o código mutado (gate Quick/Full) no scratch.
 5. **Classifique:** *morto* (testes falham por assertion), *sobrevivente* (todos passam), *inválido* (não compila ou falha por erro de ambiente: não conta como morto, escolha outra mutação), *falha de infraestrutura* (runner não executa: BLOCKED).
 6. **Restaure a baseline entre rodadas** no scratch (`git checkout -- .` no worktree, ou recopie) e repita para a próxima mutação.
 7. **Descarte o scratch** (`git worktree remove --force` / apague a cópia). A árvore real nunca foi tocada; não há nada a restaurar nela. **Proibido:** `git stash push` na árvore real.
-8. **Mutante sobrevive** → os testes não discriminam aquele comportamento → task de correção; PASS não é possível com sobrevivente.
+8. **Mutante sobrevivente** significa que os testes não discriminam aquele comportamento e gera task de correção; PASS não é possível com sobrevivente.
 
-Profundidade: default 1–3 mutações no código de maior risco; caminho crítico (dinheiro, liquidação, auth, integridade) → ≥5 mutações cobrindo ramificações, ou tooling de mutação da linguagem quando disponível (Stryker.NET, mutmut, cargo-mutants). Registre o resultado por mutação com a classificação acima.
+Profundidade: default 1–3 mutações no código de maior risco. Caminho crítico (dinheiro, liquidação, auth, integridade) exige no mínimo 5 mutações cobrindo ramificações, ou tooling de mutação da linguagem quando disponível (Stryker.NET, mutmut, cargo-mutants). Registre o resultado por mutação com a classificação acima.
 
 ### 2.5 Eixo 2 — aderência ao design
 
-O eixo 1 prova que a spec foi atendida; não prova que a estrutura é a projetada. Organização é ter lugar definido para as coisas (o design); bagunça é coisa fora do lugar combinado — e só existe dívida técnica onde existe lugar definido, senão é improviso. Este eixo detecta a bagunça enquanto é pequena. Checklist com observação obrigatória em ⚠️ e ❌:
+O eixo 1 prova que a spec foi atendida; não prova que a estrutura é a projetada. Organização é ter lugar definido para as coisas (o design); bagunça é coisa fora do lugar combinado — e só existe dívida técnica onde existe lugar definido, senão é improviso. Este eixo detecta a bagunça enquanto é pequena. Checklist, com observação obrigatória nos itens com ressalva ou não atendidos:
 
 | Item | Status | Observação |
 |---|---|---|
@@ -91,7 +91,7 @@ O eixo 1 prova que a spec foi atendida; não prova que a estrutura é a projetad
 | Lacunas do design resolvidas explicitamente e registradas | | |
 | Desvios (`SPEC_DEVIATION`) justificados e listados | | |
 
-⚠️ = desvio justificado; ❌ = não atendido. Ambos exigem observação. ❌ → gap.
+Na tabela, a marca de ressalva (`⚠️`) significa desvio justificado e a marca de reprovado (`❌`) significa item não atendido. As duas exigem observação. Item não atendido vira gap.
 
 ### 2.6 Qualidade de código (por arquivo do diff)
 
@@ -101,13 +101,21 @@ Nada além do pedido; sem abstração de uso único; sem flexibilidade não soli
 
 Só quando há comportamento user-facing em que julgamento humano importa (fluxo de UI, interação, visual). Backend e infra: checks automatizados bastam.
 
-Um teste por vez: `Teste N: [nome] — Esperado: [observável] — Funciona? Descreva o que vê.` Interprete: "sim/passa/próximo" ✅; "pula/não dá para testar" ⏭️; qualquer outra coisa ❌ com o texto verbatim. Severidade inferida (nunca perguntada): crash/erro/quebrado → Bloqueante; não funciona/errado/falta → Maior; lento/estranho/pequeno → Menor; cor/fonte/alinhamento → Cosmético; incerto → Maior.
+Um teste por vez: `Teste N: [nome] — Esperado: [observável] — Funciona? Descreva o que vê.` Interprete a resposta pela tabela:
+
+| Resposta | Marca |
+|---|---|
+| "sim", "passa", "próximo" | ✅ |
+| "pula", "não dá para testar" | ⏭️ |
+| qualquer outra coisa | ❌, com o texto verbatim |
+
+A severidade é inferida, nunca perguntada: crash, erro ou quebrado é Bloqueante; não funciona, errado ou falta é Maior; lento, estranho ou pequeno é Menor; cor, fonte ou alinhamento é Cosmético; incerto é Maior.
 
 ### 2.8 Relatório e ciclo de correção
 
-Produza o relatório no formato de `validation.md` (template abaixo) e devolva-o ao orquestrador com o resumo compacto. Veredito é uma palavra: **PASS**, **FAIL** ou **BLOCKED** (verificação incompleta: gate não executável, dependência indisponível, sensor impossível), com `**Motivo do bloqueio:**` quando BLOCKED; modes.md, Estados. Gaps viram **tasks de correção** `TCn` no formato do `tasks.md` (tasks.md, Task atômica), em `## Tasks de correção` do `tasks.md` ou, sem ele, do plano inline, executadas pelo ciclo do Execute, seguidas de re-verificação. **Máximo 3 iterações** corrigir → re-verificar; persistindo, escale ao usuário em vez de continuar o loop. Mesmo limite para diagnóstico de uma issue de UAT.
+Produza o relatório no formato de `validation.md` (template abaixo) e devolva-o ao orquestrador com o resumo compacto. Veredito é uma palavra: **PASS**, **FAIL** ou **BLOCKED** (verificação incompleta: gate não executável, dependência indisponível, sensor impossível), com `**Motivo do bloqueio:**` quando BLOCKED; modes.md, Estados. Gaps viram **tasks de correção** `TCn` no formato do `tasks.md` (tasks.md, Task atômica), em `## Tasks de correção` do `tasks.md` ou, sem ele, do plano inline, executadas pelo ciclo do Execute, seguidas de re-verificação. **Máximo 3 iterações** de corrigir e re-verificar; persistindo, escale ao usuário em vez de continuar o loop. Mesmo limite para diagnóstico de uma issue de UAT.
 
-O orquestrador persiste `changes/NNNN-<feature>/validation.md` e roda `lint_validation.py <validation.md> --spec <spec.md>` (`--uat` em Complex user-facing; `--evidence-of-run <log>` quando o log do gate foi capturado). Exit ≠ 0 → a mudança não fecha: HARD corrige o relatório; FAIL roteia os gaps; BLOCKED escala o bloqueio. O linter confere a consistência do relatório, não prova que os comandos rodaram: quem rodou é quem responde por isso.
+O orquestrador persiste `changes/NNNN-<feature>/validation.md` e roda `lint_validation.py <validation.md> --spec <spec.md>` (`--uat` em Complex user-facing; `--evidence-of-run <log>` quando o log do gate foi capturado). Com exit diferente de 0, a mudança não fecha: HARD corrige o relatório; FAIL roteia os gaps; BLOCKED escala o bloqueio. O linter confere a consistência do relatório, não prova que os comandos rodaram: quem rodou é quem responde por isso.
 
 Depois do PASS e com os desvios resolvidos (modes.md, Desvios): o orquestrador atualiza `Status` da Rastreabilidade para `Verified` e segue para o arquivamento ([memory.md](memory.md)).
 
@@ -164,7 +172,7 @@ Baseline no scratch: verde.
 1 de 3
 ```
 
-**Resumo compacto no chat:** veredito na primeira linha; N/N requisitos com evidência; gate; sensor (mortos/sobreviventes); aderência (itens ⚠️/❌); gaps ordenados; próximo passo.
+**Resumo compacto no chat:** veredito na primeira linha; N/N requisitos com evidência; gate; sensor (mortos/sobreviventes); aderência (itens com ressalva ou não atendidos); gaps ordenados; próximo passo.
 
 ---
 

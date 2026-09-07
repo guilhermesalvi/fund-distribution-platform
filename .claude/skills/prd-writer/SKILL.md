@@ -9,7 +9,7 @@ Este arquivo é o roteador: quando usar, o workflow e onde vive cada regra. Regr
 
 ## Quando usar
 
-Feature, produto digital ou iniciativa tecnológica com impacto funcional para um usuário. Iniciativa técnica com impacto funcional real → PRD focado no impacto, não na implementação.
+Feature, produto digital ou iniciativa tecnológica com impacto funcional para um usuário. Iniciativa técnica com impacto funcional real ganha PRD focado no impacto, não na implementação.
 
 | Não é PRD | Artefato certo |
 |---|---|
@@ -22,8 +22,8 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 
 ## Princípios
 
-- Precedência: pedido do usuário na sessão > convenção do repositório (CLAUDE.md, rules, docs existentes) > instruções pessoais do usuário (CLAUDE.md global) > defaults desta skill, para layout, seções, idioma e forma. A skill preenche o que ninguém fixou e diz quando um default foi substituído; seção default dispensada por convenção do projeto é declarada no comentário de tier (`omit:`, output.md, Header), e o linter só silencia WARN, nunca HARD.
-- Idioma do artefato pela mesma precedência; sem nada fixado, o do input, português quando ambíguo. Identificadores de domínio, IDs de requisito e tags de máquina não se traduzem. O idioma da conversa não muda o do artefato.
+- **Precedência.** Quando pedido, convenção e defaults discordam sobre layout, seções, idioma ou forma, vale nesta ordem: primeiro o que o usuário pediu nesta sessão; depois a convenção do repositório (CLAUDE.md, rules, docs existentes); depois as instruções pessoais do usuário (CLAUDE.md global); por último os defaults desta skill. A skill preenche só o que ninguém fixou e avisa quando substituiu um default. Seção que o tier espera mas a convenção do projeto dispensa é declarada no comentário de tier com `omit:` (output.md, Header); isso silencia só o WARN do linter, nunca um HARD.
+- O idioma do artefato segue a mesma precedência. Quando ninguém fixou, é o idioma do input; se o input é ambíguo, português. Identificadores de domínio, IDs de requisito e tags de máquina não se traduzem. O idioma da conversa não muda o do artefato.
 - Falha é entregável: linter com HARD que você não consegue resolver, parser Mermaid indisponível ou fonte que falta se apresentam como relatório de falha com o que falta, nunca como PRD aprovável.
 - Rascunho útil vale mais que certeza forjada: Status, Confiança, `[LACUNA]`, `[PREMISSA-CRÍTICA]` e Perguntas em Aberto dizem juntos o que falta (output.md, Header; writing.md, Convenção de confiança). Não resolva incerteza artificialmente para entregar.
 - O PRD vive no problem space. O capability test (writing.md, Lente DDD) é o critério de qualidade mais importante desta skill.
@@ -45,13 +45,13 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 
 Leia a referência inteira antes de executar o passo; as regras dependem umas das outras.
 
-**Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA-CRÍTICA]` a validar, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Mudança que afeta várias seções ou a narrativa → regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) → ajuste pontual. Em dúvida, regenere.
+**Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA-CRÍTICA]` a validar, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Quando a mudança afeta várias seções ou a narrativa, regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Quando a mudança é localizada (um FR, um threshold, uma frase, uma `[LACUNA]`), faça o ajuste pontual. Em dúvida, regenere.
 
 O Status só passa a Aprovado por decisão do usuário (output.md, Header); é o estado que a skill `spec-driven` consome para abrir uma spec. PRD que já tem spec derivada em `/docs/specs`: antes de alterar ou remover um FR, liste as specs que citam os IDs tocados (writing.md, IDs).
 
 ## Scripts
 
-Ficam em `scripts/` no diretório desta skill; rode-os a partir dele (`python`, ou `python3` onde `python` não existir; o parser Mermaid exige Node). `/docs/prd` nos exemplos é caminho relativo à raiz do repositório: passe o caminho real. Semântica de HARD e WARN em review.md, Passada mecânica.
+Ficam em `scripts/` no diretório desta skill e são executados a partir dele, com `python` (ou `python3` onde `python` não existir); o parser Mermaid exige Node. `/docs/prd` nos exemplos é caminho relativo à raiz do repositório: passe o caminho real. Semântica de HARD e WARN em review.md, Passada mecânica.
 
 | Comando | Quando |
 |---|---|

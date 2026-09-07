@@ -418,6 +418,29 @@ Invariantes preservados: RSV-07 e RSV-09. Objetivo: extrair a policy de lote.
         self.assertHard(out, "task referencia RSV-99, que o delta de refactor nao lista como invariante")
         self.assertIn("invariante RSV-09 do refactor sem task", out)
 
+    def test_refactor_invariants_use_the_delta_prefix_only(self):
+        refactor = self.write("refactor.md", """\
+<!-- sdd: spec-delta | tier: medium | capability: reservation-book/reservation-lifecycle | no-behavior-change -->
+# Refactor
+
+| | |
+|---|---|
+| **Status** | Rascunho |
+| **Prefixo** | RSV |
+
+## Contexto (Context)
+
+Invariantes preservados: RSV-07 [BOOK-03] e RSV-09 [BOOK-04], hash SHA-256 conforme ADR-0001.
+""")
+        tasks = [task("T1", req="RSV-07"), task("T2", deps="T1", req="RSV-09"), task("T3", deps="T2", req="RSV-07")]
+        code, out = self.run_lint(doc(tasks), spec=refactor)
+        self.assertNoHard(out)
+        self.assertNotIn("invariante BOOK-03", out)
+        self.assertNotIn("invariante ADR-0001", out)
+        tasks = [task("T1", req="BOOK-03"), task("T2", deps="T1", req="RSV-09"), task("T3", deps="T2", req="RSV-07")]
+        code, out = self.run_lint(doc(tasks), spec=refactor)
+        self.assertHard(out, "task referencia BOOK-03, que o delta de refactor nao lista como invariante")
+
     def test_missing_tasks_file_is_usage_not_traceback(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
@@ -560,6 +583,18 @@ class CheckCommitTest(unittest.TestCase):
             with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
                 code = check_commit.main(argv)
             self.assertEqual(code, 2, (argv, err.getvalue()))
+            self.assertNotIn("Traceback", err.getvalue())
+
+    def test_file_not_utf8_is_usage(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "COMMIT_EDITMSG")
+            with open(path, "wb") as f:
+                f.write(b"fix: corrigir acentua\xe7\xe3o\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                code = check_commit.main(["check_commit.py", "--file", path])
+            self.assertEqual(code, 2)
+            self.assertIn("UTF-8", err.getvalue())
             self.assertNotIn("Traceback", err.getvalue())
 
     def test_violation_exit_1_distinct_from_usage(self):

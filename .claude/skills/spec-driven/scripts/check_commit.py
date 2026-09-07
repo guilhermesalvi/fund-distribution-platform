@@ -170,6 +170,9 @@ def main(argv):
         except OSError as e:
             print(f"check_commit: nao foi possivel ler '{args.file}': {e.strerror or e}", file=sys.stderr)
             return 2
+        except UnicodeDecodeError as e:
+            print(f"check_commit: '{args.file}' nao esta em UTF-8: {e}", file=sys.stderr)
+            return 2
     errs = check(msg, max_len=args.max_len, no_scope=args.no_scope, no_bang=args.no_bang,
                  single_line=args.single_line, lowercase=args.lowercase)
     for e in errs:

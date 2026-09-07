@@ -31,9 +31,11 @@ Checa:
   plano aprovado;
 - todo ID de requisito ADDED/MODIFIED da spec mapeado a >=1 task (HARD).
   Delta de refactor (`no-behavior-change` no comentario de maquina, sem
-  ADDED/MODIFIED): a fonte de cobertura sao os IDs da spec viva citados no
-  delta como invariantes (modes.md, Refactor); task que cita ID fora dessa
-  lista e HARD, invariante sem task e WARN;
+  ADDED/MODIFIED): a fonte de cobertura sao os IDs citados no delta com o
+  prefixo do header (`| **Prefixo** | RSV |`; sem header, todo ID X-nn),
+  fora de bloco de codigo - os invariantes da spec viva (modes.md, Refactor).
+  IDs de PRD ou de ADR citados no Contexto nao entram. Task que cita ID fora
+  dessa lista e HARD, invariante sem task e WARN;
 - `Tests`: lista separada por virgula de unit|integration|e2e, ou `none`
   sozinho; `none` (WARN); `Tests: none` exige `Gate: build`; Tests com
   integration/e2e com `Gate: quick` (HARD, incoerente);
@@ -241,10 +243,18 @@ def spec_ids(path):
     refactor = bool(flags) and "no-behavior-change" in flags
     if refactor:
         mask = fenced_line_mask(lines)
+        prefix = None
+        for l in lines[:40]:
+            pm = re.match(r"^\|\s*\*{0,2}\s*(?:prefixo|prefix)\s*\*{0,2}\s*\|\s*`?([A-Z][A-Z0-9]{1,9})`?", l, re.IGNORECASE)
+            if pm:
+                prefix = pm.group(1).upper()
+                break
         for i, l in enumerate(lines):
             if i == mc_idx or mask[i]:
                 continue
-            ids["INVARIANT"].update(REQ_ID.findall(l))
+            for rid in REQ_ID.findall(l):
+                if prefix is None or rid.startswith(prefix + "-"):
+                    ids["INVARIANT"].add(rid)
         has_delta = True
     for kind in ids:
         sec = find_section(lines, (f"{kind} Requirements",))

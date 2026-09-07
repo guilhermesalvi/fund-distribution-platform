@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS)
@@ -166,6 +167,53 @@ class CreateTests(SensorScratchBase):
         self.assertEqual(code, 0, err)
         with open(os.path.join(self.scratch, "logo.png"), "rb") as f:
             self.assertEqual(f.read(), b"\x89PNG\r\n\x1a\n\x00\x02\x03")
+
+    def test_create_from_subdirectory_keeps_root_relative_paths(self):
+        write(self.repo, "src/Calc.cs", "modified\n")
+        write(self.repo, "src/New.cs", "untracked\n")
+        write(self.repo, "tests/Deep/NewTests.cs", "untracked deep\n")
+        cwd = os.getcwd()
+        os.chdir(os.path.join(self.repo, "src"))
+        try:
+            code, out, err = run(["create", self.scratch, "--path", "src", "--path", "tests"])
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(read(self.scratch, "src/Calc.cs"), "modified\n")
+        self.assertEqual(read(self.scratch, "src/New.cs"), "untracked\n")
+        self.assertEqual(read(self.scratch, "tests/Deep/NewTests.cs"), "untracked deep\n")
+        self.assertFalse(os.path.exists(os.path.join(self.scratch, "src", "src")))
+        self.assert_scratch_clean()
+
+    def test_refuses_scratch_inside_repo(self):
+        before = self.real_state()
+        code, _, err = run(["create", os.path.join(self.repo, "scratch"), "--repo", self.repo])
+        self.assertEqual(code, 1)
+        self.assertIn("dentro do repositorio", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(self.real_state(), before)
+        self.assertNotIn("scratch", git(["worktree", "list"], self.repo))
+
+    def test_refuses_existing_file_as_dir(self):
+        write(self.tmp, "afile", "x\n")
+        code, _, err = run(["create", os.path.join(self.tmp, "afile"), "--repo", self.repo])
+        self.assertEqual(code, 1)
+        self.assertIn("nao e diretorio", err)
+        self.assertNotIn("Traceback", err)
+
+    def test_missing_repo_is_error_not_traceback(self):
+        code, _, err = run(["create", self.scratch, "--repo", os.path.join(self.tmp, "nope")])
+        self.assertEqual(code, 1)
+        self.assertNotIn("Traceback", err)
+
+    def test_populate_failure_removes_worktree(self):
+        write(self.repo, "src/Calc.cs", "modified\n")
+        with unittest.mock.patch.object(sensor_scratch, "populate", side_effect=OSError("disk full")):
+            code, _, err = run(["create", self.scratch, "--repo", self.repo])
+        self.assertEqual(code, 1)
+        self.assertIn("worktree removido", err)
+        self.assertNotIn("scratch", git(["worktree", "list"], self.repo))
+        self.assertFalse(os.path.exists(self.scratch))
 
     def test_refuses_non_empty_dir(self):
         os.makedirs(self.scratch)

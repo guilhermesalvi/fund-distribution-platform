@@ -20,8 +20,13 @@ create
     scratch (HEAD destacado, `--no-verify`, autor fixo) como snapshot; o hash
     do snapshot fica em `<git-dir-do-worktree>/sdd-snapshot` e e impresso.
     Arquivo ignorado (bin/, obj/, node_modules/) nao e copiado: o gate no
-    scratch precisa se bastar (restore, build). Recusa <dir> existente e nao
-    vazio.
+    scratch precisa se bastar (restore, build).
+    `--repo` pode ser qualquer diretorio dentro do repositorio (default: cwd);
+    a raiz vem de `git rev-parse --show-toplevel`, e `--path` e relativo a
+    essa raiz. <dir> precisa ficar FORA da arvore do repositorio (ex.: /tmp):
+    dentro dela o worktree apareceria como untracked na arvore real. Recusa
+    <dir> existente e nao vazio, ou que nao seja diretorio. Se a montagem
+    falhar depois do `worktree add`, o worktree e removido antes de sair.
 
 reset
     `git reset --hard <snapshot>` + `git clean -fd` no scratch: volta a versao
@@ -94,26 +99,39 @@ def read_snapshot(scratch):
     return sha
 
 
-def untracked_files(repo, paths):
-    out = git(["ls-files", "--others", "--exclude-standard", "-z", "--"] + paths, cwd=repo, binary=True)
+def untracked_files(root, paths):
+    """Untracked nao ignorados, relativos a raiz (cwd=root garante isso)."""
+    out = git(["ls-files", "--others", "--exclude-standard", "-z", "--"] + paths, cwd=root, binary=True)
     return [p.decode("utf-8", "surrogateescape") for p in out.split(b"\0") if p]
 
 
-def create(scratch, repo, paths):
-    repo = os.path.abspath(repo)
-    scratch = os.path.abspath(scratch)
-    git(["rev-parse", "--verify", "HEAD"], cwd=repo)
-    if os.path.exists(scratch) and os.listdir(scratch):
-        raise GitError(f"{scratch} existe e nao esta vazio; escolha outro diretorio ou rode `remove`")
-    git(["worktree", "add", "--detach", "--quiet", scratch, "HEAD"], cwd=repo)
-    patch = git(["diff", "HEAD", "--binary", "--"] + paths, cwd=repo, binary=True)
+def repo_root(repo):
+    if not os.path.isdir(repo):
+        raise GitError(f"{repo} nao existe ou nao e diretorio")
+    return os.path.realpath(git(["rev-parse", "--show-toplevel"], cwd=repo).strip())
+
+
+def inside(path, root):
+    real = os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
+    try:
+        return os.path.commonpath([real, root]) == root
+    except ValueError:  # drives diferentes no Windows
+        return False
+
+
+def populate(scratch, root, paths):
+    """Aplica as alteracoes pendentes sobre o worktree e commita o snapshot.
+    Retorna (sha, applied, copied)."""
+    patch = git(["diff", "HEAD", "--binary", "--"] + paths, cwd=root, binary=True)
     applied = []
     if patch.strip():
         git(["apply", "--whitespace=nowarn", "-"], cwd=scratch, input_bytes=patch)
-        applied = [l for l in git(["diff", "HEAD", "--name-status", "--"] + paths, cwd=repo).splitlines() if l]
+        applied = [l for l in git(["diff", "HEAD", "--name-status", "--"] + paths, cwd=root).splitlines() if l]
     copied = []
-    for rel in untracked_files(repo, paths):
-        src = os.path.join(repo, rel)
+    for rel in untracked_files(root, paths):
+        src = os.path.join(root, rel)
+        if not os.path.isfile(src):
+            continue  # entrada que nao e arquivo regular (ex.: repositorio aninhado)
         dst = os.path.join(scratch, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copy2(src, dst)
@@ -126,6 +144,27 @@ def create(scratch, repo, paths):
     status = git(["status", "--porcelain"], cwd=scratch)
     if status.strip():
         raise GitError(f"scratch sujo logo apos o snapshot:\n{status}")
+    return sha, applied, copied
+
+
+def create(scratch, repo, paths):
+    root = repo_root(repo)
+    scratch = os.path.abspath(scratch)
+    git(["rev-parse", "--verify", "HEAD"], cwd=root)
+    if os.path.exists(scratch):
+        if not os.path.isdir(scratch):
+            raise GitError(f"{scratch} existe e nao e diretorio")
+        if os.listdir(scratch):
+            raise GitError(f"{scratch} existe e nao esta vazio; escolha outro diretorio ou rode `remove`")
+    if inside(scratch, root):
+        raise GitError(f"{scratch} fica dentro do repositorio {root}; use um diretorio fora da arvore (ex.: /tmp)")
+    git(["worktree", "add", "--detach", "--quiet", scratch, "HEAD"], cwd=root)
+    try:
+        sha, applied, copied = populate(scratch, root, paths)
+    except (GitError, OSError) as e:
+        subprocess.run(["git", "worktree", "remove", "--force", scratch], cwd=root, capture_output=True)
+        subprocess.run(["git", "worktree", "prune"], cwd=root, capture_output=True)
+        raise GitError(f"falha ao montar o scratch; worktree removido. Causa: {e}")
     print(f"scratch: {scratch}")
     print(f"snapshot: {sha}")
     print(f"tracked changes applied: {len(applied)}")
@@ -169,9 +208,10 @@ def build_parser():
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("create", help="worktree em HEAD + alteracoes pendentes, commitadas como snapshot")
     c.add_argument("dir", help="diretorio novo (ou vazio) para o scratch")
-    c.add_argument("--repo", default=".", metavar="PATH", help="repositorio de origem (default: cwd)")
+    c.add_argument("--repo", default=".", metavar="PATH",
+                   help="diretorio dentro do repositorio de origem (default: cwd); a raiz e inferida")
     c.add_argument("--path", action="append", default=[], metavar="P",
-                   help="restringe as alteracoes pendentes a este path (repetivel)")
+                   help="restringe as alteracoes pendentes a este path, relativo a raiz (repetivel)")
     r = sub.add_parser("reset", help="volta o scratch ao snapshot")
     r.add_argument("dir")
     d = sub.add_parser("remove", help="remove o worktree do scratch")

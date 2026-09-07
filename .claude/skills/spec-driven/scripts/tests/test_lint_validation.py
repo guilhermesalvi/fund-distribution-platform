@@ -385,6 +385,35 @@ class LintValidationTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
 
 
+class SourceAndReasonTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def lint(self, content, *args):
+        path = os.path.join(self.tmp.name, "validation.md")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = lint_validation.main(["lint_validation.py", path, *args])
+        return code, out.getvalue()
+
+    def test_missing_spec_file_is_incomplete(self):
+        code, out = self.lint(doc(), "--spec", os.path.join(self.tmp.name, "nope.md"))
+        self.assertEqual(code, 1)
+        self.assertTrue(any(l.startswith("HARD") and "INCOMPLETO" in l and "nao encontrado" in l
+                            for l in out.splitlines()), out)
+
+    def test_template_comment_is_not_a_blocking_reason(self):
+        code, out = self.lint(doc(verdict="BLOCKED", extra_head="**Motivo do bloqueio:** <!-- só quando BLOCKED -->"))
+        self.assertEqual(code, 1)
+        self.assertTrue(any(l.startswith("HARD") and "Motivo do bloqueio" in l and "vazio" in l
+                            for l in out.splitlines()), out)
+
+
 class UsageTests(unittest.TestCase):
     def test_missing_file_is_usage_not_traceback(self):
         err = io.StringIO()

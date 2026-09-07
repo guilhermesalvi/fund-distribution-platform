@@ -36,7 +36,8 @@ Conteudo obrigatorio: tabela de conformidade com >=1 linha, 4 colunas por
 linha, IDs de requisito unicos, linha PASS com file:line; Gate Build com
 Comando, Total, Passou, Falhou, Pulou; Pulou > 0 exige justificativa na secao
 (texto apos os numeros ou linha `Pulados:`). Com `--spec`, todo ID
-ADDED/MODIFIED do delta aparece na tabela; sem `--spec`, WARN.
+ADDED/MODIFIED do delta aparece na tabela; sem `--spec`, WARN; `--spec`
+apontando para arquivo inexistente e HARD INCOMPLETO (fonte ausente).
 
 Proporcional ao tier: sensor de discriminacao obrigatorio em large/complex
 (HARD), WARN em medium, nao exigido em small. Aderencia ao design: >=4 itens
@@ -147,9 +148,10 @@ def check_verdict(rep, lines):
     for i, l in enumerate(lines):
         m = BLOCK_REASON_RE.match(l)
         if m:
-            reason = m.group(2).strip()
+            # comentario HTML do template (`<!-- so quando BLOCKED -->`) nao e motivo
+            reason = re.sub(r"<!--.*?-->", "", m.group(2)).strip()
             if verdict == "BLOCKED" and not reason:
-                rep.hard("**Motivo do bloqueio:** vazio", i + 1)
+                rep.hard("**Motivo do bloqueio:** vazio (comentario do template nao conta como motivo)", i + 1)
             break
     if verdict == "BLOCKED" and reason is None:
         rep.hard("veredito BLOCKED exige linha '**Motivo do bloqueio:** <motivo>'")
@@ -355,7 +357,8 @@ def main(argv):
     spec_ids = None
     if opts["spec"]:
         if not os.path.exists(opts["spec"]):
-            rep.warn(f"--spec {opts['spec']} nao encontrado; cobertura de requisitos nao verificada contra a spec")
+            rep.incomplete(f"validacao incompleta: --spec {opts['spec']} nao encontrado; "
+                           "cobertura de requisitos nao verificada contra a spec")
         else:
             spec_ids = spec_delta_ids(opts["spec"])
     else:

@@ -456,7 +456,7 @@ class Doc:
                     if sm:
                         self.superseded_by = int(sm.group(1))
                 if first in SUPERSEDES_FIELDS:
-                    self.supersedes = [int(n) for n in re.findall(r"\b(\d{4})\b", val)]
+                    self.supersedes = sorted({int(n) for n in re.findall(r"\b(\d{4})\b", val)})
             # linha de prefixo entre a tabela e a primeira secao
             for i in range(self.header_end, len(self.lines)):
                 if self.lines[i].startswith("## "):

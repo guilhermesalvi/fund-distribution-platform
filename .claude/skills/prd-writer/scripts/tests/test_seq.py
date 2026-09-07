@@ -137,6 +137,22 @@ class SupersedesTests(SeqCase):
         self.write("0002-onb-x.md", header(extra="| **Substitui** | 0001 |\n"))
         rc, out = self.run_seq("check", self.root)
         self.assertEqual(rc, 0, out)
+        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)  # substituicao declarada: sem aviso de slug
+
+    def test_reciprocal_chain_of_three_has_no_slug_warn(self):
+        self.write("0001-onb-x.md", header(status="Substituído por 0002"))
+        self.write("0002-onb-x.md", header(status="Substituído por 0003", extra="| **Substitui** | 0001 |\n"))
+        self.write("0003-onb-x.md", header(extra="| **Substitui** | 0002 |\n"))
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)
+
+    def test_substitui_cell_with_prefix_or_link_reads_like_lint_prd(self):
+        self.write("0001-onb-x.md", header(status="Substituído por 0002"))
+        self.write("0002-onb-x.md", header(extra="| **Substitui** | PRD [0001](0001-onb-x.md) |\n"))
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)
 
     def test_orphan_backlink(self):
         self.write("0001-onb-x.md", header(status="Substituído por 0009"))

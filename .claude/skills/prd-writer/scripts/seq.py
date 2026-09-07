@@ -77,11 +77,13 @@ NOT_PRD = ("README.md", "assets", "archive")
 # forma do header (output.md, Header): a linha de tabela `| **Substitui** |
 # NNNN |` e o Status `Substituido por NNNN`. Prosa com o verbo "substitui"
 # seguido de um numero nao e marcador (mesma leitura do lint_prd.py).
+# O numero e o primeiro token de 4 digitos da celula (`0001`, `PRD 0001`,
+# `[0001](0001-x.md)`), a mesma leitura do lint_prd.py.
 SUPERSEDES = re.compile(
-    r"^\|\s*\*{0,2}\s*(supersedes|substitui|replaces)\s*\*{0,2}\s*\|\s*\*{0,2}\s*(\d{4})\b",
+    r"^\|\s*\*{0,2}\s*(supersedes|substitui|replaces)\s*\*{0,2}\s*\|[^|\d]*?\b(\d{4})\b",
     re.IGNORECASE | re.MULTILINE)
 SUPERSEDED_BY = re.compile(
-    r"^\|\s*\*{0,2}\s*status\s*\*{0,2}\s*\|\s*\*{0,2}\s*"
+    r"^\|\s*\*{0,2}\s*status\s*\*{0,2}\s*\|[^|]*?"
     r"(superseded[- ]by|substitu[ií]d[oa] por|replaced by)\s+(\d{4})\b",
     re.IGNORECASE | re.MULTILINE)
 HEADER_SCAN_LINES = 40
@@ -325,7 +327,8 @@ def check_supersedes(entries, by_num, rep):
     for slug, group in by_slug.items():
         if len(group) > 1:
             nums = sorted(g.number for g in group)
-            marked = all(any((a, b) in linked for b in nums if b != a) for a in nums)
+            # cada par consecutivo da cadeia esta ligado em alguma direcao
+            marked = all((a, b) in linked or (b, a) in linked for a, b in zip(nums, nums[1:]))
             if not marked:
                 rep.warn(f"slug '{slug}' em mais de um numero "
                          f"({', '.join(f'{n:0{WIDTH}d}' for n in nums)}) - "

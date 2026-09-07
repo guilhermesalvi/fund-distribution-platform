@@ -79,7 +79,7 @@ Cada task carrega:
 | **Pronto quando** | Critérios binários e testáveis: pelo menos um de comportamento (o resultado que a spec define), mais o comando de gate; contagem esperada de testes é sinal auxiliar, não prova de cobertura. Task pronta = critérios atendidos, validação significativa e nenhum bloqueador; exit 0 sozinho não basta |
 | **Tests** | Lista dos tipos realmente necessários, separados por vírgula (`unit`, `unit, integration`, `e2e`), ou `none` sozinho — da matriz; integration/e2e não substituem unit exigido pela camada |
 | **Gate** | `quick` / `full` / `build` — dos comandos; todo valor usado tem linha em Comandos de Gate; integration/e2e exige `full`; `none` exige `build` |
-| **Commit** | Mensagem planejada no formato do repositório (Conventional Commits por default); pode ficar vazia quando commits não estão autorizados (WARN); presente, é validada na forma pelo `check_commit.py` (`--no-scope`, `--max-len N`), que o `lint_tasks.py` chama com `--commit-no-scope` / `--commit-max-len N` para aplicar a regra do repositório. Mensagem planejada, commit autorizado e commit executado são estados distintos (SKILL.md, Contrato, item 3) |
+| **Commit** | Mensagem planejada no formato do repositório (Conventional Commits por default); pode ficar vazia quando commits não estão autorizados (WARN); presente, é validada na forma pelo `check_commit.py` (`--max-len N`, `--no-scope`, `--no-bang`, `--single-line`, `--lowercase`), que o `lint_tasks.py` chama com as mesmas opções prefixadas por `commit-` (`--commit-max-len N`, `--commit-no-scope`, `--commit-no-bang`, `--commit-single-line`, `--commit-lowercase`) para aplicar a política do repositório. Mensagem planejada, commit autorizado e commit executado são estados distintos (SKILL.md, Contrato, item 3) |
 
 **Sem placeholders** (SKILL.md, Redação). Específicos de tasks: "escrever testes para o acima" sem dizer quais; "similar à T3" (repita, porque o executor pode ler fora de ordem); referência a tipo ou método não definido em nenhuma task nem no design.
 
@@ -97,7 +97,7 @@ Dependência aponta só para trás ou para a mesma fase; dentro da fase, a ordem
 
 ## 5. Validar antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>` (SKILL.md, Gates), com `--commit-max-len` e `--commit-no-scope` quando o repositório restringe mais que Conventional Commits. Requisito da spec sem task é código que não vai existir.
+Rode `lint_tasks.py <tasks.md> --spec <spec.md>` (SKILL.md, Gates), com as opções de prefixo `commit-` (`--commit-max-len`, `--commit-no-scope`, `--commit-no-bang`, `--commit-single-line`, `--commit-lowercase`) que a política de commit do repositório exigir além de Conventional Commits. Requisito da spec sem task é código que não vai existir.
 
 Depois, as três checagens de julgamento, com as tabelas incluídas no output:
 

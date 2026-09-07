@@ -4,7 +4,8 @@ lint_tasks.py - verificacao deterministica de um tasks.md gerado pela skill
 spec-driven.
 
     Uso:  python3 <skill-dir>/scripts/lint_tasks.py <tasks.md> --spec <spec.md>
-              [--commit-max-len N] [--commit-no-scope]
+              [--commit-max-len N] [--commit-no-scope] [--commit-no-bang]
+              [--commit-single-line] [--commit-lowercase]
 
 `--spec` e obrigatorio: sem ele a cobertura requisito -> task nao e verificada
 e o linter reporta HARD "validacao incompleta". So spec-delta com secao
@@ -36,8 +37,10 @@ Checa:
   exit 0 nao prova regra de negocio;
 - `Commit`: mensagem planejada validada com check_commit.check(); vazia
   (WARN: planejamento pode nao ter commit autorizado); presente e invalida
-  (HARD). `--commit-max-len` e `--commit-no-scope` repassam a regra mais
-  estrita do repositorio. Mensagem planejada, commit autorizado e commit
+  (HARD). `--commit-max-len`, `--commit-no-scope`, `--commit-no-bang`,
+  `--commit-single-line` e `--commit-lowercase` repassam a regra mais estrita
+  do repositorio, uma a uma, as opcoes homonimas do check_commit.py (mesma
+  politica nos dois lugares). Mensagem planejada, commit autorizado e commit
   executado sao estados distintos: aqui so a forma da mensagem e validada;
 - placeholders proibidos (HARD).
 
@@ -447,6 +450,15 @@ def parse_args(argv):
             i += 2
         elif a == "--commit-no-scope":
             commit_opts["no_scope"] = True
+            i += 1
+        elif a == "--commit-no-bang":
+            commit_opts["no_bang"] = True
+            i += 1
+        elif a == "--commit-single-line":
+            commit_opts["single_line"] = True
+            i += 1
+        elif a == "--commit-lowercase":
+            commit_opts["lowercase"] = True
             i += 1
         else:
             usage(f"opcao desconhecida: {a}\n\n{__doc__}")

@@ -11,8 +11,10 @@ valido, Data AAAA-MM-DD real, Autor sem placeholder, Prefixo igual ao dos IDs),
 secoes por tier (heading casa por igualdade com os aliases PT/EN, nunca por
 prefixo; secao duplicada e HARD), requisitos EARS-shaped (SHALL), IDs bem
 formados e unicos, linha com aparencia de requisito nao reconhecida (HARD),
-MODIFIED com `Antes:` e apontando para ID existente na spec viva, REMOVED com
-razao, RENAMED nao suportado (IDs sao estaveis), assumptions sem default vazio,
+MODIFIED com `Antes:` apontando para ID existente na spec viva e igual ao texto
+vigente nela (HARD se divergente: alteracao concorrente, mesma regra do
+apply_delta.py), REMOVED com razao, RENAMED nao suportado (IDs sao estaveis),
+assumptions sem default vazio,
 tags de confianca, [PREMISSA-CRÍTICA] com "se falsa", rastreabilidade cobrindo
 todo ID, cenarios herdados do PRD, Ponto de Maior Fragilidade, placeholders,
 hedging e meta-narracao. Tudo que esta dentro de bloco de codigo (``` ou ~~~)
@@ -41,6 +43,8 @@ ou em code span ficam fora.
 
 Saida: HARD (exit 1) / WARN (nao afeta exit). HARD com prefixo INCOMPLETO
 marca validacao incompleta (fonte ausente, git indisponivel), nao violacao.
+Exit 2 em erro de uso: opcao desconhecida, `--living` sem valor, arquivo
+ausente ou fora de UTF-8.
 
 NAO julga semantica. Linter verde = esqueleto conforme, nao spec boa.
 """
@@ -151,6 +155,20 @@ def check_ears(rep, reqs, label):
             if v in low:
                 rep.warn(f"{label} {rid}: termo vago '{v}' - use valor concreto", i + 1)
                 break
+
+
+def living_texts(path):
+    """{id: texto} dos requisitos da spec viva (fora de bloco de codigo)."""
+    out = {}
+    lines = read_lines(path)
+    mask = fenced_line_mask(lines)
+    for i, l in enumerate(lines):
+        if mask[i]:
+            continue
+        m = REQ_LINE.match(l)
+        if m and m.group(1) not in out:
+            out[m.group(1)] = m.group(2).strip()
+    return out
 
 
 def living_ids(path):
@@ -299,27 +317,39 @@ def lint_inherited_scenarios(rep, lines, mask, defs, prefixes, spec_ids, spec_pr
                     rep.hard(f"cenario herdado '{name[:40]}': requisito EARS {rid} nao existe no delta", i + 1)
 
 
-MD_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)")  # destino em <...> (com espacos) ou sem espacos
 URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
 CODE_SPAN = re.compile(r"`[^`]*`")
 
 
+def link_target(m):
+    """Destino de um match de MD_LINK: forma <...> ou forma simples."""
+    return m.group(1) if m.group(1) is not None else m.group(2)
+
+
 def check_local_links(rep, lines, mask, doc_path):
-    """Todo link Markdown para arquivo local resolve; URL e ancora pura ficam
-    fora. HARD com a linha e o path onde o destino foi procurado."""
+    """Todo link Markdown para arquivo local resolve: destino relativo so a
+    partir da pasta do documento (como o GitHub renderiza), `/docs/...` a
+    partir da raiz do repositorio. URL e ancora pura ficam fora. HARD com a
+    linha e o path onde o destino foi procurado."""
+    base = os.path.dirname(os.path.abspath(doc_path))
     for i, l in enumerate(lines):
         if mask[i]:
             continue
         for m in MD_LINK.finditer(CODE_SPAN.sub("", l)):
-            raw = m.group(1)
-            if URL_SCHEME.match(raw) or raw.startswith("#"):
+            raw = link_target(m).strip()
+            if not raw or URL_SCHEME.match(raw) or raw.startswith("#"):
                 continue
             target = raw.split("#", 1)[0]
             if not target:
                 continue
-            if resolve_local_path(doc_path, target) is None:
-                base = os.path.dirname(os.path.abspath(doc_path))
-                expected = os.path.normpath(os.path.join(base, target)) if not target.startswith("/") else target
+            if target.startswith("/"):
+                ok = resolve_local_path(doc_path, target) is not None
+                expected = f"<raiz do repositorio>{target}"
+            else:
+                expected = os.path.normpath(os.path.join(base, target))
+                ok = os.path.exists(expected)
+            if not ok:
                 rep.hard(f"link '{raw}' nao resolve (procurado em {expected}); "
                          "conte os `../` a partir da pasta deste arquivo", i + 1)
 
@@ -510,21 +540,30 @@ def lint_delta(rep, lines, mask, fields, flags, living, header):
     for i, rid, text in delta["REMOVED"]:
         if not re.search(r"raz[aã]o|reason", text, re.IGNORECASE):
             rep.hard(f"REMOVED {rid}: sem razao registrada", i + 1)
+    before_of = {}
     for i, rid, _ in delta["MODIFIED"]:
         nxt = lines[i + 1] if i + 1 < len(lines) else ""
-        if not re.search(r"^\s*(antes|before)\s*:", nxt, re.IGNORECASE):
+        bm = re.match(r"^\s*(?:antes|before)\s*:\s*(.*?)\s*$", nxt, re.IGNORECASE)
+        if not bm:
             rep.hard(f"MODIFIED {rid}: sem linha 'Antes:' com o texto anterior", i + 1)
+        else:
+            before_of[rid] = (i, bm.group(1))
 
     changed = {rid: i for kind in ("ADDED", "MODIFIED") for i, rid, _ in delta[kind]}
     spec_prefix = check_prefix(rep, header, changed, "delta")
 
     # IDs contra a spec viva
     if living and os.path.exists(living):
+        ltexts = living_texts(living)
         lids = living_ids(living)
         for kind in ("MODIFIED", "REMOVED"):
             for i, rid, _ in delta[kind]:
                 if rid not in lids:
                     rep.hard(f"{kind} {rid}: ID nao existe na spec viva {living}", i + 1)
+        for rid, (i, before) in before_of.items():
+            if rid in ltexts and ltexts[rid] != before:
+                rep.hard(f"MODIFIED {rid}: 'Antes:' difere do texto vigente na spec viva "
+                         f"(alteracao concorrente; revise o delta). Vigente: {ltexts[rid][:60]}", i + 2)
         for i, rid, _ in delta["ADDED"]:
             if rid in lids:
                 rep.hard(f"ADDED {rid}: ID ja existe na spec viva - use MODIFIED ou ID novo", i + 1)
@@ -611,18 +650,42 @@ def print_prd_rev(path):
     return 0
 
 
-def main(argv):
-    if len(argv) < 2:
+def parse_args(argv):
+    """Retorna ('print', prd_path) ou ('lint', spec_path, living). Opcao
+    desconhecida, valor ausente ou arquivo faltando e erro de uso (exit 2)."""
+    args = list(argv[1:])
+    if not args:
         usage(__doc__)
-    if "--print-prd-rev" in argv:
-        pos = argv.index("--print-prd-rev")
-        if pos + 1 >= len(argv):
+    if "--print-prd-rev" in args:
+        pos = args.index("--print-prd-rev")
+        if pos + 1 >= len(args) or args[pos + 1].startswith("--"):
             usage("--print-prd-rev exige o path do PRD")
-        return print_prd_rev(argv[pos + 1])
-    path = argv[1]
-    living = None
-    if "--living" in argv:
-        living = argv[argv.index("--living") + 1]
+        if len(args) != 2:
+            usage("--print-prd-rev nao se combina com outras opcoes")
+        return "print", args[pos + 1], None
+    if args[0].startswith("--"):
+        usage(f"primeiro argumento deve ser o path da spec, veio '{args[0]}'\n\n{__doc__}")
+    path, living, i = args[0], None, 1
+    while i < len(args):
+        a = args[i]
+        if a == "--living":
+            if i + 1 >= len(args) or args[i + 1].startswith("--"):
+                usage("--living exige o path da spec viva")
+            living = args[i + 1]
+            i += 2
+        else:
+            usage(f"opcao desconhecida: {a}\n\n{__doc__}")
+    return "lint", path, living
+
+
+def main(argv):
+    mode, path, living = parse_args(argv)
+    if mode == "print":
+        if not os.path.isfile(path):
+            usage(f"PRD nao encontrado: {path}")
+        return print_prd_rev(path)
+    if living is not None and not os.path.isfile(living):
+        usage(f"spec viva nao encontrada: {living}")
     lines = read_lines(path)
     mask = fenced_line_mask(lines)
     rep = Report("lint_spec")
@@ -633,7 +696,7 @@ def main(argv):
                  "ou <!-- sdd: spec | capability: ... -->", (mc_idx or 0) + 1)
         return rep.emit(path)
     kind = fields["sdd"].lower()
-    is_delta = kind in ("spec-delta", "delta")
+    is_delta = kind == "spec-delta"
     header = lint_header(rep, lines, mc_idx, is_delta)
 
     spec_ids, spec_prefix = set(), None

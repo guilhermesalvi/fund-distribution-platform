@@ -26,7 +26,7 @@ A spec de uma **capability** é viva e sobrevive às mudanças. Cada mudança é
 - **Mudanças são numeradas:** o diretório é `changes/NNNN-<feature-slug>/`, com contador global de 4 dígitos em `/docs/specs/`. Aloque o número com `seq.py next /docs/specs --slug <feature-slug>` antes de criar o diretório, nunca lendo o diretório. O número é ordem de chegada e referência curta. Quem sobrescreve quem é dito pelo delta (`MODIFIED`/`REMOVED` apontando para o ID), nunca pelo número. Contador global colide em PR paralelo: renumere o branch que entra depois, e `seq.py check` acusa a duplicata.
 - A `spec.md` viva **não** é numerada (uma por capability) e **não é reescrita por geração**. O modelo escreve o delta. `apply_delta.py` funde a lista de Requisitos, a Data e o Histórico, que são as regiões do script. Propósito, Glossário e Domain Events são do autor (memory.md, Arquivar).
 - **Crie artefatos sob demanda.** Nunca scaffolde `design.md` ou `tasks.md` vazios. Ausência é o estado correto de fase pulada, e o substituto de cada artefato dispensado está em modes.md. Arquivo vazio mente sobre o processo.
-- Em capability nova, o delta é todo `ADDED` e o arquivamento cria a spec viva. Em refactor puro, o comentário de máquina é `<!-- sdd: spec-delta | no-behavior-change -->` e não há requisito inventado: o Contexto declara o objetivo técnico e os IDs da spec viva que o refactor preserva (modes.md). Em spike descartável, o comentário de máquina leva `spec-first` e não há arquivamento. O fechamento do spike é registrar no Contexto o que se aprendeu e o Status `Descartado` ou `Promovido a <mudança>`; diga ao usuário, porque é exceção. Em modo código, o primeiro delta é a baseline (`changes/NNNN-baseline/`), todo `ADDED`, arquivado com `apply_delta.py apply --create`.
+- Em capability nova, o delta é todo `ADDED` e o arquivamento cria a spec viva. Em refactor puro, o comentário de máquina é `<!-- sdd: spec-delta | tier: <tier> | capability: <domínio>/<capability> | no-behavior-change -->` (a forma completa de Layout, com o flag no fim) e não há requisito inventado: o Contexto declara o objetivo técnico e os IDs da spec viva que o refactor preserva (modes.md). Em spike descartável, o comentário de máquina leva `spec-first` e não há arquivamento. O fechamento do spike é registrar no Contexto o que se aprendeu e o Status `Descartado` ou `Promovido a <mudança>`; diga ao usuário, porque é exceção. Em modo código, o primeiro delta é a baseline (`changes/NNNN-baseline/`), todo `ADDED`, arquivado com `apply_delta.py apply --create`.
 - Não versione por timestamp no nome, porque git é o controle de versão. A spec viva mantém `## Histórico de revisões` ao fim, com uma linha por mudança e todos os IDs afetados explícitos (`+RSV-07, +RSV-08, ~RSV-03, -RSV-05`). ID com `-` fica aposentado para sempre.
 - Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica (SKILL.md, Gates, Caminhos).
 
@@ -146,7 +146,7 @@ A `spec.md` viva tem os requisitos vigentes; a `changes/NNNN-<feature>/spec.md` 
 | `## MODIFIED Requirements` | Requisito existente com texto novo | Reproduza o ID e o **texto completo** novo (não diff); uma linha `Antes:` com o texto anterior |
 | `## REMOVED Requirements` | ID + uma linha de razão | Requisito removido precisa de razão registrada; o ID fica aposentado e o teste correspondente é removido na task com a mesma razão |
 
-IDs são estáveis: não existe RENAMED. Mudar o significado é `MODIFIED`; substituir o conceito é `REMOVED` seguido de `ADDED` com ID novo. `MODIFIED`/`REMOVED` apontando para ID inexistente na spec viva, `Antes:` divergente do texto vigente e seção `RENAMED` são `HARD` no linter e no `apply_delta.py`.
+IDs são estáveis: não existe RENAMED. Mudar o significado é `MODIFIED`; substituir o conceito é `REMOVED` seguido de `ADDED` com ID novo. `MODIFIED`/`REMOVED` apontando para ID inexistente na spec viva, `Antes:` divergente do texto vigente (quando a spec viva é encontrada) e seção `RENAMED` são `HARD` no linter e no `apply_delta.py`.
 
 ---
 
@@ -210,7 +210,7 @@ Rótulos em PT; em spec em inglês, use os rótulos EN entre parênteses (o lint
 - [PREMISSA-CRÍTICA] [afirmação]. Se falsa, [consequência para a abordagem]. Validar com [quem/como] antes de Execute.
 
 **Perguntas em aberto:**
-- Blocker antes de Execute: a `[PREMISSA-CRÍTICA]` acima. Dono: produto; resolve com a validação indicada.
+- Blocker antes de Execute: a premissa crítica acima. Dono: produto; resolve com a validação indicada.
 - [pergunta com impacto, dono e critério de resolução; "nenhuma" só quando não há pendência, e nenhuma pode estar no caminho]
 
 ## Histórias (User Stories)

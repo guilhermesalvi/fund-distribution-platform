@@ -385,5 +385,18 @@ class LintValidationTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
 
 
+class UsageTests(unittest.TestCase):
+    def test_missing_file_is_usage_not_traceback(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                code = lint_validation.main(["lint_validation.py", os.path.join(tempfile.gettempdir(), "nope-validation.md")])
+            except SystemExit as e:
+                code = e.code
+        self.assertEqual(code, 2)
+        self.assertIn("arquivo ilegivel", err.getvalue())
+        self.assertNotIn("Traceback", err.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

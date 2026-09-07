@@ -392,6 +392,43 @@ class CommitFieldTest(LintTasksBase):
         self.assertEqual(code, 0)
 
 
+    def test_correction_task_in_map_does_not_diverge_from_plan(self):
+        tasks = [task("T1"), task("T2", deps="T1"), task("T3", deps="T2")]
+        tc = task("TC1", deps="T3").replace("### TC1: Criar coisa TC1", "### TC1: Corrigir coisa")
+        body = doc(tasks, extra="## Mapa de execução\n\n```\nFase 1: T1 → T2\nFase 2: T3\nCorreção: TC1\n```\n\n## Tasks de correção\n\n" + tc)
+        code, out = self.run_lint(body)
+        self.assertNotIn("Mapa de execucao diverge", out)
+        self.assertNoHard(out)
+
+    def test_refactor_delta_serves_as_coverage_source(self):
+        refactor = self.write("refactor.md", """\
+<!-- sdd: spec-delta | tier: medium | capability: reservation-book/reservation-lifecycle | no-behavior-change -->
+# Refactor
+
+## Contexto (Context)
+
+Invariantes preservados: RSV-07 e RSV-09. Objetivo: extrair a policy de lote.
+""")
+        tasks = [task("T1", req="RSV-07"), task("T2", deps="T1", req="RSV-09"), task("T3", deps="T2", req="RSV-07")]
+        code, out = self.run_lint(doc(tasks), spec=refactor)
+        self.assertNotIn("INCOMPLETO", out)
+        self.assertNoHard(out)
+        tasks = [task("T1", req="RSV-07"), task("T2", deps="T1", req="RSV-99"), task("T3", deps="T2", req="RSV-07")]
+        code, out = self.run_lint(doc(tasks), spec=refactor)
+        self.assertHard(out, "task referencia RSV-99, que o delta de refactor nao lista como invariante")
+        self.assertIn("invariante RSV-09 do refactor sem task", out)
+
+    def test_missing_tasks_file_is_usage_not_traceback(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                code = lint_tasks.main(["lint_tasks.py", os.path.join(self.dir, "nope.md"), "--spec", self.spec])
+            except SystemExit as e:
+                code = e.code
+        self.assertEqual(code, 2)
+        self.assertNotIn("Traceback", err)
+
+
 class TemplateRegressionTest(LintTasksBase):
     """O template de references/tasks.md, com T2 minima e tabelas preenchidas,
     linta sem HARD. O plano e o mapa do template citam T3-T5 sem corpo; o

@@ -80,8 +80,15 @@ class Report:
 
 
 def read_lines(path):
-    with open(path, encoding="utf-8") as f:
-        return f.read().splitlines()
+    """Linhas do arquivo em UTF-8 (BOM aceito e removido). Arquivo ausente,
+    ilegivel ou fora de UTF-8 e erro de uso (exit 2), nunca traceback."""
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            return f.read().splitlines()
+    except OSError as e:
+        usage(f"arquivo ilegivel: {path}: {e.strerror or e}")
+    except UnicodeDecodeError as e:
+        usage(f"arquivo nao esta em UTF-8: {path}: {e}")
 
 
 def parse_machine_comment(lines):

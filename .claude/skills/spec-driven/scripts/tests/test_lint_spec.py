@@ -383,6 +383,20 @@ class LocalLinks(Base):
         code, out = self.delta(extra="\nOrigem: [PRD](/docs/prd/0009-missing.md).\n")
         self.assertHard(out, "link '/docs/prd/0009-missing.md' nao resolve")
 
+    def test_relative_link_is_not_resolved_from_repo_root(self):
+        # `docs/prd/...` escrito da pasta da mudanca quebra no GitHub; a raiz so vale com `/`
+        code, out = self.delta(extra="\nOrigem: [PRD 0002](docs/prd/0002-reservation-book.md).\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "link 'docs/prd/0002-reservation-book.md' nao resolve")
+
+    def test_angle_bracket_link_with_space_is_checked(self):
+        os.makedirs(os.path.join(self.root, "docs", "notas"), exist_ok=True)
+        self.write(os.path.join(self.root, "docs", "notas", "ata reuniao.md"), "# Ata\n")
+        code, out = self.delta(extra="\nVeja [ata](<../../../../../notas/ata reuniao.md>) e [x](<../../../../../notas/nao existe.md>).\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "link '../../../../../notas/nao existe.md' nao resolve")
+        self.assertNotIn("ata reuniao.md' nao resolve", out)
+
     def test_url_anchor_code_span_and_fence_are_ignored(self):
         extra = ("\nFontes: [CVM 160](https://example.org/x.pdf), [seção](#contexto), "
                  "`[literal](nao/existe.md)`, <mailto:x@y.z>.\n\n"
@@ -390,6 +404,113 @@ class LocalLinks(Base):
         code, out = self.delta(extra=extra)
         self.assertEqual(code, 0, out)
         self.assertNotIn("nao resolve", out)
+
+
+LIVING_RSV = """<!-- sdd: spec | capability: reservation-book/reservation-lifecycle -->
+# Livro
+
+| | |
+|---|---|
+| **Status** | Vigente |
+| **Data** | 2026-09-05 (última mudança: init) |
+
+## Requisitos (Requirements)
+
+- **RSV-01** — WHEN o operador registra THEN the system SHALL aceitar [BOOK-01]
+- **RSV-03** — WHEN o livro fecha THEN the system SHALL congelar as reservas integrais
+"""
+
+MODIFIED_BLOCK = """## MODIFIED Requirements
+
+- **RSV-03** — WHEN o livro fecha THEN the system SHALL congelar todas as reservas [BOOK-02]
+  Antes: {antes}
+"""
+
+
+class LivingConsistency(Base):
+    """MODIFIED contra a spec viva: `Antes:` tem de ser o texto vigente (mesma
+    regra do apply_delta.py), e `sdd: delta` nao e aceito como sinonimo."""
+
+    def setUp(self):
+        super().setUp()
+        self.living = os.path.join(self.root, "docs", "specs", "reservation-book",
+                                   "reservation-lifecycle", "spec.md")
+        self.write(self.living, LIVING_RSV)
+
+    def modified(self, antes):
+        extra = MODIFIED_BLOCK.format(antes=antes)
+        scenarios = SCENARIOS + "\n| Fechamento (BOOK-02) | RSV-03 |\n"
+        return self.delta(extra=extra, scenarios=scenarios.replace("| Alteracao (BOOK-02) | RSV-02 |\n", ""))
+
+    def test_antes_equal_to_living_passes(self):
+        code, out = self.modified("WHEN o livro fecha THEN the system SHALL congelar as reservas integrais")
+        self.assertNotIn("difere do texto vigente", out)
+
+    def test_antes_divergent_from_living_is_hard(self):
+        code, out = self.modified("WHEN o livro fecha THEN the system SHALL congelar TEXTO QUE NAO E O VIGENTE")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "MODIFIED RSV-03: 'Antes:' difere do texto vigente na spec viva")
+
+
+
+class DeltaKind(Base):
+    def test_delta_alias_is_rejected(self):
+        """`sdd: delta` nao e sinonimo de `sdd: spec-delta`: apply_delta.py so
+        aceita a forma completa, e o linter nao pode aprovar o que o
+        arquivamento rejeita."""
+        code, out = self.delta()
+        self.assertEqual(code, 0, out)
+        text = open(self.spec, encoding="utf-8").read().replace("<!-- sdd: spec-delta |", "<!-- sdd: delta |", 1)
+        self.write(self.spec, text)
+        code, out = run(self.spec)
+        self.assertEqual(code, 1)
+        self.assertHard(out, "sdd: 'delta' nao e spec-delta nem spec")
+
+
+class Usage(Base):
+    def exit_code(self, *argv):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                code = lint_spec.main(["lint_spec.py", *argv])
+            except SystemExit as e:
+                code = e.code
+        return code, err.getvalue()
+
+    def test_living_without_value_is_usage(self):
+        self.delta()
+        code, err = self.exit_code(self.spec, "--living")
+        self.assertEqual(code, 2)
+        self.assertIn("--living exige", err)
+        self.assertNotIn("Traceback", err)
+
+    def test_unknown_option_is_usage(self):
+        self.delta()
+        code, err = self.exit_code(self.spec, "--bogus")
+        self.assertEqual(code, 2)
+        self.assertIn("opcao desconhecida", err)
+
+    def test_missing_file_is_usage_not_traceback(self):
+        code, err = self.exit_code(os.path.join(self.root, "nope.md"))
+        self.assertEqual(code, 2)
+        self.assertIn("arquivo ilegivel", err)
+        self.assertNotIn("Traceback", err)
+
+    def test_non_utf8_file_is_usage(self):
+        with open(self.spec, "wb") as f:
+            f.write(b"<!-- sdd: spec-delta | tier: small | capability: x/y -->\n# T\x97\n")
+        code, err = self.exit_code(self.spec)
+        self.assertEqual(code, 2)
+        self.assertIn("UTF-8", err)
+
+    def test_bom_is_accepted(self):
+        self.delta()
+        with open(self.spec, "rb") as f:
+            raw = f.read()
+        with open(self.spec, "wb") as f:
+            f.write(b"\xef\xbb\xbf" + raw)
+        code, out = run(self.spec)
+        self.assertEqual(code, 0, out)
 
 
 if __name__ == "__main__":

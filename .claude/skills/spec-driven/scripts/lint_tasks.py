@@ -26,9 +26,14 @@ Checa:
   fase anterior/igual que justifique (HARD);
 - plano de execucao nos dois sentidos: task no plano que nao existe e task
   fora do plano (HARD); `## Mapa de execucao`, quando presente, cita o mesmo
-  conjunto de tasks do plano (HARD). Tasks de correcao (TC) ficam fora dessa
-  exigencia porque nascem no Verify, depois do plano aprovado;
-- todo ID de requisito ADDED/MODIFIED da spec mapeado a >=1 task (HARD);
+  conjunto de tasks T do plano (HARD). Tasks de correcao (TC) ficam fora das
+  duas exigencias, no plano e no mapa, porque nascem no Verify, depois do
+  plano aprovado;
+- todo ID de requisito ADDED/MODIFIED da spec mapeado a >=1 task (HARD).
+  Delta de refactor (`no-behavior-change` no comentario de maquina, sem
+  ADDED/MODIFIED): a fonte de cobertura sao os IDs da spec viva citados no
+  delta como invariantes (modes.md, Refactor); task que cita ID fora dessa
+  lista e HARD, invariante sem task e WARN;
 - `Tests`: lista separada por virgula de unit|integration|e2e, ou `none`
   sozinho; `none` (WARN); `Tests: none` exige `Gate: build`; Tests com
   integration/e2e com `Gate: quick` (HARD, incoerente);
@@ -53,8 +58,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, TIERS, Report, find_section, parse_machine_comment,
-    read_lines, scan_placeholders, table_rows, usage,
+    REQ_ID, REQ_LINE, TIERS, Report, fenced_line_mask, find_section,
+    parse_machine_comment, read_lines, scan_placeholders, table_rows, usage,
 )
 import check_commit  # noqa: E402
 
@@ -224,11 +229,23 @@ def check_tables(rep, lines, gates_used):
 
 
 def spec_ids(path):
-    """(ids, has_delta): ids por tipo; has_delta e False quando a spec nao tem
-    secao ADDED/MODIFIED Requirements (nao e spec-delta)."""
+    """(ids, has_delta, refactor): ids por tipo; has_delta e False quando a
+    spec nao tem secao ADDED/MODIFIED Requirements (nao e spec-delta). Com o
+    flag `no-behavior-change` (refactor=True), ids["INVARIANT"] traz os IDs
+    citados no delta fora de bloco de codigo e do comentario de maquina, e
+    has_delta e True."""
     lines = read_lines(path)
-    ids = {"ADDED": set(), "MODIFIED": set(), "REMOVED": set()}
+    ids = {"ADDED": set(), "MODIFIED": set(), "REMOVED": set(), "INVARIANT": set()}
     has_delta = False
+    _, flags, mc_idx = parse_machine_comment(lines)
+    refactor = bool(flags) and "no-behavior-change" in flags
+    if refactor:
+        mask = fenced_line_mask(lines)
+        for i, l in enumerate(lines):
+            if i == mc_idx or mask[i]:
+                continue
+            ids["INVARIANT"].update(REQ_ID.findall(l))
+        has_delta = True
     for kind in ids:
         sec = find_section(lines, (f"{kind} Requirements",))
         if sec:
@@ -238,7 +255,7 @@ def spec_ids(path):
                 m = REQ_LINE.match(lines[i])
                 if m:
                     ids[kind].add(m.group(1))
-    return ids, has_delta
+    return ids, has_delta, refactor
 
 
 def find_cycles(deps):
@@ -343,7 +360,8 @@ def check_plan(rep, tasks, plan_ids, plan_sec, map_ids):
         if tid not in plan_ids:
             rep.hard(f"{tid}: nao aparece no Plano de execucao", tasks[tid]["line"] + 1)
     if map_ids is not None:
-        p, m = set(plan_ids), set(map_ids)
+        p = {t for t in plan_ids if not t.startswith("TC")}
+        m = {t for t in map_ids if not t.startswith("TC")}
         if p != m:
             only_plan = ", ".join(sorted(p - m, key=task_key)) or "-"
             only_map = ", ".join(sorted(m - p, key=task_key)) or "-"
@@ -504,9 +522,14 @@ def main(argv):
     elif not spec or not os.path.exists(spec):
         rep.incomplete(f"validacao incompleta: spec nao encontrada: '{spec}'")
     else:
-        ids, has_delta = spec_ids(spec)
+        ids, has_delta, refactor = spec_ids(spec)
         if not has_delta:
             rep.incomplete(f"validacao incompleta: {spec} sem secao ADDED/MODIFIED Requirements - so spec-delta serve de fonte de cobertura")
+        elif refactor:
+            for rid in sorted(all_req_refs - ids["INVARIANT"]):
+                rep.hard(f"task referencia {rid}, que o delta de refactor nao lista como invariante (modes.md, Refactor)")
+            for rid in sorted(ids["INVARIANT"] - all_req_refs):
+                rep.warn(f"invariante {rid} do refactor sem task que o preserve (teste de characterization)")
         else:
             for rid in sorted(ids["ADDED"] | ids["MODIFIED"]):
                 if rid not in all_req_refs:

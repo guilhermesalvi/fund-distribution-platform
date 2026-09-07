@@ -101,12 +101,17 @@ python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --setup
 Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`):
 
 ```bash
+python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --self-test
 python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests
 python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests
+python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
 python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
+python3 .claude/skills/spec-driven/scripts/seq.py check docs/specs
 python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/changes/<NNNN-slug>/spec.md
 ```
 
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser ausente, PRD não encontrado), nunca sucesso; `WARN` é heurística para julgamento e não afeta o exit. No Verify da spec-driven, o veredito `BLOCKED` marca verificação incompleta por ambiente e não fecha a mudança. Cada script imprime o que checa quando chamado sem argumentos.
+Em pull requests a CI ainda valida cada mensagem de commit com o perfil de [CLAUDE.md](CLAUDE.md).
 
-A CI executa a suíte, o parser Mermaid, os linters sobre `docs/` e, em pull requests, valida cada mensagem de commit contra o perfil de [CLAUDE.md](CLAUDE.md). Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.
+Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente, PRD ou spec viva não encontrados), nunca sucesso, e `lint_mermaid.py` sozinho sai com exit 3 nesse caso; `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). No Verify da spec-driven, o veredito `BLOCKED` marca verificação incompleta por ambiente e não fecha a mudança. Cada script imprime o que checa quando chamado sem argumentos.
+
+A CI executa exatamente esses passos e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

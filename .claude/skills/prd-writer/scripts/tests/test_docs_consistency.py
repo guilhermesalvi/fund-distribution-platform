@@ -69,7 +69,9 @@ def script_flags(path):
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
-CITATION_RE = r"\\b(%s)\\.md, ([^)\\];|]+?)(?=[)\\];]|, [A-Z]|\\. |$)"
+OWN_FILES = "intake|writing|output|review|example"
+SIBLING_FILES = "specify|design|tasks|execute|verify|memory|modes"
+CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 
 def cited_sections(text, files_alt):
@@ -90,8 +92,13 @@ def cited_sections(text, files_alt):
 def section_exists(doc_text, title):
     """Titulo casa com heading (qualquer nivel) ou paragrafo/trecho em negrito,
     por igualdade normalizada ou prefixo; a vírgula separa subtitulo opcional."""
-    want = norm(title.split(",")[0])
-    heads = {norm(h) for h in re.findall(r"^#{1,4}\s+(.+)$", doc_text, re.M)}
+    first = re.sub(r"\s*\(.*$", "", title.split(",")[0]).strip()
+    raw_heads = re.findall(r"^#{1,4}\s+(.+)$", doc_text, re.M)
+    num = re.match(r"^(?:se[cç][aã]o|section)?\s*(\d+(?:\.\d+)*)$", first, re.IGNORECASE)
+    if num:  # citacao por numero de secao: "seção 1", "2.4"
+        return any(re.match(r"^" + re.escape(num.group(1)) + r"(?:[.\s]|$)", h.strip()) for h in raw_heads)
+    want = norm(first)
+    heads = {norm(h) for h in raw_heads}
     bold = {norm(b) for b in re.findall(r"\*\*([^*\n]+)\*\*", doc_text)}
     return any(want == h or h.startswith(want) or want in h for h in heads | bold)
 
@@ -145,8 +152,10 @@ class DocsConsistency(unittest.TestCase):
         """Citacoes `arquivo.md, Titulo` a arquivos desta skill apontam para
         heading ou trecho em negrito existente."""
         own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
+        total = sum(len(cited_sections(read(md), OWN_FILES)) for md in md_files(SKILL))
+        self.assertGreater(total, 0, "nenhuma citacao encontrada: regex de citacao morta")
         for md in md_files(SKILL):
-            for fname, title, line in cited_sections(read(md), "intake|writing|output|review|example"):
+            for fname, title, line in cited_sections(read(md), OWN_FILES):
                 self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente")
                 self.assertTrue(section_exists(own[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
@@ -159,12 +168,12 @@ class DocsConsistency(unittest.TestCase):
         own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
         sib = {os.path.basename(p): read(p) for p in md_files(SIBLING)}
         for md in md_files(SKILL):
-            for fname, title, line in cited_sections(read(md), "specify|design|tasks|execute|verify|memory|modes"):
+            for fname, title, line in cited_sections(read(md), SIBLING_FILES):
                 self.assertIn(fname, sib, f"{md}:{line}: cita {fname} inexistente na spec-driven")
                 self.assertTrue(section_exists(sib[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname} (spec-driven)")
         for md in md_files(SIBLING):
-            for fname, title, line in cited_sections(read(md), "intake|writing|output|review|example"):
+            for fname, title, line in cited_sections(read(md), OWN_FILES):
                 self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente nesta skill")
                 self.assertTrue(section_exists(own[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")

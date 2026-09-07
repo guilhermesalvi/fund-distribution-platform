@@ -64,11 +64,11 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_LINE, Report, find_section, parse_machine_comment,
+    REQ_LINE, Report, find_section, parse_machine_comment, BEFORE_LINE,
 )
 
 ID_RE = r"[A-Z][A-Z0-9]{1,9}-\d{2,}"
-BEFORE = re.compile(r"^\s+(Antes|Before):\s*(.+?)\s*$")
+BEFORE = BEFORE_LINE
 REASON = re.compile(r"^\s*(Raz[ãa]o|Reason)\s*:\s*(.+)$", re.IGNORECASE)
 # Bullet que comeca com algo parecido com ID (bold opcional) mas nao casa
 # REQ_LINE: `- **CHK-2** —`, `- **chk-01** —`, `- CHK-01 — ...`.
@@ -632,7 +632,7 @@ def cmd_check(args):
     _, fields, _, delta, change = parse_delta(rep, args.delta)
     living = resolve_living(args)
     if not os.path.isfile(living):
-        rep.hard(f"spec viva nao encontrada: {living}")
+        rep.incomplete(f"spec viva nao encontrada: {living}")
         return rep.emit(args.delta)
     ldoc = Document.read(living)
     _, reqs, (_, rows) = parse_living(rep, ldoc, fields)
@@ -654,6 +654,14 @@ def cmd_check(args):
     return rep.emit(args.delta)
 
 
+def iso_date(value):
+    """Valor de --date: AAAA-MM-DD de calendario; senao erro de uso (exit 2)."""
+    try:
+        return datetime.date.fromisoformat(value).isoformat()
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"data invalida '{value}'; use AAAA-MM-DD")
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else list(argv)
     if not argv:
@@ -669,7 +677,7 @@ def main(argv=None):
         if name == "apply":
             sp.add_argument("--create", action="store_true",
                             help="capability nova: cria a spec viva a partir do delta")
-            sp.add_argument("--date", help="data do historico (default: hoje)")
+            sp.add_argument("--date", type=iso_date, help="data do historico, AAAA-MM-DD (default: hoje)")
             sp.add_argument("--dry-run", action="store_true",
                             help="imprime o resultado sem escrever")
         sp.set_defaults(fn=fn)

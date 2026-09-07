@@ -43,8 +43,9 @@ ou em code span ficam fora.
 
 Saida: HARD (exit 1) / WARN (nao afeta exit). HARD com prefixo INCOMPLETO
 marca validacao incompleta (fonte ausente, git indisponivel), nao violacao.
-Exit 2 em erro de uso: opcao desconhecida, `--living` sem valor, arquivo
-ausente ou fora de UTF-8.
+Spec viva nao encontrada (via --living ou inferida de changes/../../spec.md)
+com MODIFIED/REMOVED no delta e HARD INCOMPLETO. Exit 2 em erro de uso: opcao
+desconhecida, `--living` sem valor, spec ausente ou fora de UTF-8.
 
 NAO julga semantica. Linter verde = esqueleto conforme, nao spec boa.
 """
@@ -56,7 +57,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, TIERS, Report, check_tags, content_rev, fenced_line_mask,
+    BEFORE_LINE, REQ_ID, REQ_LINE, TIERS, Report, check_tags, content_rev, fenced_line_mask,
     find_section_exact, find_sections_exact, git_blob_rev, iter_headings,
     norm_heading, parse_machine_comment, read_lines, scan_placeholders,
     scan_prose, strip_accents, table_rows, usage,
@@ -206,8 +207,35 @@ def resolve_local_path(doc_path, target):
     return None
 
 
+PRD_FILE = re.compile(r"^\d{4}-[^/\\]+\.md$", re.IGNORECASE)
+PRD_FOLDER = re.compile(r"^\d{4}-[^/\\]+$")
+
+
+def prd_files(root):
+    """PRDs abaixo de root, com a mesma regra do lint_prd.py (prd-writer):
+    `NNNN-*.md` (plano) e `NNNN-*/prd.md` (pasta), na raiz ou em subpasta de
+    dominio; `README.md`, `decisions.md`, `assets/` e o resto de uma pasta de
+    PRD sao anexos e ficam fora do indice."""
+    out = []
+    for dirpath, dirnames, files in os.walk(root):
+        keep = []
+        for d in sorted(dirnames):
+            if d.startswith(".") or d in ("assets", "archive", "node_modules"):
+                continue
+            if PRD_FOLDER.match(d):
+                cand = os.path.join(dirpath, d, "prd.md")
+                if os.path.isfile(cand):
+                    out.append(cand)
+                continue
+            keep.append(d)
+        dirnames[:] = keep
+        out.extend(os.path.join(dirpath, f) for f in sorted(files) if PRD_FILE.match(f))
+    return out
+
+
 def prd_index(prd_path):
-    """(definicoes, prefixos) de todos os .md da pasta de PRDs (ancestral `prd`)."""
+    """(definicoes, prefixos) dos PRDs da pasta de PRDs (ancestral `prd`),
+    com a mesma regra de "o que e PRD" do lint_prd.py."""
     d = os.path.dirname(os.path.abspath(prd_path)) if os.path.isfile(prd_path) else prd_path
     root = d
     cur = d
@@ -220,22 +248,18 @@ def prd_index(prd_path):
             break
         cur = parent
     defs, prefixes = set(), set()
-    for dirpath, dirnames, files in os.walk(root):
-        dirnames[:] = [x for x in dirnames if not x.startswith(".") and x not in ("assets", "node_modules")]
-        for f in files:
-            if not f.endswith(".md") or f.lower() == "readme.md":
+    for path in prd_files(root):
+        plines = read_lines(path)
+        pmask = fenced_line_mask(plines)
+        for i, l in enumerate(plines):
+            if pmask[i]:
                 continue
-            plines = read_lines(os.path.join(dirpath, f))
-            pmask = fenced_line_mask(plines)
-            for i, l in enumerate(plines):
-                if pmask[i]:
-                    continue
-                m = PRD_DEF.match(l)
-                if m:
-                    defs.add(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}")
-                pm = PRD_PREFIX_LINE.match(l)
-                if pm:
-                    prefixes.add(pm.group(1))
+            m = PRD_DEF.match(l)
+            if m:
+                defs.add(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}")
+            pm = PRD_PREFIX_LINE.match(l)
+            if pm:
+                prefixes.add(pm.group(1))
     return defs, prefixes
 
 
@@ -543,11 +567,11 @@ def lint_delta(rep, lines, mask, fields, flags, living, header):
     before_of = {}
     for i, rid, _ in delta["MODIFIED"]:
         nxt = lines[i + 1] if i + 1 < len(lines) else ""
-        bm = re.match(r"^\s*(?:antes|before)\s*:\s*(.*?)\s*$", nxt, re.IGNORECASE)
+        bm = BEFORE_LINE.match(nxt)
         if not bm:
             rep.hard(f"MODIFIED {rid}: sem linha 'Antes:' com o texto anterior", i + 1)
         else:
-            before_of[rid] = (i, bm.group(1))
+            before_of[rid] = (i, bm.group(2))
 
     changed = {rid: i for kind in ("ADDED", "MODIFIED") for i, rid, _ in delta[kind]}
     spec_prefix = check_prefix(rep, header, changed, "delta")
@@ -568,8 +592,8 @@ def lint_delta(rep, lines, mask, fields, flags, living, header):
             if rid in lids:
                 rep.hard(f"ADDED {rid}: ID ja existe na spec viva - use MODIFIED ou ID novo", i + 1)
     elif delta["MODIFIED"] or delta["REMOVED"]:
-        rep.warn("MODIFIED/REMOVED presentes mas spec viva nao encontrada - "
-                 "passe --living para validar IDs")
+        rep.incomplete("spec viva nao encontrada; IDs de MODIFIED/REMOVED e 'Antes:' nao "
+                       "verificados - passe --living com a spec viva da capability")
 
     # rastreabilidade cobre todo ID de ADDED/MODIFIED
     sec = find_section_exact(lines, TRACE_ALIASES, mask=mask)
@@ -684,11 +708,12 @@ def main(argv):
         if not os.path.isfile(path):
             usage(f"PRD nao encontrado: {path}")
         return print_prd_rev(path)
-    if living is not None and not os.path.isfile(living):
-        usage(f"spec viva nao encontrada: {living}")
     lines = read_lines(path)
     mask = fenced_line_mask(lines)
     rep = Report("lint_spec")
+    if living is not None and not os.path.isfile(living):
+        rep.incomplete(f"spec viva nao encontrada: {living}")
+        living = None
 
     fields, flags, mc_idx = parse_machine_comment(lines)
     if fields is None:

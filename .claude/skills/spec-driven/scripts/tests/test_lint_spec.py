@@ -17,6 +17,7 @@ SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS)
 import _common  # noqa: E402
 import lint_spec  # noqa: E402
+import apply_delta  # noqa: E402
 
 PRD = """# PRD do Livro
 
@@ -511,6 +512,80 @@ class Usage(Base):
             f.write(b"\xef\xbb\xbf" + raw)
         code, out = run(self.spec)
         self.assertEqual(code, 0, out)
+
+
+class LivingMissing(Base):
+    def test_modified_without_living_is_incomplete(self):
+        extra = MODIFIED_BLOCK.format(antes="WHEN o livro fecha THEN the system SHALL congelar as reservas integrais")
+        scenarios = SCENARIOS + "\n| Fechamento (BOOK-02) | RSV-03 |\n"
+        code, out = self.delta(extra=extra, scenarios=scenarios)
+        self.assertEqual(code, 1)
+        self.assertHard(out, "INCOMPLETO: spec viva nao encontrada")
+
+    def test_added_only_without_living_passes(self):
+        code, out = self.delta()
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("INCOMPLETO", out)
+
+    def test_explicit_living_path_missing_is_incomplete(self):
+        self.delta()
+        code, out = run(self.spec, "--living", os.path.join(self.root, "nope.md"))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "INCOMPLETO: spec viva nao encontrada")
+
+
+class AntesParityWithApplyDelta(Base):
+    """A mesma linha `Antes:` e lida pelo lint_spec e pelo apply_delta com a
+    mesma regex (_common.BEFORE_LINE): o que um aceita o outro aceita."""
+
+    def setUp(self):
+        super().setUp()
+        self.living = os.path.join(self.root, "docs", "specs", "reservation-book",
+                                   "reservation-lifecycle", "spec.md")
+        self.write(self.living, LIVING_RSV)
+
+    def both(self, antes_line):
+        extra = "## MODIFIED Requirements\n\n- **RSV-03** — WHEN o livro fecha THEN the system SHALL congelar todas as reservas [BOOK-02]\n" + antes_line + "\n"
+        scenarios = SCENARIOS + "\n| Fechamento (BOOK-02) | RSV-03 |\n"
+        code_lint, out_lint = self.delta(extra=extra, scenarios=scenarios)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code_apply = apply_delta.main(["apply", self.spec, "--living", self.living, "--dry-run"])
+        return ("sem linha 'Antes:'" in out_lint), ("sem linha 'Antes:'" in buf.getvalue())
+
+    def test_indented_and_column_zero_and_lowercase_agree(self):
+        text = "WHEN o livro fecha THEN the system SHALL congelar as reservas integrais"
+        for line in ("  Antes: " + text, "Antes: " + text, "  antes: " + text, "  Before: " + text):
+            lint_missing, apply_missing = self.both(line)
+            self.assertEqual(lint_missing, apply_missing, line)
+            self.assertFalse(lint_missing, line)
+
+
+class PromotedStatus(Base):
+    def test_promoted_to_change_is_accepted(self):
+        code, out = self.delta(status="Promovido a 0002-reserva-parcial")
+        self.assertNotIn("Status", " ".join(l for l in out.splitlines() if l.startswith("HARD")))
+
+    def test_promoted_without_target_is_hard(self):
+        code, out = self.delta(status="Promovido")
+        self.assertEqual(code, 1)
+        self.assertTrue(any(l.startswith("HARD") and "Status" in l for l in out.splitlines()), out)
+
+
+class PrdIndexScope(Base):
+    def test_decisions_md_inside_folder_prd_is_not_indexed(self):
+        folder = os.path.join(self.prd_dir, "0003-onboarding")
+        os.makedirs(folder)
+        self.write(os.path.join(folder, "prd.md"), PRD.replace("`BOOK`", "`ONB`").replace("BOOK-", "ONB-"))
+        self.write(os.path.join(folder, "decisions.md"), "# Decisoes\n\nPrefixo dos requisitos: `RSV`.\n\n- **RSV-01 (Must)** — nao e PRD.\n")
+        # RSV e o prefixo da propria spec: se decisions.md entrasse no indice, colidiria (HARD)
+        code, out = self.delta()
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("coincide com prefixo de PRD", out)
+        defs, prefixes = lint_spec.prd_index(self.prd)
+        self.assertNotIn("RSV", prefixes)
+        self.assertIn("ONB", prefixes)
+        self.assertIn("ONB-01", defs)
 
 
 if __name__ == "__main__":

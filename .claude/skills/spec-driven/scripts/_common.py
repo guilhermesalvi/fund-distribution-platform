@@ -20,6 +20,9 @@ for _stream in (sys.stdout, sys.stderr):
 REQ_ID = re.compile(r"\b([A-Z][A-Z0-9]{1,9}-\d{2,})\b")
 REQ_LINE = re.compile(r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9}-\d{2,})\*\*\s*[—\-–:]\s*(.+)$")
 TASK_ID = re.compile(r"\bT(\d+)\b")
+# Linha `Antes:` de um MODIFIED (specify.md, Delta): indentada ou nao, PT ou
+# EN, mesma leitura no lint_spec.py e no apply_delta.py.
+BEFORE_LINE = re.compile(r"^\s*(Antes|Before)\s*:\s*(.+?)\s*$", re.IGNORECASE)
 FILE_LINE = re.compile(r"[\w./\\\-]+\.[A-Za-z0-9]+:\d+")
 
 TIERS = {"small", "medium", "large", "complex"}

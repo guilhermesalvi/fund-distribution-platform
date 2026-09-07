@@ -408,6 +408,29 @@ class ExitCodes(Base):
 
 
 class NoArgsTests(unittest.TestCase):
+    def test_invalid_date_is_usage(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                code = apply_delta.main(["apply", "x.md", "--date", "2026-13-45", "--dry-run"])
+            except SystemExit as e:
+                code = e.code
+        self.assertEqual(code, 2)
+        self.assertIn("data invalida", err.getvalue())
+
+    def test_check_with_missing_living_is_incomplete(self):
+        with tempfile.TemporaryDirectory() as d:
+            change = os.path.join(d, "cap", "changes", "0001-x")
+            os.makedirs(change)
+            delta = os.path.join(change, "spec.md")
+            with open(delta, "w", encoding="utf-8") as f:
+                f.write("<!-- sdd: spec-delta | tier: small | capability: x/cap -->\n# X\n\n## ADDED Requirements\n\n- **AB-01** — The system SHALL x\n")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = apply_delta.main(["check", delta])
+            self.assertEqual(code, 1)
+            self.assertIn("INCOMPLETO: spec viva nao encontrada", out.getvalue())
+
     def test_no_args_prints_docstring_and_exits_2(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):

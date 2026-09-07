@@ -11,6 +11,25 @@
     <File Path="docs/prd/0002-reservation-book-reservation-lifecycle.md" />
     <File Path="docs/prd/0003-allocation-book-processing.md" />
   </Folder>
+  <Folder Name="/docs/specs/" />
+  <Folder Name="/docs/specs/allocation/" />
+  <Folder Name="/docs/specs/allocation/book-processing/" />
+  <Folder Name="/docs/specs/allocation/book-processing/changes/" />
+  <Folder Name="/docs/specs/allocation/book-processing/changes/0003-book-processing/">
+    <File Path="docs/specs/allocation/book-processing/changes/0003-book-processing/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/offering/" />
+  <Folder Name="/docs/specs/offering/offer-lifecycle/" />
+  <Folder Name="/docs/specs/offering/offer-lifecycle/changes/" />
+  <Folder Name="/docs/specs/offering/offer-lifecycle/changes/0001-offer-lifecycle/">
+    <File Path="docs/specs/offering/offer-lifecycle/changes/0001-offer-lifecycle/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/reservation-book/" />
+  <Folder Name="/docs/specs/reservation-book/reservation-lifecycle/" />
+  <Folder Name="/docs/specs/reservation-book/reservation-lifecycle/changes/" />
+  <Folder Name="/docs/specs/reservation-book/reservation-lifecycle/changes/0002-reservation-lifecycle/">
+    <File Path="docs/specs/reservation-book/reservation-lifecycle/changes/0002-reservation-lifecycle/spec.md" />
+  </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />

@@ -199,6 +199,14 @@ class SupersedesTests(SeqCase):
         self.assertEqual(rc, 0, out)
 
 
+    def test_substitui_cell_with_two_numbers_reads_all(self):
+        self.write("0001-onb-a.md", header(status="Substituído por 0003"))
+        self.write("0002-onb-b.md", header(status="Substituído por 0003"))
+        self.write("0003-onb-c.md", header(extra="| **Substitui** | 0001, 0002 |\n"))
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+
+
 class ExtensionCaseTests(SeqCase):
     def test_upper_case_md_counts_as_prd(self):
         self.write("0001-onb-x.MD")

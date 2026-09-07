@@ -77,11 +77,12 @@ NOT_PRD = ("README.md", "assets", "archive")
 # forma do header (output.md, Header): a linha de tabela `| **Substitui** |
 # NNNN |` e o Status `Substituido por NNNN`. Prosa com o verbo "substitui"
 # seguido de um numero nao e marcador (mesma leitura do lint_prd.py).
-# O numero e o primeiro token de 4 digitos da celula (`0001`, `PRD 0001`,
-# `[0001](0001-x.md)`), a mesma leitura do lint_prd.py.
+# Os numeros sao todos os tokens de 4 digitos da celula (`0001`, `PRD 0001`,
+# `[0001](0001-x.md)`, `0001, 0002`), a mesma leitura do lint_prd.py.
 SUPERSEDES = re.compile(
-    r"^\|\s*\*{0,2}\s*(supersedes|substitui|replaces)\s*\*{0,2}\s*\|[^|\d]*?\b(\d{4})\b",
+    r"^\|\s*\*{0,2}\s*(supersedes|substitui|replaces)\s*\*{0,2}\s*\|([^|\n]*)",
     re.IGNORECASE | re.MULTILINE)
+FOUR_DIGITS = re.compile(r"\b(\d{4})\b")
 SUPERSEDED_BY = re.compile(
     r"^\|\s*\*{0,2}\s*status\s*\*{0,2}\s*\|[^|]*?"
     r"(superseded[- ]by|substitu[ií]d[oa] por|replaced by)\s+(\d{4})\b",
@@ -255,14 +256,15 @@ def check_supersedes(entries, by_num, rep):
         head = "\n".join(l.rstrip("\n") for l in read_head(doc))
         supersedes.setdefault(e.number, set())
         superseded_by.setdefault(e.number, set())
-        for _, target in SUPERSEDES.findall(head):
-            t = int(target)
-            supersedes[e.number].add(t)
-            if t not in by_num:
-                rep.hard(f"supersedes {target}: numero inexistente", doc)
-            elif t >= e.number:
-                rep.hard(f"supersedes {target}: alvo deve ser anterior a "
-                         f"{e.number:0{WIDTH}d} - a sequencia e a ordem de precedencia", doc)
+        for _, cell in SUPERSEDES.findall(head):
+            for target in FOUR_DIGITS.findall(cell):
+                t = int(target)
+                supersedes[e.number].add(t)
+                if t not in by_num:
+                    rep.hard(f"supersedes {target}: numero inexistente", doc)
+                elif t >= e.number:
+                    rep.hard(f"supersedes {target}: alvo deve ser anterior a "
+                             f"{e.number:0{WIDTH}d} - a sequencia e a ordem de precedencia", doc)
         for _, target in SUPERSEDED_BY.findall(head):
             t = int(target)
             superseded_by[e.number].add(t)

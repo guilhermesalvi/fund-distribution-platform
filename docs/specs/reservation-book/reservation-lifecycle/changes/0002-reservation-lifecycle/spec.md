@@ -12,7 +12,7 @@
 
 ## Contexto (Context)
 
-Origem: [PRD 0002](../../../../prd/0002-reservation-book-reservation-lifecycle.md), tier `complexa`, Status Rascunho em 2026-09-06; o usuário autorizou nesta sessão abrir a spec sobre o rascunho. Mapa de contextos e catálogo de eventos: [PRD 0000](../../../../prd/0000-platform-overview.md). A capability consome `OfferPublished`, `OfferClosed`, `OfferRevoked` e `BookProcessed`, não produz evento na v1, e fornece o livro fechado ao Allocation por consulta (BOOK-16).
+Origem: [PRD 0002](../../../../../prd/0002-reservation-book-reservation-lifecycle.md), tier `complexa`, Status Rascunho em 2026-09-06; o usuário autorizou nesta sessão abrir a spec sobre o rascunho. Mapa de contextos e catálogo de eventos: [PRD 0000](../../../../../prd/0000-platform-overview.md). A capability consome `OfferPublished`, `OfferClosed`, `OfferRevoked` e `BookProcessed`, não produz evento na v1, e fornece o livro fechado ao Allocation por consulta (BOOK-16).
 
 Base lida: `src/ReservationBook` contém só a composição do serviço, sem domínio; testes são o esqueleto do xUnit. Convenções respeitadas: `.claude/rules/program-composition.md` e `.claude/rules/tracing.md`. Capability nova: delta todo ADDED. Identificadores de categoria e de vínculo foram acrescentados ao glossário do PRD 0002 durante esta spec (sem commit; Data do PRD 2026-09-04, editado em 2026-09-06), porque a spec não inventa nome de enumeração.
 

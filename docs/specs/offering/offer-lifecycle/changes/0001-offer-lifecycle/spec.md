@@ -12,7 +12,7 @@
 
 ## Contexto (Context)
 
-Origem: [PRD 0001](../../../../prd/0001-offering-offer-lifecycle.md), tier `complexa`, Status Rascunho em 2026-09-06; o usuário autorizou nesta sessão abrir a spec sobre o rascunho, por isso a Confiança fica em Média até a aprovação do PRD. Mapa de contextos, catálogo de eventos e decisões delegadas a ADR vêm do [PRD 0000](../../../../prd/0000-platform-overview.md). A capability é upstream: ReservationBook e Allocation leem a definição publicada e o estado corrente; o Allocation devolve `BookProcessed`, único gatilho de `Unconditional` e `Lapsed`.
+Origem: [PRD 0001](../../../../../prd/0001-offering-offer-lifecycle.md), tier `complexa`, Status Rascunho em 2026-09-06; o usuário autorizou nesta sessão abrir a spec sobre o rascunho, por isso a Confiança fica em Média até a aprovação do PRD. Mapa de contextos, catálogo de eventos e decisões delegadas a ADR vêm do [PRD 0000](../../../../../prd/0000-platform-overview.md). A capability é upstream: ReservationBook e Allocation leem a definição publicada e o estado corrente; o Allocation devolve `BookProcessed`, único gatilho de `Unconditional` e `Lapsed`.
 
 Base lida: `src/Offering` contém só a composição do serviço (`Program.cs` com `AddServiceDefaults`/`AddApiDefaults`), sem domínio; `tests/UnitTests` e `tests/IntegrationTests` têm o esqueleto do xUnit. Convenções que a spec respeita: `.claude/rules/program-composition.md` (módulo de feature, endpoints versionados, `JsonSerializerContext` por feature) e `.claude/rules/tracing.md` (sem span manual em handler; tags `app.*`). Capability nova: delta todo ADDED; o arquivamento cria a spec viva.
 

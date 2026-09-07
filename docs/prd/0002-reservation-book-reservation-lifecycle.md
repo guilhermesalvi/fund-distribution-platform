@@ -69,8 +69,8 @@ Persistência, exposição e experiência de registro são downstream.
 | Termo | Definição |
 |---|---|
 | Investidor | Pessoa que reserva cotas. No MVP, apenas id e nome, carregados por seed. |
-| Categoria do investidor | Declaração feita na reserva: varejo, qualificado ou profissional. Única por investidor em cada oferta. |
-| Pessoa vinculada | Investidor que declara, na reserva, vínculo com o fundo, o ofertante ou os intermediários. Declaração única por investidor em cada oferta. |
+| Categoria do investidor | Declaração feita na reserva: varejo, qualificado ou profissional. Identificadores `Retail`, `Qualified`, `Professional` (CVM 30, arts. 11 e 12: "investidor profissional" e "investidor qualificado"). Única por investidor em cada oferta. |
+| Pessoa vinculada | Investidor que declara, na reserva, vínculo com o fundo, o ofertante ou os intermediários. Identificador da declaração: `IsRelatedParty`. Declaração única por investidor em cada oferta. |
 | Reserva | Pedido de compra de uma quantidade de cotas de uma oferta Aberta por um investidor, com declaração de categoria, de vínculo e opção de condicionamento. |
 | Livro de reservas | Conjunto das reservas de uma oferta. Livro fechado: as reservas ativas no instante do fechamento. |
 | Posição do investidor | Soma das quantidades das reservas ativas de um investidor em uma oferta; limitada pelo investimento máximo. |
@@ -198,7 +198,7 @@ Acoplamentos entre contextos: PRD 0000.
 
 ## Perguntas em Aberto
 
-Nenhuma. Decisões de 2026-09-05 estão em Trade-offs; as sem custo próprio: operador registra em nome do investidor; demanda acumulada visível é Must (BOOK-20); revogação após o processamento e oferta não formada por resultado (BOOK-17, BOOK-18).
+- Na corretora, a reserva do cliente é ajustável até o fechamento do livro interno, com o pedido formal ao coordenador sendo o consolidado (`[PREMISSA]` em Trade-offs)? Impacto: BOOK-10 a BOOK-12 caem se a resposta for não. Dono: autor; resolve com confirmação em fonte primária (regulamento de corretora ou contrato de distribuição) antes de o PRD passar a Em Revisão.
 
 ## Ponto de Maior Fragilidade
 

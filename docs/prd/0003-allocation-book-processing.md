@@ -131,6 +131,15 @@ Cada requisito é uma condição verificável. Notação na Solução Proposta.
 - **ALLOC-25 (Must)** O resultado por reserva carrega quantidade alocada e um motivo entre: atendida integralmente, atendida parcialmente por proporcional, atendida parcialmente por rateio, não atendida por condicionamento, excluída por vinculação, oferta não formada.
 - **ALLOC-26 (Must)** O desfecho carrega `D`, `Dn`, `D'`, `E`, o ramo aplicado (inclusive colocação limitada) e a lista de resultados por reserva, e é emitido uma única vez como `BookProcessed`.
 
+| Motivo (ALLOC-25) | Identificador |
+|---|---|
+| Atendida integralmente | `Filled` |
+| Atendida parcialmente por proporcional | `PartiallyFilledByCondition` |
+| Atendida parcialmente por rateio | `ScaledBack` |
+| Não atendida por condicionamento | `CancelledByCondition` |
+| Excluída por vinculação | `ExcludedRelatedParty` |
+| Oferta não formada | `OfferLapsed` |
+
 ## Domain Events
 
 Produz `BookProcessed` (ALLOC-26). Consome `OfferPublished` (definição), `OfferClosed` (ALLOC-01) e `OfferRevoked` (ALLOC-03). O livro fechado é lido do ReservationBook (BOOK-16); a forma da leitura é delegada a ADR e precisa satisfazer BOOK-NFR-02. Catálogo e sequências: PRD 0000.
@@ -168,6 +177,7 @@ Texto consolidado da CVM 160 lido em 2026-09-05; artigos conferidos contra o tex
 - **Limites por investidor só no registro.** *Custo:* um investidor pode receber uma cota, ou nenhuma, com mínimo de dez. *Razão:* é o comportamento real do rateio; impor o mínimo na alocação é critério de rateio distinto.
 - **Um único critério de rateio.** *Custo:* ofertas com outro critério no plano de distribuição não são representáveis. *Razão:* proporcional é o padrão de varejo.
 - **Vedação antes da formação.** *Custo:* nenhum; pela exceção do § 1º, III, a exclusão nunca leva `D'` abaixo de `B`. *Razão:* segue a ordem da norma e evita excluir reservas de oferta que não vai se formar.
+- **`ScaledBack` como identificador do rateio.** *Custo:* o livro mapeia proporcional e rateio no mesmo status `PartiallyFilled` (BOOK-17), então o motivo e o status usam vocabulários distintos. *Razão:* é o termo dos prospectos para redução pro rata em excesso de demanda ("scale-back of oversubscriptions on a pro rata basis", Referências); `ProRata` sozinho colidiria com a opção 3, que também é proporcional.
 - **Colocação limitada como sub-ramo do excesso.** *Custo:* o rateio ganha dois parâmetros (`R`, conjunto rateado). *Razão:* em colocação limitada `D' = D > B`, então é excesso por definição; parametrizar reutiliza ALLOC-16 a ALLOC-18 e mantém ALLOC-19 como invariante único.
 
 ## Métricas de Sucesso
@@ -182,23 +192,23 @@ Projeto sem uso em produção; métricas de correção, verificáveis por teste.
 
 `B = 1000`, `M = 600`, reservas não vinculadas, salvo indicação. `V` marca reserva vinculada; a ordem de listagem é a ordem de registro; `(n)` é a opção de condicionamento. Frações entre parênteses são `q × R / Dr` antes do truncamento.
 
-| Livro | `D`, `Dn`, `D'`, `E` | Ramo | Resultado |
-|---|---|---|---|
-| A 500 (3), C 300 (2) | 800, 800, 800, 800 | parcial | A 400 = ⌊500 × 800 / 1000⌋ proporcional; C 300 integral; soma 700 |
-| A 100 (1), C 550 (2) | 650, 650, 650, 650 | parcial | A 0 condicionamento; C 550; formada mesmo com soma 550 abaixo de `M` |
-| A 1 (3), C 699 (2) | 700, 700, 700, 700 | parcial | A 0 = ⌊1 × 700 / 1000⌋, motivo proporcional; C 699 |
-| A1 300 (1), A2 200 (2) do mesmo investidor; C 200 (2) | 700, 700, 700, 700 | parcial | A1 0 condicionamento; A2 200; C 200; resultado por reserva |
-| reservas somando 500 | 500, 500, 500, — | não formada | todas 0, motivo oferta não formada |
-| `M = B = 1000`, reservas somando 900 | 900, 900, 900, — | não formada | todas 0 |
-| livro sem reservas | 0, 0, 0, — | não formada | desfecho sem resultados por reserva |
-| A 700, C 500, V 300 | 1500, 1200, 1200, 1000 | exclusão, rateio | V 0 excluída; A 583 (583,33), C 416 (416,67); resto 1 → C; A 583, C 417; soma 1000 |
-| A 800, V 600 | 1400, 800, 1400, 1000 | colocação limitada | A 800 integral; V rateia 200 e recebe 200 por rateio; soma 1000 |
-| A 800, V1 400, V2 200 | 1400, 800, 1400, 1000 | colocação limitada | A 800; `R = 200`, `Dr = 600`: V1 133 (133,33), V2 66 (66,67); resto 1 → V2; V1 133, V2 67; soma 1000 |
-| A 600, C 400 | 1000, 1000, 1000, 1000 | integral | A 600, C 400; opções ignoradas |
-| A 1000, C 1000 | 2000, 2000, 2000, 1000 | rateio | 500 e 500, sem resto |
-| A 1000, C 999 | 1999, 1999, 1999, 1000 | rateio | A 500 (500,25), C 499 (499,75); resto 1 → C; 500 e 500 |
-| A 500, C 500, `B = 999` | 1000, 1000, 1000, 999 | rateio | 499 (499,5) cada; frações iguais; resto 1 → A, ordem de registro; A 500, C 499 |
-| idem, aceitas no mesmo instante, A anterior na ordem de registro | 1000, 1000, 1000, 999 | rateio | A 500, C 499 |
+| Caso | Livro | `D`, `Dn`, `D'`, `E` | Ramo | Resultado |
+|---|---|---|---|---|
+| Parcial com proporcional | A 500 (3), C 300 (2) | 800, 800, 800, 800 | parcial | A 400 = ⌊500 × 800 / 1000⌋ proporcional; C 300 integral; soma 700 |
+| Parcial com colocação total | A 100 (1), C 550 (2) | 650, 650, 650, 650 | parcial | A 0 condicionamento; C 550; formada mesmo com soma 550 abaixo de `M` |
+| Proporcional truncado a zero | A 1 (3), C 699 (2) | 700, 700, 700, 700 | parcial | A 0 = ⌊1 × 700 / 1000⌋, motivo proporcional; C 699 |
+| Duas reservas do mesmo investidor | A1 300 (1), A2 200 (2) do mesmo investidor; C 200 (2) | 700, 700, 700, 700 | parcial | A1 0 condicionamento; A2 200; C 200; resultado por reserva |
+| Não formada | reservas somando 500 | 500, 500, 500, — | não formada | todas 0, motivo oferta não formada |
+| Não formada sem distribuição parcial | `M = B = 1000`, reservas somando 900 | 900, 900, 900, — | não formada | todas 0 |
+| Livro vazio | livro sem reservas | 0, 0, 0, — | não formada | desfecho sem resultados por reserva |
+| Exclusão de vinculadas e rateio | A 700, C 500, V 300 | 1500, 1200, 1200, 1000 | exclusão, rateio | V 0 excluída; A 583 (583,33), C 416 (416,67); resto 1 → C; A 583, C 417; soma 1000 |
+| Colocação limitada | A 800, V 600 | 1400, 800, 1400, 1000 | colocação limitada | A 800 integral; V rateia 200 e recebe 200 por rateio; soma 1000 |
+| Colocação limitada com resto | A 800, V1 400, V2 200 | 1400, 800, 1400, 1000 | colocação limitada | A 800; `R = 200`, `Dr = 600`: V1 133 (133,33), V2 66 (66,67); resto 1 → V2; V1 133, V2 67; soma 1000 |
+| Colocação integral | A 600, C 400 | 1000, 1000, 1000, 1000 | integral | A 600, C 400; opções ignoradas |
+| Rateio sem resto | A 1000, C 1000 | 2000, 2000, 2000, 1000 | rateio | 500 e 500, sem resto |
+| Rateio com resto | A 1000, C 999 | 1999, 1999, 1999, 1000 | rateio | A 500 (500,25), C 499 (499,75); resto 1 → C; 500 e 500 |
+| Empate na fração | A 500, C 500, `B = 999` | 1000, 1000, 1000, 999 | rateio | 499 (499,5) cada; frações iguais; resto 1 → A, ordem de registro; A 500, C 499 |
+| Empate no instante de registro | idem, aceitas no mesmo instante, A anterior na ordem de registro | 1000, 1000, 1000, 999 | rateio | A 500, C 499 |
 
 - **Dado** um processamento em curso, **quando** a oferta é revogada, **então** nenhum `BookProcessed` é emitido.
 - **Dado** uma oferta com `BookProcessed` emitido, **quando** novo processamento é solicitado, **então** é rejeitado.
@@ -216,7 +226,7 @@ Acoplamentos entre contextos: PRD 0000.
 
 ## Perguntas em Aberto
 
-Nenhuma. Decisões de 2026-09-05 estão em Trade-offs; as sem custo próprio: colocação limitada do art. 56, § 3º, modelada em ALLOC-07 e ALLOC-21 (antes, vinculadas rateavam normalmente); repetição após falha (ALLOC-02); "sobras" substituído por resto do arredondamento por colidir com sobras de subscrição.
+Nenhuma.
 
 ## Ponto de Maior Fragilidade
 
@@ -230,4 +240,5 @@ A decisão de **processar o livro automaticamente no fechamento e emitir o resul
 
 - [Resolução CVM 160 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 49, 56, 65, 73, 74 e 75. Lido em 2026-09-05.
 - [Instrução CVM 400 (revogada)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º.
+- [Completion of A$1.5M Security Purchase Plan](https://www.newsfilecorp.com/release/252189/Completion-of-A1.5M-Security-Purchase-Plan) — uso de "scale-back of oversubscriptions on a pro rata equitable basis". Lido em 2026-09-06.
 - [PRD 0000](0000-platform-overview.md), [PRD 0001](0001-offering-offer-lifecycle.md) (definição da oferta e semântica das opções), [PRD 0002](0002-reservation-book-reservation-lifecycle.md) (livro fechado, declarações, ordem de registro).

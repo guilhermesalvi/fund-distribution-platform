@@ -219,7 +219,7 @@ Acoplamentos entre contextos: PRD 0000.
 
 ## Perguntas em Aberto
 
-Nenhuma. Decisões de 2026-09-05 estão em Trade-offs; as sem custo próprio: fechamento antecipado permitido (OFF-07, art. 76, II); Encerrada por ação do operador é Must (OFF-13); precisão do preço em 8 casas (OFF-17).
+- Oferta sem distribuição parcial (OFF-20) publicada com conjunto de opções informado: a publicação é rejeitada como violação ou o conjunto é ignorado? Impacto: uma regra de validação a mais em OFF-15 a OFF-25 e o contrato exposto aos consumidores. Dono: autor; resolve com a escolha registrada em OFF-20 antes de o PRD passar a Em Revisão.
 
 ## Ponto de Maior Fragilidade
 

@@ -407,5 +407,14 @@ class ExitCodes(Base):
         self.assert_hard(self.apply(p), "identidade da mudanca invalida")
 
 
+class NoArgsTests(unittest.TestCase):
+    def test_no_args_prints_docstring_and_exits_2(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            code = apply_delta.main([])
+        self.assertEqual(code, 2)
+        self.assertIn("apply_delta.py - ", err.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

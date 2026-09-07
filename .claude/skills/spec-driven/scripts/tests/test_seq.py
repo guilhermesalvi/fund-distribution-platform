@@ -114,5 +114,12 @@ class ContractTests(SeqCase):
         self.assertEqual(rc, 2, out)
 
 
+class NoArgsTests(unittest.TestCase):
+    def test_no_args_prints_docstring_and_exits_2(self):
+        r = subprocess.run([sys.executable, SEQ], capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("seq.py - ", r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

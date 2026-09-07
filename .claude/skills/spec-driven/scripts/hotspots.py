@@ -120,6 +120,10 @@ def collect(repo, days, path):
 
 
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if not argv:
+        print(__doc__, file=sys.stderr)
+        return 2
     args, problems = parse_args(argv)
     if problems:
         for p in problems:

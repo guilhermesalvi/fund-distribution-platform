@@ -171,5 +171,14 @@ class InvalidInputTests(unittest.TestCase):
         self._expect_2([self.tmp.name], "nao e um repositorio git")
 
 
+class NoArgsTests(unittest.TestCase):
+    def test_no_args_prints_docstring_and_exits_2(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            code = hotspots.main([])
+        self.assertEqual(code, 2)
+        self.assertIn("hotspots.py - ", err.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

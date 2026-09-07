@@ -90,11 +90,11 @@ Cada PRD referencia o 0000 na linha de prefixo do header em vez de repetir prop�
 
 Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2` vai uma tabela com estado, identificador e significado. A mesma coluna Identificador vale para toda enumeração que o código vai carregar (motivo de resultado, categoria, tipo de declaração). Essa tabela fica junto do FR que a define ou no Glossário, porque a spec usa esse identificador nos requisitos EARS (skill `spec-driven`, specify.md, Origem e modo), e nome inventado na spec é decisão de linguagem tomada fora do PRD.
 
-Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off`, `end`, `on` e derivadas falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra); use o nome completo. Todo bloco passa por parse antes de apresentar (review.md, Passada mecânica).
+Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado); use o nome completo. Todo bloco passa por parse antes de apresentar (review.md, Passada mecânica).
 
 ## Seções
 
-Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linter): Contexto e Problema, Usuário-alvo, Solução Proposta e Ponto de Maior Fragilidade. O PRD 0000 (`overview`) tem as seções da tabela PRD 0000 e não tem Ponto de Maior Fragilidade. As demais são esperadas a partir do tier indicado (WARN se ausentes) ou condicionais; omissão deliberada é legítima.
+Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linter): Contexto e Problema, Usuário-alvo, Solução Proposta e Ponto de Maior Fragilidade. O PRD 0000 (`overview`) tem as seções da tabela PRD 0000 e não tem Ponto de Maior Fragilidade. As demais são esperadas a partir do tier indicado (WARN se ausentes) ou condicionais; omissão deliberada é legítima. Uma condicional é HARD em qualquer tier: Functional Requirements, quando o PRD define IDs de requisito ou tem Non-functional Requirements.
 
 | Seção | Entra quando | Forma |
 |---|---|---|

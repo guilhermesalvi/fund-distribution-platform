@@ -421,8 +421,13 @@ class Doc:
     def visible(self, i):
         return not self.fenced[i]
 
+    @property
+    def visible_text(self):
+        """Texto sem as linhas de bloco de codigo (numeracao preservada)."""
+        return "\n".join(l if self.visible(i) else "" for i, l in enumerate(self.lines))
+
     def scan(self):
-        m = TIER_COMMENT.search(self.text)
+        m = TIER_COMMENT.search(self.visible_text)
         if m:
             self.tier_declared = True
             v = m.group(1).lower()
@@ -511,8 +516,8 @@ def lint_doc(doc):
     lines = doc.lines
     hard, warn = doc.add_hard, doc.add_warn
 
-    # --- 1. comentario de tier ---------------------------------------------
-    m = TIER_COMMENT.search(doc.text)
+    # --- 1. comentario de tier (fora de bloco de codigo) -------------------
+    m = TIER_COMMENT.search(doc.visible_text)
     if not m:
         hard("comentario de tier ausente. Primeira linha deve ser "
              "'<!-- prd-tier: simples|media|complexa|overview -->'"

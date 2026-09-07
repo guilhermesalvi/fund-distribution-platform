@@ -541,6 +541,10 @@ class DocumentedHardRulesTests(LintCase):
     def test_missing_tier_comment(self):
         self.hard_for(prd().replace("<!-- prd-tier: media -->\n", ""), "comentario de tier ausente")
 
+    def test_tier_comment_inside_fence_does_not_count(self):
+        text = prd().replace("<!-- prd-tier: media -->\n", "") + "\n```markdown\n<!-- prd-tier: simples -->\n```\n"
+        self.hard_for(text, "comentario de tier ausente")
+
     def test_invalid_tier_value(self):
         self.hard_for(prd(tier="gigante"), "tier 'gigante' invalido")
 

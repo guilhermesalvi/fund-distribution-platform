@@ -1,0 +1,84 @@
+# Validates the agent skills (.claude/skills) and the artifacts they produce
+# (docs/prd, docs/specs): Python test suites, Mermaid parser self-test, PRD and
+# spec linters, sequence checks, and the commit-message policy of pull
+# requests. Everything runs from the repository root.
+name: skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: .claude/skills/prd-writer/scripts/mermaid-parser/package-lock.json
+
+      - name: Print tool versions
+        run: |
+          python3 --version
+          node --version
+          git --version
+
+      - name: Install the pinned Mermaid parser (npm ci)
+        run: python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --setup
+
+      - name: Mermaid parser self-test
+        run: python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --self-test
+
+      - name: prd-writer test suite
+        run: python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests -v
+
+      - name: spec-driven test suite
+        run: python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests -v
+
+      - name: No skipped tests (the parser is installed, so nothing may be skipped)
+        run: |
+          out=$(python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests 2>&1; python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests 2>&1)
+          echo "$out" | tail -n 8
+          if echo "$out" | grep -q "skipped="; then echo "::error::test suite reported skipped tests"; exit 1; fi
+
+      - name: Lint PRDs (docs/prd)
+        run: |
+          python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
+          python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
+
+      - name: Lint specs (docs/specs)
+        run: |
+          python3 .claude/skills/spec-driven/scripts/seq.py check docs/specs
+          status=0
+          for spec in $(find docs/specs -name spec.md | sort); do
+            python3 .claude/skills/spec-driven/scripts/lint_spec.py "$spec" || status=1
+          done
+          exit $status
+
+      - name: Commit messages follow CLAUDE.md (pull requests only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          status=0
+          for sha in $(git rev-list --no-merges "$BASE..$HEAD"); do
+            msg=$(git log -1 --format=%B "$sha")
+            echo "== $sha: ${msg%%$'\n'*}"
+            python3 .claude/skills/spec-driven/scripts/check_commit.py --message "$msg" \
+              --max-len 60 --no-scope --no-bang --single-line --lowercase || status=1
+          done
+          exit $status

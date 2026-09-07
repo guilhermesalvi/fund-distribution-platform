@@ -66,6 +66,10 @@
     <File Path=".claude/skills/spec-driven/scripts/tests/test_sensor_scratch.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_seq.py" />
   </Folder>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/skills.yml" />
+  </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/prd/">
     <File Path="docs/prd/0000-platform-overview.md" />

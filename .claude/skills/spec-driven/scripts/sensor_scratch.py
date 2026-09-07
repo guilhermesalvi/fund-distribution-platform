@@ -112,7 +112,7 @@ def repo_root(repo):
 
 
 def inside(path, root):
-    real = os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
+    real = os.path.realpath(path)
     try:
         return os.path.commonpath([real, root]) == root
     except ValueError:  # drives diferentes no Windows
@@ -151,6 +151,8 @@ def create(scratch, repo, paths):
     root = repo_root(repo)
     scratch = os.path.abspath(scratch)
     git(["rev-parse", "--verify", "HEAD"], cwd=root)
+    if os.path.islink(scratch):
+        raise GitError(f"{scratch} e um link simbolico; passe o diretorio real")
     if os.path.exists(scratch):
         if not os.path.isdir(scratch):
             raise GitError(f"{scratch} existe e nao e diretorio")

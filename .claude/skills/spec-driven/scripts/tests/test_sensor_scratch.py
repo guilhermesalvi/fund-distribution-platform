@@ -194,6 +194,17 @@ class CreateTests(SensorScratchBase):
         self.assertEqual(self.real_state(), before)
         self.assertNotIn("scratch", git(["worktree", "list"], self.repo))
 
+    def test_refuses_symlink_into_repo(self):
+        os.makedirs(os.path.join(self.repo, "sub"))
+        link = os.path.join(self.tmp, "sublink")
+        os.symlink(os.path.join(self.repo, "sub"), link)
+        before = self.real_state()
+        code, _, err = run(["create", link, "--repo", self.repo])
+        self.assertEqual(code, 1)
+        self.assertIn("link simbolico", err)
+        self.assertEqual(self.real_state(), before)
+        self.assertNotIn("sub", git(["worktree", "list"], self.repo))
+
     def test_refuses_existing_file_as_dir(self):
         write(self.tmp, "afile", "x\n")
         code, _, err = run(["create", os.path.join(self.tmp, "afile"), "--repo", self.repo])

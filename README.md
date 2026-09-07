@@ -53,7 +53,13 @@ dotnet test FundDistributionPlatform.slnx
 ```text
 .
 ├── .claude/
-│   └── rules/                        # regras por área: composição do Program.cs, tracing
+│   ├── rules/                        # regras por área: composição do Program.cs, tracing
+│   └── skills/                       # skills de agente: prd-writer e spec-driven (ver Skills)
+├── .github/
+│   └── workflows/                    # CI: skills.yml valida skills, PRDs, specs e commits
+├── docs/
+│   ├── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
+│   └── specs/                        # specs por capability (spec-driven): changes/NNNN-<slug>/
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
@@ -76,3 +82,31 @@ Os serviços de API compilam com Native AOT (`PublishAot=true`) e globalização
 ## Convenções
 
 As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). Regras específicas por área (composição do `Program.cs`, módulos de feature, tracing) estão em [.claude/rules](.claude/rules).
+
+## Skills
+
+Duas skills de agente em `.claude/skills/` cobrem o caminho do problema ao código verificado; cada uma tem um `SKILL.md` (roteador), `references/` (regras por etapa) e `scripts/` (linters e testes).
+
+| Skill | Quando usar | Produz |
+| --- | --- | --- |
+| [prd-writer](.claude/skills/prd-writer/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
+| [spec-driven](.claude/skills/spec-driven/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/changes/NNNN-<slug>/` (`spec.md`, `design.md`, `tasks.md`, `validation.md`) |
+
+Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede):
+
+```bash
+python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --setup
+```
+
+Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`):
+
+```bash
+python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests
+python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests
+python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
+python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/changes/<NNNN-slug>/spec.md
+```
+
+Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser ausente, PRD não encontrado), nunca sucesso; `WARN` é heurística para julgamento e não afeta o exit. No Verify da spec-driven, o veredito `BLOCKED` marca verificação incompleta por ambiente e não fecha a mudança. Cada script imprime o que checa quando chamado sem argumentos.
+
+A CI executa a suíte, o parser Mermaid, os linters sobre `docs/` e, em pull requests, valida cada mensagem de commit contra o perfil de [CLAUDE.md](CLAUDE.md). Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

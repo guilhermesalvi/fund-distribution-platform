@@ -441,6 +441,14 @@ Invariantes preservados: RSV-07 [BOOK-03] e RSV-09 [BOOK-04], hash SHA-256 confo
         code, out = self.run_lint(doc(tasks), spec=refactor)
         self.assertHard(out, "task referencia BOOK-03, que o delta de refactor nao lista como invariante")
 
+    def test_flag_with_added_requirements_keeps_normal_coverage(self):
+        flagged = self.write("flagged.md", SPEC.replace("<!-- sdd: spec | tier: large | capability: reservation -->",
+                                                        "<!-- sdd: spec-delta | tier: large | capability: reservation | no-behavior-change -->")
+                             + "- **RSV-08** — WHEN x THEN the system SHALL y\n")
+        tasks = [task("T1", req="RSV-07"), task("T2", deps="T1", req="RSV-07"), task("T3", deps="T2", req="RSV-07")]
+        code, out = self.run_lint(doc(tasks), spec=flagged)
+        self.assertHard(out, "requisito RSV-08 da spec sem task")
+
     def test_missing_tasks_file_is_usage_not_traceback(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):

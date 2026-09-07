@@ -239,8 +239,20 @@ def spec_ids(path):
     lines = read_lines(path)
     ids = {"ADDED": set(), "MODIFIED": set(), "REMOVED": set(), "INVARIANT": set()}
     has_delta = False
+    for kind in ("ADDED", "MODIFIED", "REMOVED"):
+        sec = find_section(lines, (f"{kind} Requirements",))
+        if sec:
+            if kind in ("ADDED", "MODIFIED"):
+                has_delta = True
+            for i in range(*sec):
+                m = REQ_LINE.match(lines[i])
+                if m:
+                    ids[kind].add(m.group(1))
     _, flags, mc_idx = parse_machine_comment(lines)
-    refactor = bool(flags) and "no-behavior-change" in flags
+    # refactor puro: flag presente E nenhum requisito ADDED/MODIFIED/REMOVED;
+    # com secoes de requisitos, a cobertura e a normal (o flag nao a desliga)
+    refactor = (bool(flags) and "no-behavior-change" in flags
+                and not any(ids[k] for k in ("ADDED", "MODIFIED", "REMOVED")))
     if refactor:
         mask = fenced_line_mask(lines)
         prefix = None
@@ -256,15 +268,6 @@ def spec_ids(path):
                 if prefix is None or rid.startswith(prefix + "-"):
                     ids["INVARIANT"].add(rid)
         has_delta = True
-    for kind in ids:
-        sec = find_section(lines, (f"{kind} Requirements",))
-        if sec:
-            if kind in ("ADDED", "MODIFIED"):
-                has_delta = True
-            for i in range(*sec):
-                m = REQ_LINE.match(lines[i])
-                if m:
-                    ids[kind].add(m.group(1))
     return ids, has_delta, refactor
 
 

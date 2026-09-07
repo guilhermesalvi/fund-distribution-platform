@@ -1,6 +1,6 @@
 """Testes de lint_prd.py: header (Status, Autor, Data), secoes por igualdade,
 Functional Requirements obrigatoria, fence, substituicao (ciclo de vida),
-descoberta de PRDs (flat, nested, pasta), PRD 0000 e flag omit.
+descoberta de PRDs (flat, nested, pasta), PRD 0000, flag omit e links locais.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_prd.py"
 """
@@ -93,7 +93,7 @@ decisao.
 
 
 def overview(prefixes=("ONB",)):
-    rows = "\n".join(f"| Ctx{p} | resp | [x](x.md) | `{p}` | up |" for p in prefixes)
+    rows = "\n".join(f"| Ctx{p} | resp | [x](#contextos) | `{p}` | up |" for p in prefixes)
     return f"""<!-- prd-tier: overview -->
 # Visão Geral
 
@@ -471,6 +471,38 @@ class OverviewTests(LintCase):
         self.write("0001-onb-x.md", prd())
         self.write("0002-oth-y.md", prd(prefix="OTH"))
         self.write("0000-platform-overview/prd.md", overview(("ONB", "OTH")))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class LocalLinkTests(LintCase):
+    """Link Markdown para arquivo local resolve a partir da pasta do PRD;
+    URL, ancora pura, code span e bloco de codigo ficam fora."""
+
+    def test_broken_relative_link_is_hard(self):
+        self.write("0001-onb-x.md", prd(body_extra="\nVeja [PRD 0000](0000-overview.md).\n"))
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1)
+        self.assert_hard(out, "link '0000-overview.md' nao resolve")
+
+    def test_resolving_links_pass(self):
+        self.write("0001-onb-x.md", prd(body_extra="\nVeja [PRD 0002](0002-oth-y.md#contexto) e [pasta](../prd).\n"))
+        self.write("0002-oth-y.md", prd(prefix="OTH"))
+        self.write("0000-overview.md", overview(("ONB", "OTH")))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_nested_layout_link_is_relative_to_prd_folder(self):
+        self.write("onb/0001-x/prd.md", prd(body_extra="\nVeja [0000](../../0000-overview.md) e [dec](decisions.md).\n"))
+        self.write("onb/0001-x/decisions.md", "# D\n")
+        self.write("0000-overview.md", overview(("ONB",)))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_url_anchor_code_span_and_fence_are_ignored(self):
+        body = ("\nFontes: [CVM](https://example.org/a.pdf), [sec](#contexto), `[x](nao/existe.md)`\n\n"
+                "```markdown\n[y](nao/existe/tambem.md)\n```\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
 

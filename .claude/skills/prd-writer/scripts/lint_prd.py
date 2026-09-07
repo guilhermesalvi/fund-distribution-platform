@@ -38,7 +38,9 @@ Checagens por arquivo:
   requisitos: `X`" apos a tabela ou campo Prefixo no header); definicoes
   `- **X-nn (Must)**` / `- **X-NFR-nn**` com o prefixo declarado;
   `FR-nn`/`NFR-nn` sem prefixo; "decisoes tomadas" em Perguntas em Aberto;
-  parse de todo bloco ```mermaid (lint_mermaid.py).
+  link Markdown `[texto](destino)` para arquivo local que nao resolve (destino
+  relativo a pasta do PRD, ancora removida; URL com esquema e ancora pura
+  ficam fora); parse de todo bloco ```mermaid (lint_mermaid.py).
   Linhas dentro de bloco de codigo (``` ou ~~~, 3+ caracteres; fecha com o
   mesmo caractere e comprimento >= abertura) sao ignoradas para headings,
   definicoes, citacoes, tags e placeholders. Blocos ```mermaid continuam
@@ -320,6 +322,33 @@ def is_prd_path(path):
     if base.lower() == "prd.md":
         return bool(NUMBERED.match(os.path.basename(os.path.dirname(path))))
     return bool(NUMBERED_MD.match(base))
+
+
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+
+def local_link_findings(doc):
+    """(linha_1based, destino, path_procurado) para cada link Markdown local
+    que nao resolve a partir da pasta do documento. URL e ancora pura ficam
+    fora; bloco de codigo e code span tambem."""
+    base = os.path.dirname(os.path.abspath(doc.path))
+    out = []
+    for i, raw in enumerate(doc.lines):
+        if not doc.visible(i):
+            continue
+        for m in MD_LINK.finditer(CODE_SPAN.sub("", raw)):
+            target = m.group(1)
+            if URL_SCHEME.match(target) or target.startswith("#"):
+                continue
+            rel = target.split("#", 1)[0]
+            if not rel:
+                continue
+            expected = os.path.normpath(os.path.join(base, rel))
+            if not os.path.exists(expected):
+                out.append((i + 1, target, expected))
+    return out
 
 
 class Doc:
@@ -704,6 +733,11 @@ def lint_doc(doc):
                  "impacto, dono, criterio); 'Nenhuma.' so sem pendencia; "
                  "decisao tomada vive em Trade-offs ou no FR.", i + 1)
             break
+
+    # --- 16. links Markdown para arquivo local resolvem --------------------
+    for line, target, expected in local_link_findings(doc):
+        hard(f"link '{target}' nao resolve (procurado em {expected}); "
+             "o destino e relativo a pasta deste arquivo.", line)
 
 
 def _fmt_num(n):

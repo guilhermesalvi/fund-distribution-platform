@@ -1,6 +1,6 @@
 """Testes de lint_spec.py: gramatica de secoes (igualdade, duplicata, fence),
 requisito malformado, header, proveniencia do PRD (prd, prd-rev, prefixos),
-cenarios herdados, RENAMED e MODIFIED sem Antes.
+cenarios herdados, RENAMED e MODIFIED sem Antes, links locais.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_spec.py"
 """
@@ -358,6 +358,38 @@ class DeltaModel(Base):
                                      "  Antes: The system SHALL old\n")
         self.assertNotIn("sem linha 'Antes:'", out)
         self.assertNotIn("MODIFIED RSV-05: ID nao existe", out)
+
+
+class LocalLinks(Base):
+    """Links Markdown para arquivo local resolvem a partir da pasta da spec
+    (ou de `/docs/...` na raiz); URL, ancora pura, code span e bloco de
+    codigo ficam fora."""
+
+    def test_relative_link_with_wrong_depth_is_hard(self):
+        # da pasta da mudanca, o PRD esta 5 niveis acima; 4 cai em docs/specs/prd
+        code, out = self.delta(extra="\nOrigem: [PRD 0002](../../../../prd/0002-reservation-book.md).\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "link '../../../../prd/0002-reservation-book.md' nao resolve")
+        self.assertIn(os.path.join("docs", "specs", "prd"), out)
+
+    def test_relative_link_with_right_depth_passes(self):
+        code, out = self.delta(extra="\nOrigem: [PRD 0002](../../../../../prd/0002-reservation-book.md#contexto).\n")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("nao resolve", out)
+
+    def test_root_relative_link_resolves_from_repo_root(self):
+        code, out = self.delta(extra="\nOrigem: [PRD 0002](/docs/prd/0002-reservation-book.md).\n")
+        self.assertEqual(code, 0, out)
+        code, out = self.delta(extra="\nOrigem: [PRD](/docs/prd/0009-missing.md).\n")
+        self.assertHard(out, "link '/docs/prd/0009-missing.md' nao resolve")
+
+    def test_url_anchor_code_span_and_fence_are_ignored(self):
+        extra = ("\nFontes: [CVM 160](https://example.org/x.pdf), [seção](#contexto), "
+                 "`[literal](nao/existe.md)`, <mailto:x@y.z>.\n\n"
+                 "```markdown\n[exemplo](nao/existe/tambem.md)\n```\n")
+        code, out = self.delta(extra=extra)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("nao resolve", out)
 
 
 if __name__ == "__main__":

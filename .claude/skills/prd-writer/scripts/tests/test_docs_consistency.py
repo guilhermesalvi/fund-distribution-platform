@@ -1,5 +1,5 @@
 """Consistencia deterministica entre documentacao e scripts da skill:
-links internos resolvem; toda flag `--x` citada junto do nome de um script
+todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x` citada junto do nome de um script
 existe no argparse desse script; fences de codigo fecham; citacoes a
 secoes da skill irma (spec-driven) apontam para heading existente.
 
@@ -33,6 +33,24 @@ def norm(s):
     return re.sub(r"\s+", " ", s).strip()
 
 
+def fenced_line_mask(lines):
+    """True para linhas dentro de bloco de codigo (``` ou ~~~), fences inclusos."""
+    mask, open_ch, open_len = [], None, 0
+    for l in lines:
+        m = re.match(r"^\s{0,3}(`{3,}|~{3,})(.*)$", l)
+        if open_ch is None:
+            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
+                open_ch, open_len = m.group(1)[0], len(m.group(1))
+                mask.append(True)
+                continue
+            mask.append(False)
+        else:
+            mask.append(True)
+            if m and m.group(1)[0] == open_ch and len(m.group(1)) >= open_len and not m.group(2).strip():
+                open_ch = None
+    return mask
+
+
 def fence_unclosed(lines):
     open_ch, open_len = None, 0
     for l in lines:
@@ -52,11 +70,23 @@ def script_flags(path):
 
 class DocsConsistency(unittest.TestCase):
     def test_internal_links_resolve(self):
+        """Todo link Markdown para arquivo local, fora de bloco de codigo e
+        de code span, resolve a partir da pasta do documento (ancora
+        removida); URL com esquema e ancora pura ficam fora."""
         for md in md_files(SKILL):
-            base = os.path.dirname(md)
-            for target in re.findall(r"\]\((references/[a-z_]+\.md|[a-z_]+\.md)\)", read(md)):
-                cand = [os.path.join(base, target), os.path.join(SKILL, target)]
-                self.assertTrue(any(os.path.exists(c) for c in cand), f"{md}: link {target} nao resolve")
+            lines = read(md).splitlines()
+            mask = fenced_line_mask(lines)
+            for i, line in enumerate(lines):
+                if mask[i]:
+                    continue
+                for target in re.findall(r"\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)", re.sub(r"`[^`]*`", "", line)):
+                    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:", target) or target.startswith("#"):
+                        continue
+                    rel = target.split("#", 1)[0]
+                    if not rel:
+                        continue
+                    self.assertTrue(os.path.exists(os.path.join(os.path.dirname(md), rel)),
+                                    f"{md}:{i + 1}: link {target} nao resolve")
 
     def test_fences_close(self):
         for md in md_files(SKILL):

@@ -57,7 +57,7 @@ Ficam em `scripts/` no diretório desta skill e são executados a partir dele, c
 |---|---|
 | `python scripts/seq.py next /docs/prd --domain <domain-slug> --slug <feature-slug>` | Antes de criar o arquivo: valida a sequência e imprime o path no layout do repositório; `--overview` aloca o PRD 0000 |
 | `python scripts/seq.py check /docs/prd` | Antes de apresentar: sequência, slugs, substituições recíprocas |
-| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar: esqueleto, header (Status, Autor, Data), IDs entre PRDs, fatos duplicados, substituição, parse dos blocos Mermaid |
+| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar: esqueleto, header (Status, Autor, Data), IDs entre PRDs, fatos duplicados, substituição, links locais que resolvem, parse dos blocos Mermaid |
 | `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Isolado, quando só um diagrama mudou; `--self-test` prova extração e parser; `--setup` instala o parser (`npm ci`, único modo com rede, só com autorização); exit 3 = parser indisponível |
 
 ## Exemplo

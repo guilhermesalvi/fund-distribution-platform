@@ -1,5 +1,5 @@
 """Consistencia deterministica entre documentacao e scripts da skill:
-links internos resolvem; toda flag `--x` citada junto do nome de um script
+todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x` citada junto do nome de um script
 existe no argparse desse script; fences de codigo fecham; a skill irma
 (prd-writer) e citada em secoes que existem.
 
@@ -35,11 +35,23 @@ def script_flags(path):
 
 class DocsConsistency(unittest.TestCase):
     def test_internal_links_resolve(self):
+        """Todo link Markdown para arquivo local, fora de bloco de codigo e
+        de code span, resolve a partir da pasta do documento (ancora
+        removida); URL com esquema e ancora pura ficam fora."""
         for md in md_files(SKILL):
-            base = os.path.dirname(md)
-            for target in re.findall(r"\]\((references/[a-z_]+\.md|[a-z_]+\.md)\)", read(md)):
-                cand = [os.path.join(base, target), os.path.join(SKILL, target)]
-                self.assertTrue(any(os.path.exists(c) for c in cand), f"{md}: link {target} nao resolve")
+            lines = read(md).splitlines()
+            mask = fenced_line_mask(lines)
+            for i, line in enumerate(lines):
+                if mask[i]:
+                    continue
+                for target in re.findall(r"\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)", re.sub(r"`[^`]*`", "", line)):
+                    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:", target) or target.startswith("#"):
+                        continue
+                    rel = target.split("#", 1)[0]
+                    if not rel:
+                        continue
+                    self.assertTrue(os.path.exists(os.path.join(os.path.dirname(md), rel)),
+                                    f"{md}:{i + 1}: link {target} nao resolve")
 
     def test_fences_close(self):
         for md in md_files(SKILL):

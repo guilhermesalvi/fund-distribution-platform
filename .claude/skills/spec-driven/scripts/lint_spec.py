@@ -29,6 +29,12 @@ da tabela de Criterios de Aceitacao (HARD); spec a partir do PRD sem nenhuma
 citacao de ID do PRD (WARN). Path `/docs/...` e resolvido a partir da raiz do
 repositorio (ancestral da spec que contem `docs/`).
 
+Links Markdown `[texto](destino)` para arquivo local resolvem (HARD quando nao):
+destino relativo a partir da pasta da spec, `/docs/...` a partir da raiz do
+repositorio; ancora `#...` e removida antes de resolver. URL com esquema
+(`https:`, `mailto:`), ancora pura (`#secao`) e o que esta em bloco de codigo
+ou em code span ficam fora.
+
 `prd-rev:` e `git:<hash>` (saida de `git hash-object <prd.md>`) ou
 `sha256:<12 hex>` do conteudo com quebras normalizadas para LF;
 `--print-prd-rev` imprime o valor a usar.
@@ -158,15 +164,16 @@ def living_ids(path):
     return ids
 
 
-def resolve_prd_path(spec_path, prd_field):
-    """Path absoluto do PRD: como esta, relativo a spec, ou `/docs/...` a partir
-    da raiz do repositorio (primeiro ancestral da spec que contem `docs/`)."""
+def resolve_local_path(doc_path, target):
+    """Path absoluto de um destino local citado por um documento: como esta,
+    relativo ao documento, ou `/docs/...` a partir da raiz do repositorio
+    (primeiro ancestral do documento que contem `docs/`). None se nada existe."""
     cands = []
-    if os.path.isabs(prd_field) and os.path.exists(prd_field):
-        return prd_field
-    base = os.path.dirname(os.path.abspath(spec_path))
-    cands.append(os.path.normpath(os.path.join(base, prd_field)))
-    rel = prd_field.lstrip("/\\")
+    if os.path.isabs(target) and os.path.exists(target):
+        return target
+    base = os.path.dirname(os.path.abspath(doc_path))
+    cands.append(os.path.normpath(os.path.join(base, target)))
+    rel = target.lstrip("/\\")
     cur = base
     while True:
         if os.path.isdir(os.path.join(cur, "docs")):
@@ -292,13 +299,38 @@ def lint_inherited_scenarios(rep, lines, mask, defs, prefixes, spec_ids, spec_pr
                     rep.hard(f"cenario herdado '{name[:40]}': requisito EARS {rid} nao existe no delta", i + 1)
 
 
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+
+def check_local_links(rep, lines, mask, doc_path):
+    """Todo link Markdown para arquivo local resolve; URL e ancora pura ficam
+    fora. HARD com a linha e o path onde o destino foi procurado."""
+    for i, l in enumerate(lines):
+        if mask[i]:
+            continue
+        for m in MD_LINK.finditer(CODE_SPAN.sub("", l)):
+            raw = m.group(1)
+            if URL_SCHEME.match(raw) or raw.startswith("#"):
+                continue
+            target = raw.split("#", 1)[0]
+            if not target:
+                continue
+            if resolve_local_path(doc_path, target) is None:
+                base = os.path.dirname(os.path.abspath(doc_path))
+                expected = os.path.normpath(os.path.join(base, target)) if not target.startswith("/") else target
+                rep.hard(f"link '{raw}' nao resolve (procurado em {expected}); "
+                         "conte os `../` a partir da pasta deste arquivo", i + 1)
+
+
 def lint_prd_links(rep, lines, mask, fields, spec_path, spec_ids, spec_prefix, is_delta):
     prd_field = fields.get("prd")
     if not prd_field:
         if fields.get("prd-rev"):
             rep.warn("prd-rev sem prd: no comentario de maquina; revisao nao verificada", 1)
         return
-    prd_path = resolve_prd_path(spec_path, prd_field)
+    prd_path = resolve_local_path(spec_path, prd_field)
     if not prd_path:
         rep.incomplete(f"validacao incompleta: PRD nao encontrado ('{prd_field}'); "
                        "prefixo, citacoes e cenarios herdados nao verificados", 1)
@@ -616,6 +648,7 @@ def main(argv):
     else:
         rep.hard(f"sdd: '{kind}' nao e spec-delta nem spec", 1)
     lint_prd_links(rep, lines, mask, fields, path, spec_ids, spec_prefix, is_delta)
+    check_local_links(rep, lines, mask, path)
 
     check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, skip_first=mc_idx + 1, mask=mask)

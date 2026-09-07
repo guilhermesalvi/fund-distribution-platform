@@ -63,16 +63,16 @@ Rode o gate Build de `tasks.md` (ou do plano inline). Exit diferente de 0 é **F
 
 Prova empírica de que os testes detectam regressão. Em scratch, nunca na árvore real; o isolamento vem da construção (diretório separado), não de "restaurar" depois:
 
-1. **Scratch com a versão verificada.** `git worktree add <tmp> HEAD` e, sobre ele, aplique o que ainda não está commitado e pertence à mudança (`git diff <base> > patch` + untracked copiados, ou `git stash create` só para gerar o patch, sem `stash push`); HEAD sozinho não contém implementação não commitada. Sem Git: cópia integral do diretório do projeto. Copiar só os arquivos modificados não produz ambiente executável.
+1. **Scratch com a versão verificada.** `sensor_scratch.py create <tmp> [--path <p>]` (SKILL.md, Gates) cria um worktree destacado em HEAD, aplica sobre ele o que ainda não está commitado (`git diff HEAD`, staged e unstaged, mais os untracked não ignorados) e commita o resultado no scratch como **snapshot**, com hash: essa é a versão exatamente verificada. `--path` restringe as alterações pendentes ao escopo da mudança e deixa de fora alteração preexistente do usuário. HEAD sozinho não contém implementação não commitada; e diff contra a base (`git diff <base>`) não serve para montar o scratch, porque inclui commits que HEAD já tem e o patch não aplica. O scratch nasce sem arquivos ignorados (dependências, saída de build): o gate precisa se bastar (restore, build). Sem Git: cópia integral do diretório do projeto e uma segunda cópia intocada como snapshot. Copiar só os arquivos modificados não produz ambiente executável.
 2. **Baseline verde no scratch.** Rode o gate da mudança no scratch antes de mutar. Se falhou, o sensor é **BLOCKED** (ambiente), não "sobrevivente".
 3. **Injete uma falha de comportamento por vez** no código novo, proporcional ao risco: inverta condição (troque `>` por `>=`), troque retorno (status errado, zero em vez de calculado), off-by-one, remova efeito colateral exigido pela spec (publicação de evento, gravação).
 4. **Rode os testes** que cobrem o código mutado (gate Quick/Full) no scratch.
 5. **Classifique:** *morto* (testes falham por assertion), *sobrevivente* (todos passam), *inválido* (não compila ou falha por erro de ambiente: não conta como morto, escolha outra mutação), *falha de infraestrutura* (runner não executa: BLOCKED).
-6. **Restaure a baseline entre rodadas** no scratch (`git checkout -- .` no worktree, ou recopie) e repita para a próxima mutação.
-7. **Descarte o scratch** (`git worktree remove --force` / apague a cópia). A árvore real nunca foi tocada; não há nada a restaurar nela. **Proibido:** `git stash push` na árvore real.
+6. **Restaure o snapshot entre rodadas** com `sensor_scratch.py reset <tmp>`: volta ao commit de snapshot, remove arquivo que a mutação criou e falha se `git status --porcelain` não ficar vazio no scratch. Esse status vazio é a prova de que a próxima mutação parte da versão verificada. `git checkout -- .` não faz isso: restaura o index, que no worktree recém-criado é HEAD, não a versão verificada. Sem Git: recopie a partir da cópia-snapshot.
+7. **Descarte o scratch** (`sensor_scratch.py remove <tmp>` / apague as cópias). A árvore real, o index e os branches nunca foram tocados; não há nada a restaurar neles. **Proibido:** `git stash push`, `checkout` ou `reset` na árvore real.
 8. **Mutante sobrevivente** significa que os testes não discriminam aquele comportamento e gera task de correção; PASS não é possível com sobrevivente.
 
-Profundidade: default 1–3 mutações no código de maior risco. Caminho crítico (dinheiro, liquidação, auth, integridade) exige no mínimo 5 mutações cobrindo ramificações, ou tooling de mutação da linguagem quando disponível (Stryker.NET, mutmut, cargo-mutants). Registre o resultado por mutação com a classificação acima.
+Profundidade: default 1–3 mutações no código de maior risco. Caminho crítico (dinheiro, liquidação, auth, integridade) exige no mínimo 5 mutações cobrindo ramificações, ou tooling de mutação da linguagem quando disponível (Stryker.NET, mutmut, cargo-mutants). Registre o hash do snapshot e o resultado por mutação com a classificação acima.
 
 ### 2.5 Eixo 2 — aderência ao design
 
@@ -147,7 +147,7 @@ Pulados: nenhum
 
 ## Sensor de discriminação
 
-Baseline no scratch: verde.
+Baseline no scratch: verde (snapshot `<hash>`).
 
 | Mutação | Arquivo:linha | Testes rodados | Resultado |
 |---|---|---|---|
@@ -182,7 +182,7 @@ Baseline no scratch: verde.
 - Verifier re-deriva a cobertura sem herdar a tabela do autor e declara o grau de independência.
 - Toda linha de evidência tem `file:line` e a expressão da assertion.
 - Lacuna de precisão reportada, nunca aprovada.
-- Sensor em scratch com a versão verificada, baseline verde antes de mutar, uma mutação por vez, classificação por mutação registrada.
+- Sensor em scratch com snapshot da versão verificada (hash registrado), baseline verde antes de mutar, uma mutação por vez a partir do snapshot restaurado, classificação por mutação registrada.
 - Dois eixos, sempre: spec e design (ou `## Estrutura` do `tasks.md`, ou o plano inline, quando o design foi pulado).
 - Veredito uma palavra, consistente com conformidade, gate, sensor, gaps e UAT; BLOCKED com motivo.
 - Loop de correção limitado a 3; escala em vez de girar.

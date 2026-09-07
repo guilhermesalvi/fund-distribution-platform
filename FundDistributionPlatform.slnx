@@ -52,6 +52,7 @@
     <File Path=".claude/skills/spec-driven/scripts/lint_spec.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_tasks.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_validation.py" />
+    <File Path=".claude/skills/spec-driven/scripts/sensor_scratch.py" />
     <File Path=".claude/skills/spec-driven/scripts/seq.py" />
   </Folder>
   <Folder Name="/.claude/skills/spec-driven/scripts/tests/">
@@ -62,6 +63,7 @@
     <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_spec.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_tasks.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_validation.py" />
+    <File Path=".claude/skills/spec-driven/scripts/tests/test_sensor_scratch.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_seq.py" />
   </Folder>
   <Folder Name="/docs/" />

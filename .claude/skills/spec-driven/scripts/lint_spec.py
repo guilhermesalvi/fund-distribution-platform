@@ -43,9 +43,11 @@ ou em code span ficam fora.
 
 Saida: HARD (exit 1) / WARN (nao afeta exit). HARD com prefixo INCOMPLETO
 marca validacao incompleta (fonte ausente, git indisponivel), nao violacao.
-Spec viva nao encontrada (via --living ou inferida de changes/../../spec.md)
-com MODIFIED/REMOVED no delta e HARD INCOMPLETO. Exit 2 em erro de uso: opcao
-desconhecida, `--living` sem valor, spec ausente ou fora de UTF-8.
+Spec viva ausente e HARD INCOMPLETO em dois casos: `--living` explicito que
+nao existe (qualquer delta: o chamador afirmou uma fonte que nao pode ser
+lida) e spec viva inferida de changes/../../spec.md ausente quando o delta
+tem MODIFIED/REMOVED. Exit 2 em erro de uso: opcao desconhecida, `--living`
+sem valor, spec ausente ou fora de UTF-8.
 
 NAO julga semantica. Linter verde = esqueleto conforme, nao spec boa.
 """
@@ -66,6 +68,10 @@ from _common import (  # noqa: E402
 EARS_LEAD = re.compile(r"^\s*(WHEN|WHILE|WHERE|IF)\b", re.IGNORECASE)
 PRD_ID = re.compile(r"\b([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})\b")
 PRD_DEF = re.compile(r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})(?:\s*\([^)]*\))?\*\*")
+# `| **Prefixo** | X |` (e aliases) no header do PRD: mesma leitura do lint_prd.py
+PRD_PREFIX_ROW = re.compile(
+    r"^\|\s*\*{0,2}\s*(?:prefixo dos requisitos|requirement prefix|prefixo de id|id prefix|prefixo|prefix)"
+    r"\s*\*{0,2}\s*\|\s*`?([A-Z][A-Z0-9]{1,9})`?", re.IGNORECASE)
 PRD_PREFIX_LINE = re.compile(
     r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*`?([A-Z][A-Z0-9]{1,9})`?",
     re.IGNORECASE)
@@ -257,9 +263,9 @@ def prd_index(prd_path):
             m = PRD_DEF.match(l)
             if m:
                 defs.add(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}")
-            pm = PRD_PREFIX_LINE.match(l)
+            pm = PRD_PREFIX_LINE.match(l) or PRD_PREFIX_ROW.match(l)
             if pm:
-                prefixes.add(pm.group(1))
+                prefixes.add(pm.group(1).upper())
     return defs, prefixes
 
 
@@ -346,6 +352,18 @@ URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
 CODE_SPAN = re.compile(r"`[^`]*`")
 
 
+def repo_root_for(doc_path):
+    """Primeiro ancestral do documento que contem `docs/`, ou None."""
+    cur = os.path.dirname(os.path.abspath(doc_path))
+    while True:
+        if os.path.isdir(os.path.join(cur, "docs")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return None
+        cur = parent
+
+
 def link_target(m):
     """Destino de um match de MD_LINK: forma <...> ou forma simples."""
     return m.group(1) if m.group(1) is not None else m.group(2)
@@ -368,8 +386,11 @@ def check_local_links(rep, lines, mask, doc_path):
             if not target:
                 continue
             if target.startswith("/"):
-                ok = resolve_local_path(doc_path, target) is not None
-                expected = f"<raiz do repositorio>{target}"
+                # so a partir da raiz do repositorio (ancestral com docs/), nunca
+                # do filesystem: `/etc/hostname` nao e link renderizavel
+                root = repo_root_for(doc_path)
+                expected = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else f"<raiz>{target}"
+                ok = root is not None and os.path.exists(expected)
             else:
                 expected = os.path.normpath(os.path.join(base, target))
                 ok = os.path.exists(expected)
@@ -523,7 +544,7 @@ def check_prefix(rep, header, ids, label):
     return declared
 
 
-def lint_delta(rep, lines, mask, fields, flags, living, header):
+def lint_delta(rep, lines, mask, fields, flags, living, header, living_reported=False):
     tier = fields.get("tier", "").lower()
     if tier not in TIERS:
         rep.hard(f"tier ausente ou invalido no comentario de maquina: '{tier}' (small|medium|large|complex)", 1)
@@ -591,7 +612,7 @@ def lint_delta(rep, lines, mask, fields, flags, living, header):
         for i, rid, _ in delta["ADDED"]:
             if rid in lids:
                 rep.hard(f"ADDED {rid}: ID ja existe na spec viva - use MODIFIED ou ID novo", i + 1)
-    elif delta["MODIFIED"] or delta["REMOVED"]:
+    elif (delta["MODIFIED"] or delta["REMOVED"]) and not living_reported:
         rep.incomplete("spec viva nao encontrada; IDs de MODIFIED/REMOVED e 'Antes:' nao "
                        "verificados - passe --living com a spec viva da capability")
 
@@ -711,9 +732,10 @@ def main(argv):
     lines = read_lines(path)
     mask = fenced_line_mask(lines)
     rep = Report("lint_spec")
+    living_reported = False
     if living is not None and not os.path.isfile(living):
         rep.incomplete(f"spec viva nao encontrada: {living}")
-        living = None
+        living, living_reported = None, True
 
     fields, flags, mc_idx = parse_machine_comment(lines)
     if fields is None:
@@ -730,7 +752,8 @@ def main(argv):
             cand = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(path)), "..", "..", "spec.md"))
             if os.path.exists(cand):
                 living = cand
-        spec_ids, spec_prefix = lint_delta(rep, lines, mask, fields, flags, living, header)
+        spec_ids, spec_prefix = lint_delta(rep, lines, mask, fields, flags, living, header,
+                                           living_reported=living_reported)
     elif kind == "spec":
         spec_ids, spec_prefix = lint_living(rep, lines, mask, fields, header)
     else:

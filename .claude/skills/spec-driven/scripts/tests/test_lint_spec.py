@@ -398,6 +398,11 @@ class LocalLinks(Base):
         self.assertHard(out, "link '../../../../../notas/nao existe.md' nao resolve")
         self.assertNotIn("ata reuniao.md' nao resolve", out)
 
+    def test_absolute_filesystem_path_is_not_a_valid_link(self):
+        code, out = self.delta(extra="\nVeja [host](/etc/hostname).\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "link '/etc/hostname' nao resolve")
+
     def test_url_anchor_code_span_and_fence_are_ignored(self):
         extra = ("\nFontes: [CVM 160](https://example.org/x.pdf), [seção](#contexto), "
                  "`[literal](nao/existe.md)`, <mailto:x@y.z>.\n\n"
@@ -533,6 +538,14 @@ class LivingMissing(Base):
         self.assertEqual(code, 1)
         self.assertHard(out, "INCOMPLETO: spec viva nao encontrada")
 
+    def test_explicit_missing_living_with_modified_reports_once(self):
+        extra = MODIFIED_BLOCK.format(antes="WHEN o livro fecha THEN the system SHALL congelar as reservas integrais")
+        scenarios = SCENARIOS + "\n| Fechamento (BOOK-02) | RSV-03 |\n"
+        self.delta(extra=extra, scenarios=scenarios)
+        code, out = run(self.spec, "--living", os.path.join(self.root, "nope.md"))
+        self.assertEqual(code, 1)
+        self.assertEqual(sum(1 for l in out.splitlines() if "INCOMPLETO: spec viva nao encontrada" in l), 1, out)
+
 
 class AntesParityWithApplyDelta(Base):
     """A mesma linha `Antes:` e lida pelo lint_spec e pelo apply_delta com a
@@ -570,6 +583,16 @@ class PromotedStatus(Base):
         code, out = self.delta(status="Promovido")
         self.assertEqual(code, 1)
         self.assertTrue(any(l.startswith("HARD") and "Status" in l for l in out.splitlines()), out)
+
+
+class PrdHeaderPrefix(Base):
+    def test_prefix_declared_in_header_table_is_indexed(self):
+        header_prd = PRD.replace("Prefixo dos requisitos: `BOOK`.\n", "| | |\n|---|---|\n| **Prefixo** | `BOOK` |\n")
+        self.write(self.prd, header_prd)
+        defs, prefixes = lint_spec.prd_index(self.prd)
+        self.assertIn("BOOK", prefixes)
+        code, out = self.delta()
+        self.assertEqual(code, 0, out)
 
 
 class PrdIndexScope(Base):

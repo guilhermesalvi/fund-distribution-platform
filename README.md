@@ -110,7 +110,7 @@ python3 .claude/skills/spec-driven/scripts/seq.py check docs/specs
 python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/changes/<NNNN-slug>/spec.md
 ```
 
-Em pull requests a CI ainda valida cada mensagem de commit com o perfil de [CLAUDE.md](CLAUDE.md).
+A CI ainda roda `apply_delta.py check` em cada delta cuja capability já tem spec viva e, em pull requests, valida cada mensagem de commit com o perfil de [CLAUDE.md](CLAUDE.md).
 
 Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente, PRD ou spec viva não encontrados), nunca sucesso, e `lint_mermaid.py` sozinho sai com exit 3 nesse caso; `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). No Verify da spec-driven, o veredito `BLOCKED` marca verificação incompleta por ambiente e não fecha a mudança. Cada script imprime o que checa quando chamado sem argumentos.
 

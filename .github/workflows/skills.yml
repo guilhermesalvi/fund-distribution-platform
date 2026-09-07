@@ -68,6 +68,19 @@ jobs:
           done
           exit $status
 
+      - name: Check archived deltas against their living specs (apply_delta check)
+        run: |
+          status=0
+          for delta in $(find docs/specs -path '*/changes/*/spec.md' | sort); do
+            living="$(dirname "$delta")/../../spec.md"
+            if [ -f "$living" ]; then
+              python3 .claude/skills/spec-driven/scripts/apply_delta.py check "$delta" || status=1
+            else
+              echo "skip $delta: capability ainda sem spec viva"
+            fi
+          done
+          exit $status
+
       - name: Commit messages follow CLAUDE.md (pull requests only)
         if: github.event_name == 'pull_request'
         env:

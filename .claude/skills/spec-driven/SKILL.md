@@ -101,7 +101,7 @@ Caminhos: `<skill-dir>` é o diretório desta skill; `/docs/...` na documentaç�
 | No sensor de discriminação (verify.md, 2.4) | `sensor_scratch.py create <dir> [--repo <path>] [--path <p>]`, `sensor_scratch.py reset <dir>`, `sensor_scratch.py remove <dir>`: worktree com snapshot da versão verificada (HEAD + alterações pendentes, commitadas no scratch); `reset` volta ao snapshot e falha se o scratch não ficar limpo; a árvore real, o index e os branches nunca mudam |
 | Antes de declarar a mudança pronta | `lint_validation.py <validation.md> --spec <spec.md> [--uat] [--evidence-of-run <log>]` (`--uat`, ou a flag `uat` no comentário de máquina, exige a seção UAT): veredito PASS, FAIL ou BLOCKED consistente com o conteúdo |
 | Ao arquivar | `apply_delta.py apply <delta-spec.md> [--living <spec.md>] [--create] [--date AAAA-MM-DD] [--dry-run]`: única escrita nas regiões do script da spec viva (lista de Requisitos, Data, Histórico); Propósito, Glossário e Domain Events são do autor (memory.md, Arquivar) |
-| Depois do merge e em CI | `apply_delta.py check <delta-spec.md>`: delta mais recente é conferido por texto; delta já superado por mudanças posteriores é auditado só pela linha do histórico e pelos REMOVED, e nunca se reaplica delta antigo |
+| Depois do merge e em CI (só para capability que já tem spec viva) | `apply_delta.py check <delta-spec.md>`: delta mais recente é conferido por texto; delta já superado por mudanças posteriores é auditado só pela linha do histórico e pelos REMOVED, e nunca se reaplica delta antigo |
 | Ao abrir Design sobre base existente | `hotspots.py <repo>`: indício do repositório, não gate nem prova; saída inconclusiva (exit 2) não é evidência |
 
 ## Redação

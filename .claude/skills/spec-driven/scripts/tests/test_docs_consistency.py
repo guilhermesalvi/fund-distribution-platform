@@ -1,7 +1,8 @@
 """Consistencia deterministica entre documentacao e scripts da skill:
 todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x` citada junto do nome de um script
-existe no argparse desse script; fences de codigo fecham; a skill irma
-(prd-writer) e citada em secoes que existem.
+existe no argparse desse script; fences de codigo fecham; toda citacao
+`arquivo.md, Titulo` (a esta skill ou a irma prd-writer, nos dois sentidos)
+aponta para heading ou trecho em negrito existente.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_docs_consistency.py"
 """
@@ -33,6 +34,33 @@ def script_flags(path):
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
+CITATION_RE = r"\\b(%s)\\.md, ([^)\\];|]+?)(?=[)\\];]|, [A-Z]|\\. |$)"
+
+
+def cited_sections(text, files_alt):
+    """(arquivo, titulo) para toda citacao `arquivo.md, Titulo` fora de bloco de
+    codigo; o titulo termina no fecha-parenteses/colchete, ponto-e-virgula ou
+    fim de linha."""
+    out = []
+    lines = text.splitlines()
+    mask = fenced_line_mask(lines)
+    for i, line in enumerate(lines):
+        if mask[i]:
+            continue
+        for fname, title in re.findall(CITATION_RE % files_alt, line):
+            out.append((fname + ".md", title.strip(), i + 1))
+    return out
+
+
+def section_exists(doc_text, title):
+    """Titulo casa com heading (qualquer nivel) ou paragrafo/trecho em negrito,
+    por igualdade normalizada ou prefixo; a vírgula separa subtitulo opcional."""
+    want = norm_heading(title.split(",")[0])
+    heads = {norm_heading(h) for h in re.findall(r"^#{1,4}\s+(.+)$", doc_text, re.M)}
+    bold = {norm_heading(b) for b in re.findall(r"\*\*([^*\n]+)\*\*", doc_text)}
+    return any(want == h or h.startswith(want) or want in h for h in heads | bold)
+
+
 class DocsConsistency(unittest.TestCase):
     def test_internal_links_resolve(self):
         """Todo link Markdown para arquivo local, fora de bloco de codigo e
@@ -44,8 +72,9 @@ class DocsConsistency(unittest.TestCase):
             for i, line in enumerate(lines):
                 if mask[i]:
                     continue
-                for target in re.findall(r"\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)", re.sub(r"`[^`]*`", "", line)):
-                    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:", target) or target.startswith("#"):
+                for angled, plain in re.findall(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)", re.sub(r"`[^`]*`", "", line)):
+                    target = (angled or plain).strip()
+                    if not target or re.match(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:", target) or target.startswith("#"):
                         continue
                     rel = target.split("#", 1)[0]
                     if not rel:
@@ -82,22 +111,33 @@ class DocsConsistency(unittest.TestCase):
                         self.assertIn(fm.group(1), scripts[owner],
                                       f"{md}: flag {fm.group(1)} citada para {owner} nao existe")
 
+    def test_own_citations_resolve(self):
+        """Citacoes `arquivo.md, Titulo` a arquivos desta skill apontam para
+        heading ou trecho em negrito existente."""
+        own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
+        for md in md_files(SKILL):
+            for fname, title, line in cited_sections(read(md), "specify|design|tasks|execute|verify|memory|modes"):
+                self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente")
+                self.assertTrue(section_exists(own[fname], title),
+                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
+
     def test_sibling_citations_resolve(self):
-        """Citacoes `(specify.md, Titulo)` feitas pelo prd-writer a esta skill
-        apontam para heading (ou paragrafo em negrito) existente."""
+        """Citacoes desta skill a arquivos da skill irma (prd-writer) e da
+        irma a esta skill apontam para heading ou trecho em negrito existente."""
         if not os.path.isdir(SIBLING):
             self.skipTest("prd-writer ausente")
         own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
+        sib = {os.path.basename(p): read(p) for p in md_files(SIBLING)}
+        for md in md_files(SKILL):
+            for fname, title, line in cited_sections(read(md), "intake|writing|output|review|example"):
+                self.assertIn(fname, sib, f"{md}:{line}: cita {fname} inexistente na prd-writer")
+                self.assertTrue(section_exists(sib[fname], title),
+                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname} (prd-writer)")
         for md in md_files(SIBLING):
-            for fname, title in re.findall(r"(?:skill `spec-driven`, )([a-z]+\.md), ([^)\]]+?)[),]", read(md)):
-                if fname not in own:
-                    continue
-                text = own[fname]
-                heads = {norm_heading(h) for h in re.findall(r"^#{1,3}\s+(.+)$", text, re.M)}
-                bold = {norm_heading(b) for b in re.findall(r"\*\*([^*]+)\*\*", text)}
-                want = norm_heading(title.split(",")[0])
-                ok = any(want in h or h.startswith(want) for h in heads | bold)
-                self.assertTrue(ok, f"{md}: cita '{fname}, {title}' que nao existe em {fname}")
+            for fname, title, line in cited_sections(read(md), "specify|design|tasks|execute|verify|memory|modes"):
+                self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente nesta skill")
+                self.assertTrue(section_exists(own[fname], title),
+                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
 
 
 if __name__ == "__main__":

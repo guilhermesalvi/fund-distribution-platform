@@ -29,10 +29,10 @@ Tipos: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`
 Validação determinística da forma, com o perfil que aplica estas regras (o script sozinho é Conventional Commits genérico):
 
 ```
-python3 .claude/skills/spec-driven/scripts/check_commit.py --message "<msg>" --max-len 60 --no-scope --no-bang --single-line --lowercase
+python3 .github/scripts/check_commit.py --message "<msg>" --max-len 60 --no-scope --no-bang --single-line --lowercase
 ```
 
-O mesmo perfil vale para `lint_tasks.py` (opções com prefixo `--commit-`) e para o job de CI que valida os commits de um pull request.
+O mesmo perfil vale para o job de CI que valida os commits de um pull request.
 
 Exemplos:
 

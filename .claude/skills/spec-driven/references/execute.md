@@ -96,12 +96,11 @@ Rode o comando do nível de gate da task (`Comandos de Gate` em `tasks.md`, ou d
 Antes de fechar: marque a task concluída em `tasks.md` (ou no plano inline) e, quando há delta, atualize `Status` na Rastreabilidade da spec (de `Implementing` para `Verified` só depois do Verifier). Com commit autorizado, essas atualizações entram **no mesmo commit** da task:
 
 ```
-python <skill-dir>/scripts/check_commit.py --message "<msg>" [--max-len N] [--no-scope] [--no-bang] [--single-line] [--lowercase]
 git add <apenas os arquivos da task>
 git commit -m "<msg>"
 ```
 
-Formato da mensagem: o que o repositório convenciona (CLAUDE.md, CONTRIBUTING); `check_commit.py` confere a forma Conventional Commits, e a regra mais estrita do projeto (limite menor, sem escopo, sem `!`, uma linha, minúscula inicial) entra por `--max-len N`, `--no-scope`, `--no-bang`, `--single-line` e `--lowercase`, as mesmas opções que `lint_tasks.py` recebe com prefixo `commit-`; o perfil vem de onde a política está escrita, não de inferência. Sem commit autorizado, a task fecha com gate verde e artefatos atualizados na árvore de trabalho; o registro (`tasks.md`, Handoff) diz "sem commit" onde pediria hash. Um commit por task e blast radius: contrato itens 3 e 5.
+Formato da mensagem: o que o repositório convenciona (CLAUDE.md, CONTRIBUTING); se o repositório tem validação de mensagem, rode-a antes do commit. Sem commit autorizado, a task fecha com gate verde e artefatos atualizados na árvore de trabalho; o registro (`tasks.md`, Handoff) diz "sem commit" onde pediria hash. Um commit por task e blast radius: contrato itens 3 e 5.
 
 ---
 

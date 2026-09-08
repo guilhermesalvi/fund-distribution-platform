@@ -48,9 +48,12 @@ jobs:
       - name: spec-driven test suite
         run: python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests -v
 
+      - name: check_commit test suite (.github/scripts)
+        run: python3 -m unittest discover -s .github/scripts/tests -v
+
       - name: No skipped tests (the parser is installed, so nothing may be skipped)
         run: |
-          out=$(python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests 2>&1; python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests 2>&1)
+          out=$(python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests 2>&1; python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests 2>&1; python3 -m unittest discover -s .github/scripts/tests 2>&1)
           echo "$out" | tail -n 8
           if echo "$out" | grep -q "skipped="; then echo "::error::test suite reported skipped tests"; exit 1; fi
 
@@ -91,7 +94,7 @@ jobs:
           for sha in $(git rev-list --no-merges "$BASE..$HEAD"); do
             msg=$(git log -1 --format=%B "$sha")
             echo "== $sha: ${msg%%$'\n'*}"
-            python3 .claude/skills/spec-driven/scripts/check_commit.py --message "$msg" \
+            python3 .github/scripts/check_commit.py --message "$msg" \
               --max-len 60 --no-scope --no-bang --single-line --lowercase || status=1
           done
           exit $status

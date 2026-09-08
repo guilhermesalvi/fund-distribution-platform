@@ -47,7 +47,6 @@
   <Folder Name="/.claude/skills/spec-driven/scripts/">
     <File Path=".claude/skills/spec-driven/scripts/_common.py" />
     <File Path=".claude/skills/spec-driven/scripts/apply_delta.py" />
-    <File Path=".claude/skills/spec-driven/scripts/check_commit.py" />
     <File Path=".claude/skills/spec-driven/scripts/hotspots.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_spec.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_tasks.py" />
@@ -67,6 +66,13 @@
     <File Path=".claude/skills/spec-driven/scripts/tests/test_seq.py" />
   </Folder>
   <Folder Name="/.github/" />
+  <Folder Name="/.github/scripts/">
+    <File Path=".github/scripts/check_commit.py" />
+  </Folder>
+  <Folder Name="/.github/scripts/tests/">
+    <File Path=".github/scripts/tests/__init__.py" />
+    <File Path=".github/scripts/tests/test_check_commit.py" />
+  </Folder>
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/skills.yml" />
   </Folder>

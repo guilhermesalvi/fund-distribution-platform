@@ -2,8 +2,8 @@
 """
 check_commit.py - valida uma mensagem de commit contra Conventional Commits.
 
-    Uso:  python3 <skill-dir>/scripts/check_commit.py --message "<msg>" [opcoes]
-          python3 <skill-dir>/scripts/check_commit.py --file .git/COMMIT_EDITMSG [opcoes]
+    Uso:  python3 .github/scripts/check_commit.py --message "<msg>" [opcoes]
+          python3 .github/scripts/check_commit.py --file .git/COMMIT_EDITMSG [opcoes]
 
 Opcoes (regra mais estrita do repositorio, por cima do default):
     --max-len N     limite da primeira linha inteira, incluindo `type: ` (default 72)
@@ -13,12 +13,14 @@ Opcoes (regra mais estrita do repositorio, por cima do default):
     --lowercase     exige descricao iniciada em minuscula (`feat: add`, nao `feat: Add`)
 
 O default e o Conventional Commits generico: escopo, `!`, corpo e rodape sao
-aceitos. Repositorio com politica mais estrita liga as opcoes que a
-politica exige; o perfil fica onde a politica esta escrita (CLAUDE.md,
-CONTRIBUTING), nunca inferido pelo script.
+aceitos. O perfil deste repositorio (as opcoes que o CLAUDE.md exige) fica
+escrito no CLAUDE.md e no job de CI que valida os commits de um pull request;
+o script nunca o infere.
 
 Como hook git (sem dependencia de agente):
-    printf '#!/bin/sh\\npython3 <skill-dir>/scripts/check_commit.py --file "$1" <opcoes>\\n' > .git/hooks/commit-msg
+    printf '#!/bin/sh
+python3 .github/scripts/check_commit.py --file "$1" <opcoes>
+' > .git/hooks/commit-msg
     chmod +x .git/hooks/commit-msg
 
 Regras: primeira linha `type(scope)!: descricao` com type em
@@ -35,12 +37,6 @@ linha de tesoura (`# ---- >8 ----`, `git commit -v`) sao descartados antes da
 validacao, como o proprio git faz depois do hook `commit-msg`.
 
 Exit 0 ok, 1 violacao, 2 uso (argumento ausente ou invalido, arquivo ilegivel).
-
-Estados distintos que este script NAO confunde: a mensagem *planejada* (campo
-`Commit` do tasks.md), o commit *autorizado* (SKILL.md, Aprovacoes e autorizacoes; Contrato, item 3) e o
-commit *executado* (hash no git). Aqui e no lint_tasks.py so a forma da
-mensagem e validada; autorizacao e execucao sao decisao do usuario e fato do
-repositorio, respectivamente.
 """
 
 import argparse

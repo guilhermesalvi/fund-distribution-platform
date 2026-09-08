@@ -4,8 +4,6 @@ lint_tasks.py - verificacao deterministica de um tasks.md gerado pela skill
 spec-driven.
 
     Uso:  python3 <skill-dir>/scripts/lint_tasks.py <tasks.md> --spec <spec.md>
-              [--commit-max-len N] [--commit-no-scope] [--commit-no-bang]
-              [--commit-single-line] [--commit-lowercase]
 
 `--spec` e obrigatorio: sem ele a cobertura requisito -> task nao e verificada
 e o linter reporta HARD "validacao incompleta". So spec-delta com secao
@@ -43,13 +41,6 @@ Checa:
 - `Pronto quando` com criterios `- [ ]` (HARD sem); WARN sem criterio citando
   o gate; WARN quando todo criterio e estrutural (gate/build/contagem) -
   exit 0 nao prova regra de negocio;
-- `Commit`: mensagem planejada validada com check_commit.check(); vazia
-  (WARN: planejamento pode nao ter commit autorizado); presente e invalida
-  (HARD). `--commit-max-len`, `--commit-no-scope`, `--commit-no-bang`,
-  `--commit-single-line` e `--commit-lowercase` repassam a regra mais estrita
-  do repositorio, uma a uma, as opcoes homonimas do check_commit.py (mesma
-  politica nos dois lugares). Mensagem planejada, commit autorizado e commit
-  executado sao estados distintos: aqui so a forma da mensagem e validada;
 - placeholders proibidos (HARD).
 
 Saida: HARD (exit 1) / WARN (nao afeta exit).
@@ -64,7 +55,6 @@ from _common import (  # noqa: E402
     REQ_ID, REQ_LINE, TIERS, Report, fenced_line_mask, find_section,
     parse_machine_comment, read_lines, scan_placeholders, table_rows, usage,
 )
-import check_commit  # noqa: E402
 
 FIELDS = {
     "what": (("o quê", "o que", "what"), "hard"),
@@ -75,7 +65,6 @@ FIELDS = {
     "done": (("pronto quando", "done when"), "hard"),
     "tests": (("tests", "testes"), "hard"),
     "gate": (("gate",), "hard"),
-    "commit": (("commit",), "warn"),
 }
 # Campos cujo valor vem na mesma linha; vazio e defeito. Os demais (Interfaces,
 # Pronto quando) sao blocos: o valor esta nas linhas seguintes.
@@ -408,7 +397,7 @@ def check_done(rep, lines, tid, f):
         rep.warn(f"{tid}: criterios so estruturais; exit 0 nao prova regra de negocio", idx + 1)
 
 
-def check_task(rep, lines, tid, t, gates_used, all_req_refs, commit_opts):
+def check_task(rep, lines, tid, t, gates_used, all_req_refs):
     f = t["fields"]
     ln = t["line"] + 1
     for idx, label in t["dup_fields"]:
@@ -455,54 +444,27 @@ def check_task(rep, lines, tid, t, gates_used, all_req_refs, commit_opts):
     if "done" in f:
         check_done(rep, lines, tid, f)
 
-    if "commit" in f:
-        msg = f["commit"][1].strip("` ")
-        if not msg:
-            rep.warn(f"{tid}: Commit vazio - sem mensagem planejada (aceitavel quando commits nao estao autorizados)", f["commit"][0] + 1)
-        else:
-            for e in check_commit.check(msg, **commit_opts):
-                rep.hard(f"{tid}: Commit invalido: {e}", f["commit"][0] + 1)
-
 
 def parse_args(argv):
-    """Retorna (path, spec, commit_opts). spec e None quando --spec ausente."""
+    """Retorna (path, spec). spec e None quando --spec ausente."""
     args = list(argv[1:])
     if not args or args[0].startswith("--"):
         usage(__doc__)
     path = args[0]
     spec = None
-    commit_opts = {}
     i = 1
     while i < len(args):
         a = args[i]
         if a == "--spec":
             spec = args[i + 1] if i + 1 < len(args) else ""
             i += 2
-        elif a == "--commit-max-len":
-            raw = args[i + 1] if i + 1 < len(args) else ""
-            if not raw.isdigit() or int(raw) <= 0:
-                usage(f"--commit-max-len deve ser inteiro positivo, veio '{raw}'")
-            commit_opts["max_len"] = int(raw)
-            i += 2
-        elif a == "--commit-no-scope":
-            commit_opts["no_scope"] = True
-            i += 1
-        elif a == "--commit-no-bang":
-            commit_opts["no_bang"] = True
-            i += 1
-        elif a == "--commit-single-line":
-            commit_opts["single_line"] = True
-            i += 1
-        elif a == "--commit-lowercase":
-            commit_opts["lowercase"] = True
-            i += 1
         else:
             usage(f"opcao desconhecida: {a}\n\n{__doc__}")
-    return path, spec, commit_opts
+    return path, spec
 
 
 def main(argv):
-    path, spec, commit_opts = parse_args(argv)
+    path, spec = parse_args(argv)
     lines = read_lines(path)
     rep = Report("lint_tasks")
 
@@ -530,7 +492,7 @@ def main(argv):
     all_req_refs = set()
 
     for tid in sorted(tasks, key=task_key):
-        check_task(rep, lines, tid, tasks[tid], gates_used, all_req_refs, commit_opts)
+        check_task(rep, lines, tid, tasks[tid], gates_used, all_req_refs)
     check_dependencies(rep, tasks, phase_of)
     check_plan(rep, tasks, plan_ids, plan_sec, map_ids)
     check_tables(rep, lines, gates_used)

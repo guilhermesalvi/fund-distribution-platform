@@ -1,11 +1,7 @@
-<!-- prd-tier: complexa -->
 # Livro de Reservas
 
 | | |
 |---|---|
-| **Status** | Rascunho |
-| **Autor** | Guilherme Salvi |
-| **Data** | 2026-09-04 |
 | **Contexto Originário** | ReservationBook (primário); consome Offering; o livro fechado é lido pelo Allocation, que devolve o resultado por reserva |
 
 Prefixo dos requisitos: `BOOK`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
@@ -22,13 +18,13 @@ O livro é o único ponto de contato do investidor com a plataforma e a única f
 
 Sem um livro que valide contra a oferta e congele no fechamento, o Allocation não tem entrada confiável: quantidade fora dos limites, opção não aceita ou reserva alterada depois do fechamento produzem alocação inválida. Sem status por reserva após o processamento, investidor e operador não respondem "o que aconteceu com a minha reserva" sem consultar outro contexto.
 
-[FATO] A opção de condicionamento e a declaração de vínculo moram no pedido de reserva (CVM 160, art. 65, § 6º, II e V); a categoria de investidor é autodeclaração atestada por escrito (CVM 30, arts. 11 e 12). Não há cadastro verificado nem validação externa. Política interna de compliance que exija dado cadastral é não-objetivo, não incerteza regulatória; se entrar, as declarações viram atributos do investidor.
+A opção de condicionamento e a declaração de vínculo moram no pedido de reserva (CVM 160, art. 65, § 6º, II e V); a categoria de investidor é autodeclaração atestada por escrito (CVM 30, arts. 11 e 12). Não há cadastro verificado nem validação externa. Política interna de compliance que exija dado cadastral é não-objetivo, não incerteza regulatória; se entrar, as declarações viram atributos do investidor.
 
-[FATO] Por decisão do autor, o investidor no MVP tem apenas id e nome, carregados por seed; categoria e vínculo são declarações feitas na reserva, únicas por investidor em cada oferta.
+Por decisão do autor, o investidor no MVP tem apenas id e nome, carregados por seed; categoria e vínculo são declarações feitas na reserva, únicas por investidor em cada oferta.
 
 ## Usuário-alvo / JTBD
 
-- Investidor (comitente): garantir participação com a quantidade e a condição que escolheu, e saber o que aconteceu com a reserva. [FATO] Por decisão do autor, no MVP o operador registra em nome dele; não há acesso direto nem identidade de investidor.
+- Investidor (comitente): garantir participação com a quantidade e a condição que escolheu, e saber o que aconteceu com a reserva. Por decisão do autor, no MVP o operador registra em nome dele; não há acesso direto nem identidade de investidor.
 - Operador da corretora: livro consistente com a oferta e demanda acumulada para decidir o fechamento antecipado.
 - Allocation: lê o livro fechado como entrada única e devolve o resultado por reserva.
 
@@ -81,7 +77,7 @@ Persistência, exposição e experiência de registro são downstream.
 | Quantidade alocada | Cotas recebidas no processamento. Definida pelo Allocation; lida aqui. Zero quando a reserva está Sem efeito. |
 | Demanda acumulada | Soma das quantidades das reservas ativas de uma oferta em um instante. |
 
-## Functional Requirements
+## Requisitos Funcionais
 
 Cada requisito é uma condição verificável. "Investidor" como ator significa o operador agindo em seu nome.
 
@@ -122,7 +118,7 @@ Cada requisito é uma condição verificável. "Investidor" como ator significa 
 
 Não produz eventos na v1: o único consumidor do livro é o Allocation, que o lê no fechamento (BOOK-16). Consome `OfferPublished` (passa a aceitar reservas com limites, período e opções), `OfferClosed` (BOOK-15), `OfferRevoked` (BOOK-18, antes ou depois do resultado) e `BookProcessed` (BOOK-17, inclusive Sem efeito em oferta não formada). Catálogo e sequências: PRD 0000.
 
-## Non-functional Requirements
+## Requisitos Não Funcionais
 
 - **BOOK-NFR-01** Registro, alteração e cancelamento são atômicos e validados contra a definição vigente da oferta; BOOK-04 e BOOK-07 leem as demais reservas ativas do investidor na mesma operação.
 - **BOOK-NFR-02** Congelamento consistente: não existe reserva aceita com instante posterior ao fechamento, e o livro que o Allocation lê é idêntico ao congelado. É a exigência do ADR de leitura do livro.
@@ -133,15 +129,15 @@ Não produz eventos na v1: o único consumidor do livro é o Allocation, que o l
 
 Texto consolidado das Resoluções CVM 160 e CVM 30 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- [FATO] CVM 160, art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. O modelo admite alteração e cancelamento até o fechamento por decisão do autor (BOOK-10 a BOOK-12). Ver Trade-offs e Ponto de Maior Fragilidade.
-- [FATO] Art. 65, § 6º, II e V: o pedido de reserva contém as condições em distribuição parcial e identifica o investidor vinculado. BOOK-06, BOOK-08.
-- [FATO] Art. 65, §§ 1º e 2º: depósito do montante reservado é facultativo. Não modelado.
-- [FATO] Art. 66: a seção de reservas não se aplica a profissionais. Sem efeito na v1; é o gatilho quando a categoria passar a alterar regra.
-- [FATO] Art. 2º, XVI, e art. 56: pessoa vinculada e vedação em excesso. Aqui só a declaração; a vedação, inclusive a colocação limitada do § 3º, é ALLOC-06 a ALLOC-08 e ALLOC-21.
-- [FATO] Art. 2º, X e XI, e CVM 30, arts. 11 e 12: profissional e qualificado atestam por escrito sua condição. Categoria declarada, não verificada.
-- [FATO] Art. 64: adequação ao perfil (suitability) é dever do intermediário. Fora do escopo.
-- [FATO] Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Efeito da categoria é extensão futura.
-- [FATO] Art. 69, § 1º, e art. 65, § 5º: desistência nasce de modificação da oferta ou divergência entre prospectos, ambos fora do escopo. Se modificação entrar, este contexto ganha cancelamento após o fechamento com prazo mínimo de cinco dias úteis e presunção de manutenção no silêncio.
+- CVM 160, art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. O modelo admite alteração e cancelamento até o fechamento por decisão do autor (BOOK-10 a BOOK-12). Ver Trade-offs e Ponto de Maior Fragilidade.
+- Art. 65, § 6º, II e V: o pedido de reserva contém as condições em distribuição parcial e identifica o investidor vinculado. BOOK-06, BOOK-08.
+- Art. 65, §§ 1º e 2º: depósito do montante reservado é facultativo. Não modelado.
+- Art. 66: a seção de reservas não se aplica a profissionais. Sem efeito na v1; é o gatilho quando a categoria passar a alterar regra.
+- Art. 2º, XVI, e art. 56: pessoa vinculada e vedação em excesso. Aqui só a declaração; a vedação, inclusive a colocação limitada do § 3º, é ALLOC-06 a ALLOC-08 e ALLOC-21.
+- Art. 2º, X e XI, e CVM 30, arts. 11 e 12: profissional e qualificado atestam por escrito sua condição. Categoria declarada, não verificada.
+- Art. 64: adequação ao perfil (suitability) é dever do intermediário. Fora do escopo.
+- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Efeito da categoria é extensão futura.
+- Art. 69, § 1º, e art. 65, § 5º: desistência nasce de modificação da oferta ou divergência entre prospectos, ambos fora do escopo. Se modificação entrar, este contexto ganha cancelamento após o fechamento com prazo mínimo de cinco dias úteis e presunção de manutenção no silêncio.
 
 ## Não-objetivos
 
@@ -198,7 +194,7 @@ Acoplamentos entre contextos: PRD 0000.
 
 ## Perguntas em Aberto
 
-- Na corretora, a reserva do cliente é ajustável até o fechamento do livro interno, com o pedido formal ao coordenador sendo o consolidado (`[PREMISSA]` em Trade-offs)? Impacto: BOOK-10 a BOOK-12 caem se a resposta for não. Dono: autor; resolve com confirmação em fonte primária (regulamento de corretora ou contrato de distribuição) antes de o PRD passar a Em Revisão.
+- Na corretora, a reserva do cliente é ajustável até o fechamento do livro interno, com o pedido formal ao coordenador sendo o consolidado (`[PREMISSA]` em Trade-offs)? Impacto: BOOK-10 a BOOK-12 caem se a resposta for não. Dono: autor; resolve com confirmação em fonte primária (regulamento de corretora ou contrato de distribuição) antes de aprovar o PRD.
 
 ## Ponto de Maior Fragilidade
 

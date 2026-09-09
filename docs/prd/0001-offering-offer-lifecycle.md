@@ -1,11 +1,7 @@
-<!-- prd-tier: complexa -->
 # Cadastro e Ciclo de Vida da Oferta
 
 | | |
 |---|---|
-| **Status** | Rascunho |
-| **Autor** | Guilherme Salvi |
-| **Data** | 2026-09-04 |
 | **Contexto Originário** | Offering (primário); consumido por ReservationBook e Allocation; Allocation devolve o desfecho do livro |
 
 Prefixo dos requisitos: `OFF`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
@@ -22,11 +18,11 @@ Offering é a raiz de dependência: os outros dois contextos leem a definição 
 
 Sem definição validada e congelada e sem estado inequívoco, os demais contextos não têm base: uma reserva não pode ser aceita sem saber que a oferta está aberta e com quais limites e opções; o livro não pode ser processado sem quantidade base e montante mínimo fixos e sem saber que as reservas fecharam.
 
-[FATO] Uma oferta é a emissão de cotas de um fundo fechado, vendida como um único conjunto. Na CVM 175 o fundo se organiza em classes e subclasses (art. 5º, §§ 5º e 7º); classe fechada não admite resgate, então a distribuição é o único momento de decisão de investimento coberto pela plataforma.
+Uma oferta é a emissão de cotas de um fundo fechado, vendida como um único conjunto. Na CVM 175 o fundo se organiza em classes e subclasses (art. 5º, §§ 5º e 7º); classe fechada não admite resgate, então a distribuição é o único momento de decisão de investimento coberto pela plataforma.
 
-[FATO] Por decisão de escopo, nenhum atributo da oferta muda depois de publicada; só o estado muda, por transições explícitas. Os gatilhos que exigiriam alterar atributos (modificação de oferta, CVM 160, arts. 67, I e II, e 69; lote adicional, art. 50; redução da quantidade base) estão fora do escopo. Se modificação entrar, o contrato de imutabilidade cai e todo consumidor que congela a definição precisa ser revisto; essa é a fronteira do modelo, não uma incerteza dele.
+Por decisão de escopo, nenhum atributo da oferta muda depois de publicada; só o estado muda, por transições explícitas. Os gatilhos que exigiriam alterar atributos (modificação de oferta, CVM 160, arts. 67, I e II, e 69; lote adicional, art. 50; redução da quantidade base) estão fora do escopo. Se modificação entrar, o contrato de imutabilidade cai e todo consumidor que congela a definição precisa ser revisto; essa é a fronteira do modelo, não uma incerteza dele.
 
-[FATO] Séries como nível de processamento, tranches, lote adicional e demais extensões estão fora do escopo por decisão do autor. A oferta carrega a identificação completa das cotas (fundo, classe, subclasse, emissão) desde a v1 para que essas extensões entrem sem renomear o que existe.
+Séries como nível de processamento, tranches, lote adicional e demais extensões estão fora do escopo por decisão do autor. A oferta carrega a identificação completa das cotas (fundo, classe, subclasse, emissão) desde a v1 para que essas extensões entrem sem renomear o que existe.
 
 ## Usuário-alvo / JTBD
 
@@ -89,7 +85,7 @@ Termos de outros contextos usados aqui (reserva, investidor, demanda efetiva, co
 | Condicionamento | Condição declarada pelo investidor para manter a reserva caso a oferta feche em distribuição parcial. |
 | Opção de condicionamento | Uma das três formas de condicionamento (OFF-26 a OFF-28); a oferta define se aceita a terceira, a reserva escolhe uma das aceitas. |
 
-## Functional Requirements
+## Requisitos Funcionais
 
 Cada requisito é uma condição verificável.
 
@@ -137,7 +133,7 @@ Definidas aqui, aplicadas em ALLOC-11 a ALLOC-13. Abaixo do montante mínimo a o
 
 Produz `OfferPublished` (OFF-03, carrega a definição completa), `OfferClosed` (OFF-07) e `OfferRevoked` (OFF-12). Consome `BookProcessed`, único evento de entrada e único gatilho de Formada e Não formada, aceito só em Fechada (OFF-11); o Allocation interrompe o processamento ao receber `OfferRevoked` (ALLOC-03), e OFF-11 cobre o desfecho já emitido. Formada, Não formada e Encerrada não geram evento na v1. Catálogo, sequências e transporte: PRD 0000.
 
-## Non-functional Requirements
+## Requisitos Não Funcionais
 
 - **OFF-NFR-01** Validação de publicação e cada transição de estado são atômicas.
 - **OFF-NFR-02** Toda transição registra quem ou qual contexto a disparou e quando; desfechos descartados por OFF-11 também.
@@ -148,16 +144,16 @@ Produz `OfferPublished` (OFF-03, carrega a definição completa), `OfferClosed` 
 
 Texto consolidado das Resoluções CVM 160 e CVM 30 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- [FATO] Art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro; § 3º manda restituir integralmente quando o mínimo não é atingido. O modelo adota quantidade de cotas e mapeia o § 3º em Não formada (OFF-09).
-- [FATO] Art. 74: havendo distribuição parcial, "deve ser dada a opção ao investidor" de condicionar à totalidade (I) ou a quantidade maior ou igual ao mínimo (II). As opções 1 e 2 são obrigatórias; a variante proporcional (opção 3) não está na CVM 160 e é herança do art. 31, § 1º, da ICVM 400, mantida pela prática. OFF-25.
-- [FATO] Art. 74, parágrafo único: "efetivamente distribuídos" inclui as reservas condicionadas. `E` (numerador de OFF-28) e a formação seguem essa definição, sem recálculo após o condicionamento. Detalhe: ALLOC-10.
-- [FATO] Arts. 67, III, e 68: revogação pedida pelo ofertante e deferida pela CVM torna ineficazes oferta e aceitações, com restituição integral. Revogada modela o efeito; o deferimento não é modelado.
-- [FATO] Art. 70: suspensão e cancelamento são atos da CVM por irregularidade. Por isso o estado de mínimo não atingido se chama Não formada, não Cancelada. Suspensão não é modelada.
-- [FATO] Art. 76: o resultado é divulgado no anúncio de encerramento, no que ocorrer primeiro entre o fim do prazo (I) e a distribuição da totalidade (II). O inciso II sustenta o fechamento antecipado (OFF-07); Encerrada corresponde ao marco, o anúncio não é modelado.
-- [FATO] Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. A categoria é declarada na reserva; seu efeito é extensão futura.
-- [FATO] Art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. Sem modificação no escopo, a decisão sobre alterar reserva antes do fechamento é BOOK-10 a BOOK-12.
-- [FATO] Art. 50: lote adicional de até 25%. Fora do escopo; quando entrar, a quantidade base continua sendo o denominador do proporcional e a referência do lote.
-- [FATO] Registro na CVM, prospecto, lâmina e aviso ao mercado (arts. 57 e 65) não são modelados. Nenhum atributo espelha documento formal; se precisar, o glossário muda antes do código.
+- Art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro; § 3º manda restituir integralmente quando o mínimo não é atingido. O modelo adota quantidade de cotas e mapeia o § 3º em Não formada (OFF-09).
+- Art. 74: havendo distribuição parcial, "deve ser dada a opção ao investidor" de condicionar à totalidade (I) ou a quantidade maior ou igual ao mínimo (II). As opções 1 e 2 são obrigatórias; a variante proporcional (opção 3) não está na CVM 160 e é herança do art. 31, § 1º, da ICVM 400, mantida pela prática. OFF-25.
+- Art. 74, parágrafo único: "efetivamente distribuídos" inclui as reservas condicionadas. `E` (numerador de OFF-28) e a formação seguem essa definição, sem recálculo após o condicionamento. Detalhe: ALLOC-10.
+- Arts. 67, III, e 68: revogação pedida pelo ofertante e deferida pela CVM torna ineficazes oferta e aceitações, com restituição integral. Revogada modela o efeito; o deferimento não é modelado.
+- Art. 70: suspensão e cancelamento são atos da CVM por irregularidade. Por isso o estado de mínimo não atingido se chama Não formada, não Cancelada. Suspensão não é modelada.
+- Art. 76: o resultado é divulgado no anúncio de encerramento, no que ocorrer primeiro entre o fim do prazo (I) e a distribuição da totalidade (II). O inciso II sustenta o fechamento antecipado (OFF-07); Encerrada corresponde ao marco, o anúncio não é modelado.
+- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. A categoria é declarada na reserva; seu efeito é extensão futura.
+- Art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. Sem modificação no escopo, a decisão sobre alterar reserva antes do fechamento é BOOK-10 a BOOK-12.
+- Art. 50: lote adicional de até 25%. Fora do escopo; quando entrar, a quantidade base continua sendo o denominador do proporcional e a referência do lote.
+- Registro na CVM, prospecto, lâmina e aviso ao mercado (arts. 57 e 65) não são modelados. Nenhum atributo espelha documento formal; se precisar, o glossário muda antes do código.
 
 ## Não-objetivos
 
@@ -219,7 +215,7 @@ Acoplamentos entre contextos: PRD 0000.
 
 ## Perguntas em Aberto
 
-- Oferta sem distribuição parcial (OFF-20) publicada com conjunto de opções informado: a publicação é rejeitada como violação ou o conjunto é ignorado? Impacto: uma regra de validação a mais em OFF-15 a OFF-25 e o contrato exposto aos consumidores. Dono: autor; resolve com a escolha registrada em OFF-20 antes de o PRD passar a Em Revisão.
+- Oferta sem distribuição parcial (OFF-20) publicada com conjunto de opções informado: a publicação é rejeitada como violação ou o conjunto é ignorado? Impacto: uma regra de validação a mais em OFF-15 a OFF-25 e o contrato exposto aos consumidores. Dono: autor; resolve com a escolha registrada em OFF-20 antes de aprovar o PRD.
 
 ## Ponto de Maior Fragilidade
 

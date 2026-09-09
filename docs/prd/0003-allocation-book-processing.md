@@ -1,11 +1,7 @@
-<!-- prd-tier: complexa -->
 # Processamento do Livro e Alocação
 
 | | |
 |---|---|
-| **Status** | Rascunho |
-| **Autor** | Guilherme Salvi |
-| **Data** | 2026-09-04 |
 | **Contexto Originário** | Allocation (primário); consome Offering e ReservationBook; devolve `BookProcessed` aos dois |
 
 Prefixo dos requisitos: `ALLOC`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
@@ -22,9 +18,9 @@ Allocation é o núcleo do domínio: é onde as regras da CVM 160 sobre distribu
 
 Sem um processamento único e determinístico, cada leitura do livro produziria um resultado diferente, e nenhum contexto poderia confiar no desfecho. Sem regras precisas para vedação, formação, condicionamento e rateio, os casos de borda (exclusão que derruba a demanda abaixo da base, truncamento que deixa resto, condição que cancela reservas depois da formação) ficam a critério de quem implementa.
 
-[FATO] As cotas efetivamente distribuídas são apuradas antes do condicionamento e não são recalculadas depois: formação e numerador do proporcional consideram todas as reservas do livro fechado, inclusive as que a opção de colocação total vai cancelar. É a leitura literal da CVM 160, art. 74, parágrafo único, e a única que o texto admite: o parágrafo existe para quebrar a circularidade entre "quanto foi distribuído" e "quais condições se cumprem". Consequência aceita: a oferta pode se formar com soma final abaixo do montante mínimo, e os investidores da opção 1 são restituídos (art. 73, § 4º).
+As cotas efetivamente distribuídas são apuradas antes do condicionamento e não são recalculadas depois: formação e numerador do proporcional consideram todas as reservas do livro fechado, inclusive as que a opção de colocação total vai cancelar. É a leitura literal da CVM 160, art. 74, parágrafo único, e a única que o texto admite: o parágrafo existe para quebrar a circularidade entre "quanto foi distribuído" e "quais condições se cumprem". Consequência aceita: a oferta pode se formar com soma final abaixo do montante mínimo, e os investidores da opção 1 são restituídos (art. 73, § 4º).
 
-[FATO] Por decisão do autor, o rateio proporcional com resto por maior fração é o único critério da v1.
+Por decisão do autor, o rateio proporcional com resto por maior fração é o único critério da v1.
 
 ## Usuário-alvo / JTBD
 
@@ -80,7 +76,7 @@ Mecanismo de execução, forma de leitura do livro e transporte do resultado sã
 | Quantidade alocada | Cotas inteiras atribuídas a uma reserva. Nunca maior que a reservada; zero é válido. |
 | Desfecho | Resultado do processamento para a oferta: formada e alocada, ou não formada. |
 
-## Functional Requirements
+## Requisitos Funcionais
 
 Cada requisito é uma condição verificável. Notação na Solução Proposta.
 
@@ -144,7 +140,7 @@ Cada requisito é uma condição verificável. Notação na Solução Proposta.
 
 Produz `BookProcessed` (ALLOC-26). Consome `OfferPublished` (definição), `OfferClosed` (ALLOC-01) e `OfferRevoked` (ALLOC-03). O livro fechado é lido do ReservationBook (BOOK-16); a forma da leitura é delegada a ADR e precisa satisfazer BOOK-NFR-02. Catálogo e sequências: PRD 0000.
 
-## Non-functional Requirements
+## Requisitos Não Funcionais
 
 - **ALLOC-NFR-01** Aritmética exata: sem ponto flutuante; truncamento sempre para baixo.
 - **ALLOC-NFR-02** Processamento atômico: ou emite `BookProcessed` completo, ou nada.
@@ -155,12 +151,12 @@ Produz `BookProcessed` (ALLOC-26). Consome `OfferPublished` (definição), `Offe
 
 Texto consolidado da CVM 160 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- [FATO] Art. 56, caput, § 1º, III, e § 3º: vedação a vinculadas em excesso superior a um terço; exceção quando a exclusão derruba a demanda abaixo da quantidade ofertada; nessa hipótese a colocação para vinculadas "fica limitada ao necessário para perfazer a quantidade", preservada a colocação integral das não vinculadas. ALLOC-06, ALLOC-07, ALLOC-21. O cálculo do excesso ignora lote adicional e suplementar, inexistentes na v1.
-- [FATO] Art. 73, §§ 3º e 4º: restituição integral abaixo do mínimo, inclusive a quem condicionou à distribuição total. ALLOC-09; ALLOC-11 em distribuição parcial.
-- [FATO] Art. 74 e parágrafo único: opções de condicionamento; "efetivamente distribuídos" inclui as reservas condicionadas. ALLOC-10 fixa `E` antes do condicionamento. Incisos I e II obrigatórios na oferta (OFF-25); este contexto só aplica a opção declarada.
-- [FATO] Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Não modelado; a categoria não altera o condicionamento na v1.
-- [FATO] Art. 49, III: o plano de distribuição fixa o rateio com tratamento equitativo; a norma não impõe critério. O critério da v1 é escolha do modelo.
-- [FATO] ICVM 400, art. 31, § 1º (revogada): origem da distinção totalidade/proporcional, mantida pela prática de mercado.
+- Art. 56, caput, § 1º, III, e § 3º: vedação a vinculadas em excesso superior a um terço; exceção quando a exclusão derruba a demanda abaixo da quantidade ofertada; nessa hipótese a colocação para vinculadas "fica limitada ao necessário para perfazer a quantidade", preservada a colocação integral das não vinculadas. ALLOC-06, ALLOC-07, ALLOC-21. O cálculo do excesso ignora lote adicional e suplementar, inexistentes na v1.
+- Art. 73, §§ 3º e 4º: restituição integral abaixo do mínimo, inclusive a quem condicionou à distribuição total. ALLOC-09; ALLOC-11 em distribuição parcial.
+- Art. 74 e parágrafo único: opções de condicionamento; "efetivamente distribuídos" inclui as reservas condicionadas. ALLOC-10 fixa `E` antes do condicionamento. Incisos I e II obrigatórios na oferta (OFF-25); este contexto só aplica a opção declarada.
+- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Não modelado; a categoria não altera o condicionamento na v1.
+- Art. 49, III: o plano de distribuição fixa o rateio com tratamento equitativo; a norma não impõe critério. O critério da v1 é escolha do modelo.
+- ICVM 400, art. 31, § 1º (revogada): origem da distinção totalidade/proporcional, mantida pela prática de mercado.
 
 ## Não-objetivos
 
@@ -223,10 +219,6 @@ Acoplamentos entre contextos: PRD 0000.
 | Critério do resto do arredondamento | Risco de desenho | Escolha do modelo; pode divergir do plano de distribuição de uma oferta real |
 | Processamento sem revisão | Risco operacional | Erro no livro só se corrige por revogação |
 | Leitura do livro fechado | ADR pendente | Até o ADR, o contrato é semântico (BOOK-16, BOOK-NFR-02) |
-
-## Perguntas em Aberto
-
-Nenhuma.
 
 ## Ponto de Maior Fragilidade
 

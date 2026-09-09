@@ -3,14 +3,11 @@
 
 | | |
 |---|---|
-| **Status** | Rascunho |
-| **Autor** | Guilherme Salvi |
-| **Data** | 2026-09-05 |
 | **Escopo** | Propósito, mapa de contextos, catálogo de eventos e fluxos entre contextos. Não contém regra de negócio: toda regra vive no PRD do contexto dono e é citada pelo ID |
 
 ## Propósito
 
-[FATO] O projeto é um modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de fundo fechado a investidor final. Não há liquidação financeira nem integração externa. O investidor não acessa a plataforma; o operador da corretora age em seu nome.
+O projeto é um modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de fundo fechado a investidor final. Não há liquidação financeira nem integração externa. O investidor não acessa a plataforma; o operador da corretora age em seu nome.
 
 ## Contextos
 

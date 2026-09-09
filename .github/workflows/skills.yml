@@ -1,7 +1,8 @@
 # Validates the agent skills (.claude/skills) and the artifacts they produce
-# (docs/prd, docs/specs): Python test suites, Mermaid parser self-test, PRD and
-# spec linters, sequence checks, and the commit-message policy of pull
-# requests. Everything runs from the repository root.
+# (docs/prd, docs/specs): Python test suites, Mermaid parser self-test, PRD,
+# spec and tasks linters, the independence between skills, and the
+# commit-message policy of pull requests. Everything runs from the repository
+# root.
 name: skills
 
 on:
@@ -59,29 +60,45 @@ jobs:
 
       - name: Lint PRDs (docs/prd)
         run: |
-          python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
           python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
+          python3 .claude/skills/prd-writer/scripts/lint_mermaid.py docs/prd
 
-      - name: Lint specs (docs/specs)
+      - name: Lint living specs (docs/specs/*/*/spec.md)
         run: |
-          python3 .claude/skills/spec-driven/scripts/seq.py check docs/specs
           status=0
-          for spec in $(find docs/specs -name spec.md | sort); do
+          [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
+          for spec in $(find docs/specs -mindepth 3 -maxdepth 3 -name spec.md | sort); do
             python3 .claude/skills/spec-driven/scripts/lint_spec.py "$spec" || status=1
           done
           exit $status
 
-      - name: Check archived deltas against their living specs (apply_delta check)
+      - name: Lint tasks against their living spec (docs/specs/*/*/*/tasks.md)
         run: |
           status=0
-          for delta in $(find docs/specs -path '*/changes/*/spec.md' | sort); do
-            living="$(dirname "$delta")/../../spec.md"
-            if [ -f "$living" ]; then
-              python3 .claude/skills/spec-driven/scripts/apply_delta.py check "$delta" || status=1
-            else
-              echo "skip $delta: capability ainda sem spec viva"
-            fi
+          [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
+          for tasks in $(find docs/specs -mindepth 4 -maxdepth 4 -name tasks.md | sort); do
+            spec="$(dirname "$tasks")/../spec.md"
+            python3 .claude/skills/spec-driven/scripts/lint_tasks.py "$tasks" --spec "$spec" || status=1
           done
+          exit $status
+
+      - name: Skills are independent of each other (coupled only by the PRD artifact)
+        run: |
+          status=0
+          # spec-driven: no mention of the other skill, its files, or files this skill no longer has;
+          # its own name only in the SKILL.md frontmatter and title.
+          hits=$(grep -rIiE "prd-writer|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md" .claude/skills/spec-driven --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites another skill or a removed file"; status=1; fi
+          hits=$(grep -rIiE "spec-driven" .claude/skills/spec-driven --exclude-dir=__pycache__ --exclude=test_docs_consistency.py | grep -vE "SKILL\.md:(name: spec-driven|# Spec-Driven Development)$" || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites itself by name outside the SKILL.md frontmatter/title"; status=1; fi
+          # prd-writer: no mention of the other skill; its own name only in the SKILL.md frontmatter.
+          hits=$(grep -rIiE "spec-driven" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites spec-driven"; status=1; fi
+          hits=$(grep -rIiE "prd-writer" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules | grep -vE "SKILL\.md:name: prd-writer$" || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites itself by name outside the SKILL.md frontmatter"; status=1; fi
+          # commit policy belongs to the repository: the spec-driven scripts know nothing about it.
+          hits=$(grep -rIi "commit" .claude/skills/spec-driven/scripts --exclude-dir=__pycache__ --exclude-dir=tests || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::commit policy inside the spec-driven scripts"; status=1; fi
           exit $status
 
       - name: Commit messages follow CLAUDE.md (pull requests only)

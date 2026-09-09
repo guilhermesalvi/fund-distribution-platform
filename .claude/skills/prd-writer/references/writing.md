@@ -69,7 +69,7 @@ Aplicável quando o time opera em DDD ou tem vocabulário de domínio explícito
 - Definição: `- **OFF-01 (Must)** condição.` MoSCoW (Must, Should, Could, Won't) dentro dos parênteses. NFR sem MoSCoW.
 - Toda citação resolve para uma definição em algum PRD da pasta; ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio.
 - Rótulo de transição ou de ramo em diagrama cita o ID, não reescreve a condição (Diagramas).
-- PRD com spec derivada (`/docs/specs`, skill `spec-driven`): cada requisito EARS da spec cita o ID deste PRD ao fim da linha. Antes de alterar ou remover um FR, procure o ID em `/docs/specs` e liste as specs afetadas ao apresentar; o linter da spec confere que cada ID citado existe e, pelo `prd-rev`, que o arquivo do PRD não mudou desde a spec (qualquer alteração é HARD), mas não diz qual FR mudou: liste as specs cujo `prd-rev` aponta para o PRD tocado e re-derive.
+- Antes de alterar ou remover um FR, procure quem cita o ID fora deste PRD (outros PRDs, specs, testes) e liste ao apresentar: a citação continua apontando para o ID, mas o texto atrás dele mudou.
 
 ## PRD 0000
 
@@ -82,13 +82,13 @@ Quando há mais de um contexto com PRD próprio, o PRD `0000` (tier `overview`) 
 | Catálogo de eventos | Tabela: evento, produtor, consumidores, gatilho, IDs que o governam. Um evento só entra com consumidor que o PRD consumidor declara; sem consumidor é candidato, listado como tal, porque evento sem consumidor é acoplamento inventado |
 | Fluxos entre contextos | `sequenceDiagram` por fluxo (caminho feliz, revogação, falha); rótulos citam IDs |
 | Termos por contexto | Tabela: conceito, termo em cada contexto; só quando o mesmo conceito tem nomes diferentes entre contextos (intake.md, Ontologia). Cada PRD mantém o glossário do seu contexto; o 0000 mantém a correspondência |
-| Decisões delegadas a ADR | Tabela: decisão, exigência que o ADR precisa satisfazer (cita o NFR). A ADR resultante segue o formato da skill `spec-driven` (memory.md, Decisões e ADRs): alternativas, consequências, participantes |
+| Decisões delegadas a ADR | Tabela: decisão, exigência que a ADR precisa satisfazer (cita o NFR); o formato da ADR não é assunto do PRD |
 
 Cada PRD referencia o 0000 na linha de prefixo do header em vez de repetir propósito, mapa ou catálogo.
 
 ## Diagramas
 
-Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2` vai uma tabela com estado, identificador e significado. A mesma coluna Identificador vale para toda enumeração que o código vai carregar (motivo de resultado, categoria, tipo de declaração). Essa tabela fica junto do FR que a define ou no Glossário, porque a spec usa esse identificador nos requisitos EARS (skill `spec-driven`, specify.md, Origem e modo), e nome inventado na spec é decisão de linguagem tomada fora do PRD.
+Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2` vai uma tabela com estado, identificador e significado. A mesma coluna Identificador vale para toda enumeração que o código vai carregar (motivo de resultado, categoria, tipo de declaração). Essa tabela fica junto do FR que a define ou no Glossário, porque o código carrega esse nome, e nome inventado fora do PRD é decisão de linguagem tomada fora dele.
 
 Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado); use o nome completo. Todo bloco passa por parse antes de apresentar (review.md, Passada mecânica).
 
@@ -105,14 +105,14 @@ Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linte
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
 | Glossário de Domínio | ≥5 termos ou sinônimos concorrentes | Termo e definição de uma linha, vindos das passadas de conceitos e termos da ontologia quando há transcrição (intake.md); termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
-| Functional Requirements | `media`+ | Lista por subtítulo temático, cada linha um ID e uma condição (IDs). Atributo ou opção que só se aplica sob condição ganha FR dizendo o que acontece quando informado fora dela (rejeitado ou ignorado), porque a spec não decide problem space (skill `spec-driven`, specify.md, Origem e modo) |
+| Functional Requirements | `media`+ | Lista por subtítulo temático, cada linha um ID e uma condição (IDs). Atributo ou opção que só se aplica sob condição ganha FR dizendo o que acontece quando informado fora dela (rejeitado ou ignorado), porque é decisão de negócio, não de implementação |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências no 0000 |
-| Non-functional Requirements | `complexa` | `<PREFIXO>-NFR-nn`; são os critérios pelos quais o design será avaliado, então atributo de qualidade e restrição, nunca mecanismo (skill `spec-driven`, design.md, Critérios antes das abordagens); exigência que um ADR precisa satisfazer diz qual ADR |
+| Non-functional Requirements | `complexa` | `<PREFIXO>-NFR-nn`; são os critérios pelos quais o design será avaliado, então atributo de qualidade e restrição, nunca mecanismo; exigência que um ADR precisa satisfazer diz qual ADR |
 | Considerações Regulatórias | `complexa`, ou qualquer tier com dependência de norma ou órgão regulador | Uma linha por artigo: `[FATO] Art. N: o que diz → ID que o modela`; fonte e data de leitura no topo |
 | Não-objetivos | `simples`+; omita só sem risco de scope creep | Um bullet por exclusão; o que não faremos |
 | Trade-offs Declarados | Decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão obrigatórios; todos mantidos, porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso | `simples`+ | Exatamente três bullets: leading (proxy, agora), lagging (resultado), guardrails (o que não pode degradar; sem eles, Lei de Goodhart). Plataforma e infra em intake.md |
-| Critérios de Aceitação | `media`+ | Cenário numérico em tabela: caso, entrada, valores intermediários, ramo, resultado; a primeira coluna nomeia o caso porque a spec e o teste o citam pelo nome (skill `spec-driven`, specify.md, Origem e modo). Dado/Quando/Então só para o que a tabela não expressa, citando o FR que exercita. Só o que acrescenta valores ao FR; "usuário pode X" é tautologia |
+| Critérios de Aceitação | `media`+ | Cenário numérico em tabela: caso, entrada, valores intermediários, ramo, resultado; a primeira coluna nomeia o caso porque teste cita pelo nome. Dado/Quando/Então só para o que a tabela não expressa, citando o FR que exercita. Só o que acrescenta valores ao FR; "usuário pode X" é tautologia |
 | Dependências e Riscos | `media`+ | Tabela item, tipo, impacto; acoplamento entre contextos cita o 0000 e só o lado dono o descreve |
 | Perguntas em Aberto | `simples`+ | Pendências reais, uma linha cada: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. `[PREMISSA-CRÍTICA]` do corpo entra aqui por referência como blocker, com o plano de validação (Convenção de confiança); `[LACUNA]` que bloqueia decisão também. "Nenhuma." só quando não há pendência. Decisão tomada não entra: com custo vive em Trade-offs, sem custo vive no FR que a aplica; decisão arquitetural delegada é candidata a ADR (PRD 0000, Decisões delegadas a ADR) |
 | Ponto de Maior Fragilidade | Sempre, última seção de conteúdo; só Referências vem depois | Abaixo |
@@ -131,23 +131,6 @@ Todo PRD termina nomeando uma decisão: a decisão de julgamento mais contestáv
 - Calibre ao custo do erro: decisão de baixo custo (típico em `simples`) merece duas linhas. Retórica adversarial desproporcional é auto-crítica cosmética melhor escrita.
 - Sem auto-crítica cosmética: fraqueza menor e segura nomeada para parecer rigor é falha. A pergunta é "se este PRD falhar, qual decisão terá sido a causa?".
 - Em rascunho com `[LACUNA]` material, não fabrique vetor de ataque sustentado por fatos que não existem: aponte a decisão cuja sustentação depende da lacuna ou da `[PREMISSA]` pendente e diga o que a validação mudaria.
-
-## Interface com a skill spec-driven
-
-O PRD é a entrada da Specify (skill `spec-driven`, specify.md, Origem e modo, "A partir do PRD, seis regras"). Esta tabela é o lado do PRD do mesmo contrato; cada linha diz o que a spec consome e onde a regra deste lado vive.
-
-| A spec consome | O PRD fornece | Regra deste lado |
-|---|---|---|
-| Status Aprovado como pré-requisito; Rascunho ou Em Revisão só com decisão explícita do usuário | Status na enumeração, coerente com Confiança e Perguntas em Aberto | output.md, Header |
-| Revisão exata (`prd-rev`: hash Git ou sha256 do conteúdo) | Arquivo estável; alteração material volta o Status a Em Revisão e invalida specs que citam os IDs tocados | IDs; output.md, Header |
-| IDs `X-nn` e `X-NFR-nn` citados ao fim de cada requisito EARS, com prefixo declarado | Prefixo na linha após o header; ID nunca reciclado | IDs |
-| Identificadores de estado, evento e enumeração (motivo, categoria, declaração) | Coluna Identificador nas tabelas de estado e de enumeração; nome do evento no catálogo do 0000 | Diagramas; PRD 0000 |
-| Comportamento de atributo condicional fora da condição | FR diz se é rejeitado ou ignorado | Seções, Functional Requirements |
-| Cenários herdados, citados pelo nome do caso ou pelo FR | Primeira coluna da tabela de Critérios de Aceitação nomeia o caso; Dado/Quando/Então cita o FR | Seções, Critérios de Aceitação |
-| NFR observável vira EARS; NFR de qualidade vira critério de design | NFR é atributo de qualidade ou restrição, nunca mecanismo | Seções, Non-functional Requirements |
-| Mapa de contextos, catálogo de eventos e decisões delegadas a ADR | PRD 0000 | PRD 0000 |
-| `[FATO]` vira fato; `[PREMISSA]` continua premissa mesmo após aprovação | Tags de confiança em toda afirmação relevante | Convenção de confiança |
-| Lacuna de regra de negócio devolvida ao PRD, nunca decidida na spec | Perguntas em Aberto com dono e critério; correção no PRD antes da spec | Seções, Perguntas em Aberto; SKILL.md, Apresente e itere |
 
 ## Redação
 

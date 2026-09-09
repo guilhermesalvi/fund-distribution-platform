@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 seq.py - verificacao e alocacao deterministica do contador sequencial de
-PRDs (skill prd-writer). Mudancas de spec e ADRs sao do seq.py da skill
-spec-driven.
+PRDs.
 
     Uso:
       python scripts/seq.py check <root> [--kind prd]
@@ -446,8 +445,7 @@ def main(argv=None):
         sp.add_argument("root", help="diretorio real dos PRDs (o '/docs/prd' da "
                         "documentacao e relativo a raiz do repositorio)")
         sp.add_argument("--kind", choices=("prd",), default="prd",
-                        help="so 'prd'; mudancas de spec e ADRs usam o seq.py "
-                             "da skill spec-driven")
+                        help="so 'prd'")
         if name == "next":
             sp.add_argument("--slug", help="feature-slug para compor NNNN-<slug>")
             sp.add_argument("--domain", help="domain-slug; imprime o path "
@@ -466,8 +464,7 @@ def main(argv=None):
         return 2
     if infer_kind(args.root) is None:
         print(f"seq: '{os.path.basename(os.path.normpath(args.root))}' parece raiz de "
-              "specs ou ADRs; este seq.py cuida so de PRDs - use o seq.py da "
-              "skill spec-driven", file=sys.stderr)
+              "specs ou ADRs; este seq.py cuida so de PRDs", file=sys.stderr)
         return 2
     return args.fn(args)
 

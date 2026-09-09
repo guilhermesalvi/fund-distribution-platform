@@ -1,8 +1,8 @@
 """Consistencia deterministica entre documentacao e scripts da skill:
 todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x` citada junto do nome de um script
 existe no argparse desse script; fences de codigo fecham; toda citacao
-`arquivo.md, Titulo` (a esta skill ou a irma spec-driven, nos dois sentidos)
-aponta para heading ou trecho em negrito existente.
+`arquivo.md, Titulo` a arquivos desta skill aponta para heading ou trecho em
+negrito existente.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_docs_consistency.py"
 """
@@ -15,7 +15,6 @@ import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.dirname(SCRIPTS)
-SIBLING = os.path.join(os.path.dirname(SKILL), "spec-driven")
 
 
 def md_files(skill):
@@ -70,7 +69,6 @@ def script_flags(path):
 
 
 OWN_FILES = "intake|writing|output|review|example"
-SIBLING_FILES = "specify|design|tasks|execute|verify|memory|modes"
 CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 
@@ -157,24 +155,6 @@ class DocsConsistency(unittest.TestCase):
         for md in md_files(SKILL):
             for fname, title, line in cited_sections(read(md), OWN_FILES):
                 self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente")
-                self.assertTrue(section_exists(own[fname], title),
-                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
-
-    def test_sibling_citations_resolve(self):
-        """Citacoes desta skill a arquivos da skill irma (spec-driven) e da
-        irma a esta skill apontam para heading ou trecho em negrito existente."""
-        if not os.path.isdir(SIBLING):
-            self.skipTest("spec-driven ausente")
-        own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
-        sib = {os.path.basename(p): read(p) for p in md_files(SIBLING)}
-        for md in md_files(SKILL):
-            for fname, title, line in cited_sections(read(md), SIBLING_FILES):
-                self.assertIn(fname, sib, f"{md}:{line}: cita {fname} inexistente na spec-driven")
-                self.assertTrue(section_exists(sib[fname], title),
-                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname} (spec-driven)")
-        for md in md_files(SIBLING):
-            for fname, title, line in cited_sections(read(md), OWN_FILES):
-                self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente nesta skill")
                 self.assertTrue(section_exists(own[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
 

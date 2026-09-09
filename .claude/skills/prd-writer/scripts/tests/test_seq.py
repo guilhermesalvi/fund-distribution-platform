@@ -1,4 +1,4 @@
-"""Testes de seq.py (prd-writer): layouts flat/nested, PRD plano e em pasta,
+"""Testes de seq.py: layouts flat/nested, PRD plano e em pasta,
 PRD 0000 via --overview, unicidade global do numero, consistencia check/next
 e substituicao (reciproca, orfa, ciclo, nao anterior).
 

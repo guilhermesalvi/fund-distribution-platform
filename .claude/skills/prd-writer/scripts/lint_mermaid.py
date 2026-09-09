@@ -21,7 +21,7 @@ Setup e validacao sao separados:
     `INCOMPLETO:` ("NAO validado - parser indisponivel") e o exit code e 3,
     para o chamador distinguir "parser indisponivel" de "diagrama invalido".
     O prefixo INCOMPLETO marca validacao que nao pode ser feita, nunca
-    sucesso (mesma semantica dos linters da skill spec-driven).
+    sucesso.
 
 Extracao de fences (subconjunto do CommonMark, com uma excecao deliberada):
 

@@ -62,13 +62,13 @@ A linha de prefixo vem logo após a tabela em todo PRD com requisitos (writing.m
 | Confiança | Confidence | Média / Baixa; omitida quando Alta (writing.md, Convenção de confiança) | Medium / Low |
 | Substitui | Supersedes | NNNN, só quando substitui | NNNN |
 
-Status diz a maturidade do documento, e a skill `spec-driven` o lê antes de abrir uma spec (specify.md, Origem e modo):
+Status diz a maturidade do documento:
 
 | Status | Significa | Exige |
 |---|---|---|
 | Rascunho | Em elaboração; admite `[LACUNA]` material, `[PREMISSA-CRÍTICA]` sem plano e pergunta sem dono | Perguntas em Aberto lista o que falta |
 | Em Revisão | Pronto para o usuário aprovar | Nenhuma `[LACUNA]` bloqueando escopo, métrica ou viabilidade; toda `[PREMISSA-CRÍTICA]` com plano de validação; toda pergunta com dono e critério; Confiança Média ou omitida (writing.md, Convenção de confiança) |
-| Aprovado | Decisão do usuário, nunca da skill; pré-requisito de Specify na `spec-driven` | O mesmo de Em Revisão |
+| Aprovado | Decisão do usuário, nunca da skill; pré-requisito para derivar qualquer artefato downstream | O mesmo de Em Revisão |
 | Substituído por NNNN | Outro PRD assumiu o escopo | Campo Substitui no novo |
 
 Rótulos e valores seguem o idioma do PRD (SKILL.md, Princípios); o nome do contexto preserva o termo do domínio (`Customer Onboarding` não se traduz).

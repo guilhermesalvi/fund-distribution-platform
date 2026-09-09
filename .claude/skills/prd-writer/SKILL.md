@@ -1,6 +1,6 @@
 ---
 name: prd-writer
-description: 'Cria e refina PRDs (Product Requirements Documents) de features, produtos digitais e iniciativas tecnológicas: problema, usuário-alvo, capability, requisitos com ID, métricas, trade-offs. TRIGGER: "PRD", "product requirements", "documento de requisitos de produto", "especificação de produto", "vamos documentar/especificar essa feature" e equivalentes. NÃO acionar para tech spec, design ou tasks (skill spec-driven), ADR, notas de reunião, documentação geral ou spec de API sem contexto de produto.'
+description: 'Cria e refina PRDs (Product Requirements Documents) de features, produtos digitais e iniciativas tecnológicas: problema, usuário-alvo, capability, requisitos com ID, métricas, trade-offs. TRIGGER: "PRD", "product requirements", "documento de requisitos de produto", "especificação de produto", "vamos documentar/especificar essa feature" e equivalentes. NÃO acionar para tech spec, design ou tasks, ADR, notas de reunião, documentação geral ou spec de API sem contexto de produto.'
 ---
 
 # PRD Writer
@@ -16,7 +16,7 @@ Feature, produto digital ou iniciativa tecnológica com impacto funcional para u
 | Dívida técnica, refactor, modernização sem impacto funcional novo | ADR, doc de dívida técnica, plano de refactor |
 | Decisão arquitetural | ADR |
 | Processo interno sem entrega de software | Runbook, doc de processo |
-| Spec de implementação (contratos de API, módulos, plano de tarefas, design de componente) | Tech spec, design doc (skill `spec-driven`) |
+| Spec de implementação (contratos de API, módulos, plano de tarefas, design de componente) | Tech spec, design doc |
 
 Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenquadre pelo problema (intake.md, Escopo problemático).
 
@@ -47,7 +47,7 @@ Leia a referência inteira antes de executar o passo; as regras dependem umas da
 
 **Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA-CRÍTICA]` a validar, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Quando a mudança afeta várias seções ou a narrativa, regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Quando a mudança é localizada (um FR, um threshold, uma frase, uma `[LACUNA]`), faça o ajuste pontual. Em dúvida, regenere.
 
-O Status só passa a Aprovado por decisão do usuário (output.md, Header); é o estado que a skill `spec-driven` consome para abrir uma spec. PRD que já tem spec derivada em `/docs/specs`: antes de alterar ou remover um FR, liste as specs que citam os IDs tocados (writing.md, IDs).
+O Status só passa a Aprovado por decisão do usuário (output.md, Header). Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts
 

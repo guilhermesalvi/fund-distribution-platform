@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-lint_prd.py - verificacao deterministica de conformidade mecanica de PRDs
-gerados pela skill prd-writer.
+lint_prd.py - verificacao deterministica de conformidade mecanica de PRDs.
 
     Uso:  python scripts/lint_prd.py <caminho-do-prd.md | diretorio> [...]
 

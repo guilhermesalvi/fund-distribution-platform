@@ -91,10 +91,11 @@ jobs:
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites another skill or a removed file"; status=1; fi
           hits=$(grep -rIiE "spec-driven" .claude/skills/spec-driven --exclude-dir=__pycache__ --exclude=test_docs_consistency.py | grep -vE "SKILL\.md:(name: spec-driven|# Spec-Driven Development)$" || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites itself by name outside the SKILL.md frontmatter/title"; status=1; fi
-          # prd-writer: no mention of the other skill; its own name only in the SKILL.md frontmatter.
-          hits=$(grep -rIiE "spec-driven" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites spec-driven"; status=1; fi
-          hits=$(grep -rIiE "prd-writer" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules | grep -vE "SKILL\.md:name: prd-writer$" || true)
+          # prd-writer: no mention of the other skill, its files or its artifacts; its own name only in the
+          # SKILL.md frontmatter (the npm package name under mermaid-parser is not a skill citation).
+          hits=$(grep -rIiE "spec-driven|specify\.md|design\.md|memory\.md|/docs/specs|prd-rev" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites spec-driven or its artifacts"; status=1; fi
+          hits=$(grep -rIiE "prd-writer" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude-dir=mermaid-parser | grep -vE "SKILL\.md:name: prd-writer$" || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites itself by name outside the SKILL.md frontmatter"; status=1; fi
           # commit policy belongs to the repository: the spec-driven scripts know nothing about it.
           hits=$(grep -rIi "commit" .claude/skills/spec-driven/scripts --exclude-dir=__pycache__ --exclude-dir=tests || true)

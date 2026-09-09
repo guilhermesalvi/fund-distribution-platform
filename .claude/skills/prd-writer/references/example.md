@@ -66,7 +66,7 @@ Armazenamento de documentos, notificação, filas e desenho de tela são downstr
 | Submissão completa | Instante em que todo item do checklist tem documento anexado (ONB-03). |
 | Elegibilidade de ativação | Propriedade derivada do estado do caso (ONB-11); não é decisão do operador. |
 
-## Functional Requirements
+## Requisitos Funcionais
 
 Cada requisito é uma condição verificável.
 
@@ -91,7 +91,7 @@ Cada requisito é uma condição verificável.
 - **ONB-11 (Must)** Elegibilidade de ativação é verdadeira se e somente se o caso está Aprovado.
 - **ONB-12 (Must)** Toda submissão, validação e transição registra autor, instante e motivo, consultável por caso e por cliente.
 
-## Non-functional Requirements
+## Requisitos Não Funcionais
 
 - **ONB-NFR-01** Submissão completa é refletida como Em análise em até 1 minuto.
 - **ONB-NFR-02** Documentos de caso Recusado são retidos por no máximo 30 dias após a recusa, salvo obrigação legal de guarda, que prevalece pelo prazo que ela fixar.

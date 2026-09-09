@@ -69,7 +69,7 @@ Palavra reservada do Mermaid não serve de alias de participante nem de nó: `of
 
 ## Seções
 
-Obrigatórias, HARD no linter: Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Functional Requirements. O PRD 0000 tem as seções da tabela PRD 0000. Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre e nunca por forma: seção vazia, "Nenhuma." ou bullet inventado para completar contagem é defeito, não conformidade. A ordem é a da tabela.
+Obrigatórias, HARD no linter: Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela PRD 0000. Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre e nunca por forma: seção vazia, "Nenhuma." ou bullet inventado para completar contagem é defeito, não conformidade. A ordem é a da tabela.
 
 | Seção | Entra quando | Forma |
 |---|---|---|
@@ -80,9 +80,9 @@ Obrigatórias, HARD no linter: Contexto e Problema, Usuário-alvo, Solução Pro
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
 | Glossário de Domínio | Há termo cujo significado não é óbvio ou tem sinônimos concorrentes | Termo e definição de uma linha, vindos das passadas de conceitos e termos da ontologia quando há transcrição (intake.md); termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
-| Functional Requirements | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (IDs; Uma regra, um lugar) |
+| Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (IDs; Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências no 0000 |
-| Non-functional Requirements | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual |
+| Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual |
 | Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo: `Art. N: o que diz → ID que o modela`; artigo não conferido no texto é `[PREMISSA]` |
 | Não-objetivos | Há risco de scope creep | Um bullet por exclusão; o que não faremos |
 | Trade-offs Declarados | Há decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas, os dois obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |

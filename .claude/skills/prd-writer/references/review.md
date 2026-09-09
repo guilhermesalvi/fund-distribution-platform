@@ -18,7 +18,7 @@ Aplica writing.md, Uma regra, um lugar, depois do linter. Para cada FR, em ordem
 1. Procure a mesma regra dita com outras palavras em Solução Proposta, Glossário, Considerações Regulatórias, Critérios de Aceitação, Métricas, Dependências, Perguntas em Aberto e no PRD 0000.
 2. Substitua cada paráfrase pela citação do ID. Prosa que sobra sem a regra é prosa que sai.
 3. Se a paráfrase e o FR divergem, decida qual está certo antes de apagar a paráfrase; a divergência é a informação, não o ruído.
-4. `[FATO]` repetido em mais de um PRD vai para o 0000 e os PRDs citam.
+4. Fato repetido em mais de um PRD vai para o 0000 e os PRDs citam.
 5. Evento no catálogo do 0000 com consumidor que o PRD consumidor não declara: remova o consumidor ou declare o consumo no PRD dono.
 
 ## Passadas de julgamento
@@ -38,8 +38,8 @@ Itens com alto risco de escape. Cada um cita a regra; não a repete.
 - IDs com prefixo, todos resolvendo (writing.md, IDs).
 - Toda métrica primária com guardrail (writing.md, Seções, Métricas de Sucesso).
 - Trade-offs separados de Não-objetivos e de Perguntas em Aberto (writing.md, Seções).
-- `[PREMISSA-CRÍTICA]` com "se falsa" e plano de validação, listada por referência em Perguntas em Aberto (writing.md, Convenção de confiança).
-- Status coerente com Confiança, `[LACUNA]` e Perguntas em Aberto (output.md, Header); "Nenhuma." só sem pendência (writing.md, Seções).
+- Premissa que derruba o PRD como primeira linha de Perguntas em Aberto, com "se falsa" e plano de validação (writing.md, Tags).
+- "Nenhuma." só sem pendência (writing.md, Seções).
 - Critérios de Aceitação verificáveis e só os que acrescentam valores (writing.md, Seções).
 - Discovery sintetizado, com origem marcada (intake.md, Material de discovery).
 - Ponto de Maior Fragilidade único e não cosmético (writing.md).

@@ -8,11 +8,7 @@ PRD tier complexa de um único contexto (sem PRD 0000). Leia quando houver dúvi
 
 | | |
 |---|---|
-| **Status** | Rascunho |
-| **Autor** | A. Souza |
-| **Data** | 2026-09-05 |
 | **Contexto Originário** | Customer Onboarding (primário); afeta Account Activation e Compliance Review |
-| **Confiança** | Média — uma premissa crítica em validação |
 
 Prefixo dos requisitos: `ONB`. Contexto único; não há PRD 0000.
 
@@ -26,11 +22,9 @@ Time-to-revenue é o objetivo do trimestre; concorrentes ativam em D+1 e o garga
 
 ## Contexto e Problema
 
-[FATO] A verificação é manual: e-mail e planilha entre operações e compliance. Lead time médio de 5 dias úteis; 30% dos casos voltam por documento fora do padrão.
+A verificação é manual: e-mail e planilha entre operações e compliance. Lead time médio de 5 dias úteis; 30% dos casos voltam por documento fora do padrão.
 
-[FATO] A ativação da conta só ocorre depois da aprovação de compliance, e hoje essa aprovação é uma mensagem de e-mail sem registro estruturado.
-
-[PREMISSA-CRÍTICA] O lead time é causado pela troca manual e pela espera, não pela complexidade da análise. Se falsa, a análise continua custosa depois da digitalização, o ganho é marginal e a iniciativa não se paga; validar medindo o tempo efetivo de análise em 20 casos antes de aprovar.
+A ativação da conta só ocorre depois da aprovação de compliance, e hoje essa aprovação é uma mensagem de e-mail sem registro estruturado.
 
 ## Usuário-alvo / JTBD
 
@@ -109,8 +103,8 @@ Cada requisito é uma condição verificável.
 Textos lidos em 2026-09-05.
 
 - [PREMISSA] Circular BCB 3.978/2020, art. 2º: identificação e qualificação do cliente antes do início do relacionamento → ONB-05, ONB-11. Validar com compliance se o checklist atual cobre a qualificação.
-- [FATO] LGPD, art. 15, I: o tratamento termina quando a finalidade é alcançada → ONB-NFR-02.
-- [FATO] LGPD, art. 16, I: conservação permitida para cumprimento de obrigação legal → exceção de ONB-NFR-02.
+- LGPD, art. 15, I: o tratamento termina quando a finalidade é alcançada → ONB-NFR-02.
+- LGPD, art. 16, I: conservação permitida para cumprimento de obrigação legal → exceção de ONB-NFR-02.
 - [LACUNA] Regulação setorial além de KYC e LGPD para o segmento PJ; validar com compliance.
 
 ## Não-objetivos
@@ -157,8 +151,8 @@ Checklist com 3 itens, prazo de pendência de 10 dias úteis.
 
 ## Perguntas em Aberto
 
-- Blocker de aprovação: a `[PREMISSA-CRÍTICA]` do Contexto (lead time causado pela espera, não pela análise). Dono: operações; resolve com a medição do tempo efetivo de análise em 20 casos.
-- Há regulação setorial além de KYC e LGPD para o segmento PJ que acrescente itens ao checklist (ONB-05)? `[LACUNA]` de Considerações Regulatórias. Dono: compliance; resolve com parecer por escrito antes de o PRD passar a Em Revisão.
+- **[PREMISSA] O lead time é causado pela troca manual e pela espera, não pela complexidade da análise; se falsa, a análise continua custosa depois da digitalização, o ganho é marginal e a iniciativa não se paga.** Dono: operações; resolve medindo o tempo efetivo de análise em 20 casos antes de aprovar.
+- Há regulação setorial além de KYC e LGPD para o segmento PJ que acrescente itens ao checklist (ONB-05)? `[LACUNA]` de Considerações Regulatórias. Dono: compliance; resolve com parecer por escrito antes de aprovar.
 
 ## Ponto de Maior Fragilidade
 

@@ -25,9 +25,9 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 - **Precedência.** Quando pedido, convenção e defaults discordam sobre layout, seções, idioma ou forma, vale nesta ordem: primeiro o que o usuário pediu nesta sessão; depois a convenção do repositório (CLAUDE.md, rules, docs existentes); depois as instruções pessoais do usuário (CLAUDE.md global); por último os defaults desta skill. A skill preenche só o que ninguém fixou e avisa quando substituiu um default. Seção que o tier espera mas a convenção do projeto dispensa é declarada no comentário de tier com `omit:` (output.md, Header); isso silencia só o WARN do linter, nunca um HARD.
 - O idioma do artefato segue a mesma precedência. Quando ninguém fixou, é o idioma do input; se o input é ambíguo, português. Identificadores de domínio, IDs de requisito e tags de máquina não se traduzem. O idioma da conversa não muda o do artefato.
 - Falha é entregável: linter com HARD que você não consegue resolver, parser Mermaid indisponível ou fonte que falta se apresentam como relatório de falha com o que falta, nunca como PRD aprovável.
-- Rascunho útil vale mais que certeza forjada: Status, Confiança, `[LACUNA]`, `[PREMISSA-CRÍTICA]` e Perguntas em Aberto dizem juntos o que falta (output.md, Header; writing.md, Convenção de confiança). Não resolva incerteza artificialmente para entregar.
+- Rascunho útil vale mais que certeza forjada: `[LACUNA]`, `[PREMISSA]` e Perguntas em Aberto dizem o que falta (writing.md, Tags). Não resolva incerteza artificialmente para entregar.
 - O PRD vive no problem space. O capability test (writing.md, Lente DDD) é o critério de qualidade mais importante desta skill.
-- Toda afirmação carrega a origem pela convenção de confiança (writing.md).
+- Texto sem tag é fato; inferência é `[PREMISSA]`, informação que falta é `[LACUNA]` (writing.md, Tags).
 - Uma regra, um lugar: cada regra de negócio existe em um FR e todo o resto cita o ID (writing.md, Uma regra, um lugar). A mesma regra vale para esta skill.
 - Contribua conhecimento de domínio reconhecível (finance, saúde, e-commerce, logística, compliance) e pesquise as lacunas; não espere pelo usuário.
 
@@ -45,9 +45,9 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 
 Leia a referência inteira antes de executar o passo; as regras dependem umas das outras.
 
-**Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA-CRÍTICA]` a validar, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Quando a mudança afeta várias seções ou a narrativa, regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Quando a mudança é localizada (um FR, um threshold, uma frase, uma `[LACUNA]`), faça o ajuste pontual. Em dúvida, regenere.
+**Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Quando a mudança afeta várias seções ou a narrativa, regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Quando a mudança é localizada (um FR, um threshold, uma frase, uma `[LACUNA]`), faça o ajuste pontual. Em dúvida, regenere.
 
-O Status só passa a Aprovado por decisão do usuário (output.md, Header). Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
+Aprovação é o commit: árvore suja é trabalho em elaboração; arquivo commitado é a versão válida (output.md, Header). Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts
 

@@ -2,20 +2,14 @@
 
 Passos 3 e 4 do workflow. Regras de conteúdo: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: output.md. Como revisar: review.md.
 
-## Convenção de confiança
+## Tags
 
-Prefixo quando a fonte importa:
+Texto sem tag é fato: confirmado pelo usuário ou por fonte autoritativa (regulação oficial, política formalizada, decisão registrada). Duas tags marcam o que não é:
 
-- `[FATO]`: confirmado pelo usuário ou por fonte autoritativa (regulação oficial, política formalizada, decisão registrada).
 - `[PREMISSA]`: inferido pela skill; precisa de validação.
-- `[PREMISSA-CRÍTICA]`: load-bearing; se falsa, invalida a abordagem inteira do PRD, não só um requisito. Máximo 1–3 por documento, porque se tudo é crítico nada é. Declarada uma vez, na seção a que pertence, com a cláusula "se falsa, …" e o plano de validação na mesma linha. Perguntas em Aberto a lista como blocker por referência (Seções), sem repetir o texto: o leitor a encontra ao fim sem que ela exista em dois lugares.
 - `[LACUNA]`: informação insuficiente para preencher com substância.
 
-Nunca preencha com especulação sem tag: lacuna é informação, exponha.
-
-O campo Confiança do header tem três valores. **Alta**: não há `[LACUNA]` material nem `[PREMISSA-CRÍTICA]` pendente; o campo é omitido, porque declarar Alta é ruído. **Média**: há lacunas ou premissas que não bloqueiam, e toda `[PREMISSA-CRÍTICA]` tem plano de validação. **Baixa**: há `[PREMISSA-CRÍTICA]` sem plano, ou múltiplas `[LACUNA]` bloqueando escopo, métrica ou viabilidade.
-
-Confiança e Status andam juntos: Rascunho admite `[LACUNA]` material e Confiança Baixa; Em Revisão e Aprovado exigem Média ou Alta (output.md, Header). Não converta `[LACUNA]` em `[PREMISSA]` para subir a Confiança: rascunho que diz o que falta é entregável; rascunho que esconde não é.
+Nunca preencha com especulação sem tag: lacuna é informação, exponha. Premissa que, se falsa, derruba a abordagem do PRD, e não só um requisito, é a primeira linha de Perguntas em Aberto, em negrito, com a cláusula "se falsa, …" e como validar; declarada uma vez, ali, e citada onde importa.
 
 ## Tier
 
@@ -77,7 +71,7 @@ Quando há mais de um contexto com PRD próprio, o PRD `0000` (tier `overview`) 
 
 | Seção | Conteúdo |
 |---|---|
-| Propósito | O projeto em um parágrafo, com tags de confiança |
+| Propósito | O projeto em um parágrafo |
 | Contextos | Tabela: contexto, responsabilidade, PRD, prefixo de ID, posição (upstream, consome, devolve) e as regras de integração (persistência, direção de mudança de contrato) |
 | Catálogo de eventos | Tabela: evento, produtor, consumidores, gatilho, IDs que o governam. Um evento só entra com consumidor que o PRD consumidor declara; sem consumidor é candidato, listado como tal, porque evento sem consumidor é acoplamento inventado |
 | Fluxos entre contextos | `sequenceDiagram` por fluxo (caminho feliz, revogação, falha); rótulos citam IDs |
@@ -100,7 +94,7 @@ Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linte
 |---|---|---|
 | Resumo Executivo | `media`+ | 3–5 linhas: problema, solução, métrica primária |
 | Alinhamento Estratégico | `complexa`, ou quando precisa justificar investimento | 3–5 linhas conectando a objetivo de negócio |
-| Contexto e Problema | Sempre | O problema; fatos e premissas com tag; sem regra de negócio |
+| Contexto e Problema | Sempre | O problema; fatos e premissas (Tags); sem regra de negócio |
 | Usuário-alvo / JTBD | Sempre | Um bullet por ator com o job; plataforma e infra em intake.md |
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
@@ -108,13 +102,13 @@ Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linte
 | Functional Requirements | `media`+ | Lista por subtítulo temático, cada linha um ID e uma condição (IDs). Atributo ou opção que só se aplica sob condição ganha FR dizendo o que acontece quando informado fora dela (rejeitado ou ignorado), porque é decisão de negócio, não de implementação |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências no 0000 |
 | Non-functional Requirements | `complexa` | `<PREFIXO>-NFR-nn`; são os critérios pelos quais o design será avaliado, então atributo de qualidade e restrição, nunca mecanismo; exigência que um ADR precisa satisfazer diz qual ADR |
-| Considerações Regulatórias | `complexa`, ou qualquer tier com dependência de norma ou órgão regulador | Uma linha por artigo: `[FATO] Art. N: o que diz → ID que o modela`; fonte e data de leitura no topo |
+| Considerações Regulatórias | `complexa`, ou qualquer tier com dependência de norma ou órgão regulador | Fonte e data de leitura no topo; uma linha por artigo: `Art. N: o que diz → ID que o modela`; artigo não conferido no texto é `[PREMISSA]` |
 | Não-objetivos | `simples`+; omita só sem risco de scope creep | Um bullet por exclusão; o que não faremos |
 | Trade-offs Declarados | Decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão obrigatórios; todos mantidos, porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso | `simples`+ | Exatamente três bullets: leading (proxy, agora), lagging (resultado), guardrails (o que não pode degradar; sem eles, Lei de Goodhart). Plataforma e infra em intake.md |
 | Critérios de Aceitação | `media`+ | Cenário numérico em tabela: caso, entrada, valores intermediários, ramo, resultado; a primeira coluna nomeia o caso porque teste cita pelo nome. Dado/Quando/Então só para o que a tabela não expressa, citando o FR que exercita. Só o que acrescenta valores ao FR; "usuário pode X" é tautologia |
 | Dependências e Riscos | `media`+ | Tabela item, tipo, impacto; acoplamento entre contextos cita o 0000 e só o lado dono o descreve |
-| Perguntas em Aberto | `simples`+ | Pendências reais, uma linha cada: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. `[PREMISSA-CRÍTICA]` do corpo entra aqui por referência como blocker, com o plano de validação (Convenção de confiança); `[LACUNA]` que bloqueia decisão também. "Nenhuma." só quando não há pendência. Decisão tomada não entra: com custo vive em Trade-offs, sem custo vive no FR que a aplica; decisão arquitetural delegada é candidata a ADR (PRD 0000, Decisões delegadas a ADR) |
+| Perguntas em Aberto | `simples`+ | Pendências reais, uma linha cada: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Premissa que derruba o PRD vem primeiro, em negrito, com "se falsa, …" e como validar (Tags); `[LACUNA]` que bloqueia decisão também entra. "Nenhuma." só quando não há pendência. Decisão tomada não entra: com custo vive em Trade-offs, sem custo vive no FR que a aplica; decisão arquitetural delegada é candidata a ADR (PRD 0000, Decisões delegadas a ADR) |
 | Ponto de Maior Fragilidade | Sempre, última seção de conteúdo; só Referências vem depois | Abaixo |
 | Referências | Fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
 
@@ -122,7 +116,7 @@ Quatro seções são bloqueantes em qualquer tier de profundidade (HARD no linte
 
 Todo PRD termina nomeando uma decisão: a decisão de julgamento mais contestável, a que um revisor cético e competente atacaria primeiro.
 
-É distinta das tags de confiança. `[PREMISSA-CRÍTICA]` é crença que pode ser falsa (risco factual) e é a única coisa chamada load-bearing. `[LACUNA]` é informação que falta (risco de cobertura). O ponto de maior fragilidade é decisão especificada, baseada em `[FATO]`, sem lacuna, e ainda assim possivelmente errada (risco de julgamento): corte de escopo, threshold, priorização de trade-off, escolha de usuário-alvo.
+É distinto das tags. `[PREMISSA]` é crença que pode ser falsa (risco factual). `[LACUNA]` é informação que falta (risco de cobertura). O ponto de maior fragilidade é decisão especificada, baseada em fatos, sem lacuna, e ainda assim possivelmente errada (risco de julgamento): corte de escopo, threshold, priorização de trade-off, escolha de usuário-alvo.
 
 - Exatamente uma, última seção de conteúdo, depois de Perguntas em Aberto; só Referências vem depois.
 - Forma: a decisão; o vetor de ataque concreto de um cético; o convite ao autor para desafiá-la antes de aprovar.
@@ -141,5 +135,5 @@ Tom direto, preciso, orientado a decisão; sem linguagem genérica ("melhorar ex
 - Sem meta-narração ("este PRD descreve", "vamos discutir", "é importante notar"): o título já diz o que é.
 - Sem qualificador redundante nem filler: "de modo a" vira "para"; "devido ao fato de que" vira "porque"; "com zero X necessário" vira "sem X".
 - Um conceito por parágrafo; dois parágrafos adjacentes sobre o mesmo ponto se fundem.
-- Preserve o contexto de decisão: Razão do trade-off, racional do guardrail e "se falsa" da `[PREMISSA-CRÍTICA]` carregam sinal.
+- Preserve o contexto de decisão: Razão do trade-off, racional do guardrail e "se falsa" da premissa que derruba o PRD carregam sinal.
 - Hierarquia: `#` título, `##` seções, `###` subseções; lista para requisitos e critérios; tabela para comparação, dependência, cenário numérico.

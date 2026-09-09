@@ -1,4 +1,4 @@
-<!-- prd-tier: overview -->
+<!-- prd: overview -->
 # Visão Geral da Plataforma
 
 | | |

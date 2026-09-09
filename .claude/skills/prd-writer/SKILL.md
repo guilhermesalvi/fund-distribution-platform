@@ -40,7 +40,7 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 | 3. Declare o tier | Simples, média ou complexa; na dúvida, o maior | [writing.md](references/writing.md), Tier |
 | 4. Redija | Lente DDD, IDs, PRD 0000, diagramas, seções e sua forma, Ponto de Maior Fragilidade, redação | [writing.md](references/writing.md) |
 | 5. Grave | Path via `seq.py next`, PRD plano ou em pasta, header, comentário de tier, `.docx` | [output.md](references/output.md) |
-| 6. Revise | Scripts (nenhum HARD, nenhum bloco Mermaid sem parse), passada "uma regra, um lugar", três passadas de julgamento | [review.md](references/review.md) |
+| 6. Revise | Scripts (nenhum HARD no `lint_prd.py`, nenhum bloco Mermaid sem parse no `lint_mermaid.py`), passada "uma regra, um lugar", três passadas de julgamento | [review.md](references/review.md) |
 | 7. Apresente e itere | Abaixo | — |
 
 Leia a referência inteira antes de executar o passo; as regras dependem umas das outras.
@@ -57,8 +57,8 @@ Ficam em `scripts/` no diretório desta skill e são executados a partir dele, c
 |---|---|
 | `python scripts/seq.py next /docs/prd --domain <domain-slug> --slug <feature-slug>` | Antes de criar o arquivo: valida a sequência e imprime o path no layout do repositório; `--overview` aloca o PRD 0000 |
 | `python scripts/seq.py check /docs/prd` | Antes de apresentar: sequência, slugs, substituições recíprocas |
-| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar: esqueleto, header (Status, Autor, Data), IDs entre PRDs, fatos duplicados, substituição, links locais que resolvem, parse dos blocos Mermaid |
-| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Isolado, quando só um diagrama mudou; `--self-test` prova extração e parser; `--setup` instala o parser (`npm ci`, único modo com rede, só com autorização); exit 3 = parser indisponível |
+| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar: seções obrigatórias, prefixo, IDs entre PRDs, links locais que resolvem, PRD 0000 |
+| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama: parse de todo bloco Mermaid; `--self-test` prova extração e parser; `--setup` instala o parser (`npm ci`, único modo com rede, só com autorização); exit 3 = parser indisponível |
 
 ## Exemplo
 

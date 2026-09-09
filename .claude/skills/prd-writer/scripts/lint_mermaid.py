@@ -37,8 +37,8 @@ Extracao de fences (subconjunto do CommonMark, com uma excecao deliberada):
   - bloco ``` que nao e mermaid e ignorado.
 
 O parse Mermaid NAO substitui a validacao da estrutura Markdown do documento
-(secoes, tabelas, IDs): isso e do lint_prd.py. Este script so responde "o
-diagrama renderiza?".
+(secoes, IDs): isso e do lint_prd.py, que nao chama este script. Este script
+so responde "o diagrama renderiza?".
 
 Resultado por bloco: HARD com arquivo, indice do bloco (1-based), linha de
 abertura e a mensagem do parser. Parser indisponivel tambem e HARD, nunca WARN
@@ -54,8 +54,8 @@ uso (opcao desconhecida, path inexistente), 3 se o parser estiver
 indisponivel (com HARD INCOMPLETO por bloco).
 
 Importavel: `check_files(paths) -> (findings, blocks_checked)` onde findings e
-uma lista de (path, line, msg). lint_prd.py usa essa funcao; bloco nao parseado
-ou parser indisponivel e finding (HARD para o chamador).
+uma lista de (path, line, msg); bloco nao parseado ou parser indisponivel e
+finding (HARD para o chamador).
 """
 
 import json
@@ -77,7 +77,7 @@ MERMAID_INFO = re.compile(r"^\s*mermaid\b", re.IGNORECASE)
 
 EXIT_OK, EXIT_HARD, EXIT_USAGE, EXIT_PARSER_UNAVAILABLE = 0, 1, 2, 3
 # Prefixo de finding que marca validacao incompleta (parser indisponivel),
-# distinta de diagrama invalido. Quem consome findings (lint_prd.py) o exibe.
+# distinta de diagrama invalido. Quem consome findings o exibe.
 INCOMPLETE_PREFIX = "INCOMPLETO: "
 
 

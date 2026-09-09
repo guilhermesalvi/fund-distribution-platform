@@ -60,6 +60,7 @@ jobs:
 
       - name: Lint PRDs (docs/prd)
         run: |
+          python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
           python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
           python3 .claude/skills/prd-writer/scripts/lint_mermaid.py docs/prd
 

@@ -1,6 +1,6 @@
 # Redação do PRD
 
-Passos 3 e 4 do workflow. Regras de conteúdo: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: output.md. Como revisar: review.md.
+Passos 3 e 4 do workflow. Regras de conteúdo: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: SKILL.md, Gravar. Como revisar: review.md.
 
 ## Tags
 
@@ -13,7 +13,7 @@ Nunca preencha com especulação sem tag: lacuna é informação, exponha. Premi
 
 ## Tier
 
-Profundidade proporcional à complexidade; o tier fixa o piso de seções (tabela Seções) e vai no comentário de máquina (output.md, Header).
+Profundidade proporcional à complexidade; o tier fixa o piso de seções (tabela Seções) e vai no comentário de máquina (SKILL.md, Gravar).
 
 | Tier | Critério |
 |---|---|
@@ -59,7 +59,7 @@ Aplicável quando o time opera em DDD ou tem vocabulário de domínio explícito
 ## IDs
 
 - Formato `<PREFIXO>-nn` para FR e `<PREFIXO>-NFR-nn` para NFR, com prefixo por contexto (`OFF-12`, `BOOK-18`, `ALLOC-17`, `OFF-NFR-03`), porque `FR-14` local a cada PRD significava coisas diferentes em documentos que se citam.
-- O prefixo é declarado na linha logo após a tabela do header (output.md, Header) e na tabela de contextos do PRD 0000.
+- O prefixo é declarado na linha logo após a tabela do header (SKILL.md, Gravar) e na tabela de contextos do PRD 0000.
 - Definição: `- **OFF-01 (Must)** condição.` MoSCoW (Must, Should, Could, Won't) dentro dos parênteses. NFR sem MoSCoW.
 - Toda citação resolve para uma definição em algum PRD da pasta; ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio.
 - Rótulo de transição ou de ramo em diagrama cita o ID, não reescreve a condição (Diagramas).

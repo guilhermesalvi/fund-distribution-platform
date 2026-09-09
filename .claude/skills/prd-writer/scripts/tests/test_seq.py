@@ -1,6 +1,5 @@
-"""Testes de seq.py: layouts flat/nested, PRD plano e em pasta,
-PRD 0000 via --overview, unicidade global do numero, consistencia check/next
-e substituicao (reciproca, orfa, ciclo, nao anterior).
+"""Testes de seq.py: proximo numero (max+1), forma do slug, numero duplicado
+global na raiz, o que conta como PRD e erros de uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_seq.py"
 """
@@ -15,22 +14,6 @@ SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEQ = os.path.join(SCRIPTS, "seq.py")
 
 
-def header(status="Rascunho", extra=""):
-    return f"""<!-- prd-tier: media -->
-# X
-
-| | |
-|---|---|
-| **Status** | {status} |
-| **Autor** | A. Souza |
-| **Data** | 2026-09-05 |
-{extra}
-## Contexto e Problema
-
-texto.
-"""
-
-
 class SeqCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -40,11 +23,11 @@ class SeqCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def write(self, rel, content=None):
+    def write(self, rel, content="# X\n"):
         p = os.path.join(self.root, rel)
         os.makedirs(os.path.dirname(p), exist_ok=True)
         with open(p, "w", encoding="utf-8") as f:
-            f.write(content if content is not None else header())
+            f.write(content)
         return p
 
     def run_seq(self, *args):
@@ -53,182 +36,85 @@ class SeqCase(unittest.TestCase):
         return r.returncode, r.stdout + r.stderr
 
 
-class FlatLayoutTests(SeqCase):
-    def test_next_flat_plain_and_folder(self):
+class NextTests(SeqCase):
+    def test_next_is_max_plus_one(self):
         self.write("0001-onb-x.md")
-        self.write("0002-onb-y/prd.md")
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
+        self.write("0003-onb-y.md")
+        rc, out = self.run_seq("next", self.root, "--slug", "onb-z")
         self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip(), "0003-onb-z")
-
-    def test_check_flat_green(self):
-        self.write("0001-onb-x.md")
-        self.write("0002-onb-y/prd.md")
-        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(out.strip(), "0004-onb-z")
+        rc, out = self.run_seq("next", self.root)
         self.assertEqual(rc, 0, out)
-        self.assertNotIn("HARD", out.split("\n")[0])
+        self.assertEqual(out.strip(), "0004")
 
-    def test_folder_contents_are_not_prds(self):
-        self.write("0001-onb-x/prd.md")
-        self.write("0001-onb-x/decisions.md", "# decisoes\n")
-        self.write("0001-onb-x/assets/note.md", "# nota\n")
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-        self.assertNotIn("legado", out)
-
-    def test_overview_flat(self):
-        self.write("0001-onb-x.md")
-        rc, out = self.run_seq("next", self.root, "--overview", "--domain", "platform")
-        self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip(), "0000-platform-overview.md")
-
-    def test_overview_refuses_when_exists(self):
-        self.write("0000-platform-overview.md")
-        self.write("0001-onb-x.md")
-        rc, out = self.run_seq("next", self.root, "--overview", "--domain", "platform")
-        self.assertNotEqual(rc, 0, out)
-        self.assertIn("0000", out)
-
-    def test_empty_root_requires_layout(self):
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "x")
-        self.assertNotEqual(rc, 0, out)
-        self.assertIn("--layout", out)
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "x",
-                               "--layout", "flat")
+    def test_empty_root_starts_at_0001(self):
+        rc, out = self.run_seq("next", self.root, "--slug", "onb-x")
         self.assertEqual(rc, 0, out)
         self.assertEqual(out.strip(), "0001-onb-x")
 
-
-class NestedLayoutTests(SeqCase):
-    def test_next_nested(self):
-        self.write("onb/0001-x.md")
-        self.write("oth/0002-y/prd.md")
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
+    def test_overview_counts_as_prd(self):
+        self.write("0000-platform-overview.md")
+        rc, out = self.run_seq("next", self.root)
         self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip().replace("\\", "/"), "onb/0003-z")
+        self.assertEqual(out.strip(), "0001")
 
-    def test_number_unique_across_domains(self):
+    def test_invalid_slug_is_rejected(self):
+        for slug in ("Onb-Z", "onb_z", "onb--z", "onb-", "onb z"):
+            rc, out = self.run_seq("next", self.root, "--slug", slug)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("kebab-case", out)
+
+    def test_upper_case_md_counts_as_prd(self):
+        self.write("0001-onb-x.MD")
+        rc, out = self.run_seq("next", self.root)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out.strip(), "0002")
+
+    def test_non_prd_files_are_ignored(self):
+        self.write("0001-onb-x.md")
+        self.write("README.md")
+        self.write("notes.md")
+        self.write("assets/0009-not.md")
+        self.write("0008-onb-y/prd.md")
+        rc, out = self.run_seq("check", self.root)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("1 PRD(s)", out)
+        rc, out = self.run_seq("next", self.root)
+        self.assertEqual(out.strip(), "0002")
+
+
+class DuplicateTests(SeqCase):
+    def test_number_unique_across_subfolders(self):
         self.write("onb/0001-x.md")
         self.write("oth/0001-y.md")
         rc, out = self.run_seq("check", self.root)
         self.assertEqual(rc, 1, out)
-        self.assertIn("duplicado", out)
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
-        self.assertNotEqual(rc, 0, out)
-        self.assertTrue(os.path.exists(os.path.join(self.root, "onb", "0001-x.md")))
+        self.assertIn("HARD  numero 0001 usado por mais de um PRD", out)
+        rc, out = self.run_seq("next", self.root, "--slug", "z")
+        self.assertEqual(rc, 1, out)
+        self.assertNotIn("0002", out)
 
-    def test_overview_nested(self):
-        self.write("onb/0001-x.md")
-        rc, out = self.run_seq("next", self.root, "--overview")
-        self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip(), "0000-overview.md")
-
-    def test_mixed_layouts_warn(self):
+    def test_check_green_without_duplicates(self):
+        self.write("0000-overview.md")
         self.write("0001-onb-x.md")
-        self.write("oth/0002-y.md")
-        rc, out = self.run_seq("check", self.root)
-        self.assertIn("WARN", out)
-        self.assertIn("flat", out.lower())
-
-
-class SupersedesTests(SeqCase):
-    def test_reciprocal_ok(self):
-        self.write("0001-onb-x.md", header(status="Substituído por 0002"))
-        self.write("0002-onb-x.md", header(extra="| **Substitui** | 0001 |\n"))
+        self.write("0005-onb-y.md")
         rc, out = self.run_seq("check", self.root)
         self.assertEqual(rc, 0, out)
-        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)  # substituicao declarada: sem aviso de slug
-
-    def test_reciprocal_chain_of_three_has_no_slug_warn(self):
-        self.write("0001-onb-x.md", header(status="Substituído por 0002"))
-        self.write("0002-onb-x.md", header(status="Substituído por 0003", extra="| **Substitui** | 0001 |\n"))
-        self.write("0003-onb-x.md", header(extra="| **Substitui** | 0002 |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)
-
-    def test_substitui_cell_with_prefix_or_link_reads_like_lint_prd(self):
-        self.write("0001-onb-x.md", header(status="Substituído por 0002"))
-        self.write("0002-onb-x.md", header(extra="| **Substitui** | PRD [0001](0001-onb-x.md) |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-        self.assertFalse(any(l.startswith("WARN") for l in out.splitlines()), out)
-
-    def test_orphan_backlink(self):
-        self.write("0001-onb-x.md", header(status="Substituído por 0009"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 1, out)
-        rc2, out2 = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
-        self.assertNotEqual(rc2, 0, out2)
-
-    def test_not_reciprocal(self):
-        self.write("0001-onb-x.md")
-        self.write("0002-onb-x.md", header(extra="| **Substitui** | 0001 |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 1, out)
-
-    def test_cycle(self):
-        self.write("0001-onb-x.md", header(status="Substituído por 0002",
-                                           extra="| **Substitui** | 0002 |\n"))
-        self.write("0002-onb-x.md", header(status="Substituído por 0001",
-                                           extra="| **Substitui** | 0001 |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 1, out)
-
-    def test_supersedes_not_earlier(self):
-        self.write("0001-onb-x.md", header(extra="| **Substitui** | 0002 |\n"))
-        self.write("0002-onb-x.md", header(status="Substituído por 0001"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 1, out)
+        self.assertFalse(any(l.startswith("HARD") for l in out.splitlines()), out)
 
 
-    def test_prose_substitui_with_number_is_not_a_marker(self):
-        self.write("0001-onb-x.md", header() + "\n[FATO] O cadastro digital substitui o fluxo em papel de 2019.\n")
-        self.write("0002-onb-y.md")
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-        self.assertNotIn("supersedes", out)
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "z")
-        self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip(), "0003-onb-z")
-
-    def test_marker_forms_with_and_without_bold(self):
-        self.write("0001-onb-x.md", header(status="**Substituído por 0002**"))
-        self.write("0002-onb-x.md", header(extra="| Supersedes | 0001 |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-
-
-    def test_substitui_cell_with_two_numbers_reads_all(self):
-        self.write("0001-onb-a.md", header(status="Substituído por 0003"))
-        self.write("0002-onb-b.md", header(status="Substituído por 0003"))
-        self.write("0003-onb-c.md", header(extra="| **Substitui** | 0001, 0002 |\n"))
-        rc, out = self.run_seq("check", self.root)
-        self.assertEqual(rc, 0, out)
-
-
-class ExtensionCaseTests(SeqCase):
-    def test_upper_case_md_counts_as_prd(self):
-        self.write("0001-onb-x.MD")
-        rc, out = self.run_seq("next", self.root, "--domain", "onb", "--slug", "y", "--layout", "flat")
-        self.assertEqual(rc, 0, out)
-        self.assertEqual(out.strip(), "0002-onb-y")
-
-
-class NoArgsTests(SeqCase):
+class ContractTests(SeqCase):
     def test_no_args_prints_docstring_and_exits_2(self):
         rc, out = self.run_seq()
         self.assertEqual(rc, 2)
         self.assertIn("seq.py - ", out)
 
-
-class ContractTests(SeqCase):
-    def test_kind_change_rejected(self):
-        rc, out = self.run_seq("check", self.root, "--kind", "change")
-        self.assertEqual(rc, 2, out)
-
     def test_missing_root(self):
         rc, out = self.run_seq("check", os.path.join(self.tmp.name, "nope"))
+        self.assertEqual(rc, 2, out)
+
+    def test_unknown_option(self):
+        rc, out = self.run_seq("next", self.root, "--domain", "onb")
         self.assertEqual(rc, 2, out)
 
 

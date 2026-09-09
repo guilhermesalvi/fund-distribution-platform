@@ -22,7 +22,7 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 
 ## Princípios
 
-- **Precedência.** Quando pedido, convenção e defaults discordam sobre layout, seções, idioma ou forma, vale nesta ordem: primeiro o que o usuário pediu nesta sessão; depois a convenção do repositório (CLAUDE.md, rules, docs existentes); depois as instruções pessoais do usuário (CLAUDE.md global); por último os defaults desta skill. A skill preenche só o que ninguém fixou e avisa quando substituiu um default. Seção que o tier espera mas a convenção do projeto dispensa é declarada no comentário de tier com `omit:` (output.md, Header); isso silencia só o WARN do linter, nunca um HARD.
+- **Precedência.** Quando pedido, convenção e defaults discordam sobre layout, seções, idioma ou forma, vale nesta ordem: primeiro o que o usuário pediu nesta sessão; depois a convenção do repositório (CLAUDE.md, rules, docs existentes); depois as instruções pessoais do usuário (CLAUDE.md global); por último os defaults desta skill. A skill preenche só o que ninguém fixou e avisa quando substituiu um default.
 - O idioma do artefato segue a mesma precedência. Quando ninguém fixou, é o idioma do input; se o input é ambíguo, português. Identificadores de domínio, IDs de requisito e tags de máquina não se traduzem. O idioma da conversa não muda o do artefato.
 - Falha é entregável: linter com HARD que você não consegue resolver, parser Mermaid indisponível ou fonte que falta se apresentam como relatório de falha com o que falta, nunca como PRD aprovável.
 - Rascunho útil vale mais que certeza forjada: `[LACUNA]`, `[PREMISSA]` e Perguntas em Aberto dizem o que falta (writing.md, Tags). Não resolva incerteza artificialmente para entregar.
@@ -39,7 +39,7 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 | 2. Pesquise | Busca web para benchmarks, comportamento e regulação; cite fontes | [intake.md](references/intake.md), Pesquisa |
 | 3. Declare o tier | Simples, média ou complexa; na dúvida, o maior | [writing.md](references/writing.md), Tier |
 | 4. Redija | Lente DDD, IDs, PRD 0000, diagramas, seções e sua forma, Ponto de Maior Fragilidade, redação | [writing.md](references/writing.md) |
-| 5. Grave | Path via `seq.py next`, PRD plano ou em pasta, header, comentário de tier, `.docx` | [output.md](references/output.md) |
+| 5. Grave | Path via `seq.py next` e header | Gravar, abaixo |
 | 6. Revise | Scripts (nenhum HARD no `lint_prd.py`, nenhum bloco Mermaid sem parse no `lint_mermaid.py`), passada "uma regra, um lugar", três passadas de julgamento | [review.md](references/review.md) |
 | 7. Apresente e itere | Abaixo | — |
 
@@ -47,7 +47,24 @@ Leia a referência inteira antes de executar o passo; as regras dependem umas da
 
 **Apresente e itere.** Depois de apresentar, aponte o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas, com especificidade. Quando a mudança afeta várias seções ou a narrativa, regenere o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Quando a mudança é localizada (um FR, um threshold, uma frase, uma `[LACUNA]`), faça o ajuste pontual. Em dúvida, regenere.
 
-Aprovação é o commit: árvore suja é trabalho em elaboração; arquivo commitado é a versão válida (output.md, Header). Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
+Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
+
+## Gravar
+
+- Path: `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, kebab-case em inglês, sem prefixo `prd-`. `NNNN` é contador de 4 dígitos global na pasta, porque dá referência curta ("PRD 0007") e ordem de chegada; obtenha-o com `seq.py next`, nunca lendo o diretório. `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000). Contador colide em PR paralelo: renumere o branch que entra depois; `seq.py check` acusa a duplicata. Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica.
+- PRD se edita no lugar: o diff é a mudança; o `git log` é autor, data e histórico. Aprovação é o commit: árvore suja é trabalho em elaboração; arquivo commitado é a versão válida. Nenhum campo de status, autor, data, confiança ou aprovação; não há substituição por número novo.
+- Header: primeira linha `# Título`; abaixo, tabela de duas colunas com um único campo, `Contexto Originário` (contexto primário; afetados vão a Dependências e Riscos; rótulo equivalente, módulo ou área, se DDD não se aplica); depois a linha de prefixo (writing.md, IDs), seguida da frase que aponta o PRD 0000 quando ele existe. O PRD 0000 usa `Escopo` no lugar de Contexto Originário e não tem linha de prefixo. O comentário de tier vai antes do `#` (writing.md, Tier). O rótulo segue o idioma do PRD; o nome do contexto preserva o termo do domínio.
+
+```
+<!-- prd-tier: complexa -->
+# Verificação Assíncrona de Documentos
+
+| | |
+|---|---|
+| **Contexto Originário** | Customer Onboarding; afeta Account Activation |
+
+Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
+```
 
 ## Scripts
 
@@ -55,8 +72,8 @@ Ficam em `scripts/` no diretório desta skill e são executados a partir dele, c
 
 | Comando | Quando |
 |---|---|
-| `python scripts/seq.py next /docs/prd --domain <domain-slug> --slug <feature-slug>` | Antes de criar o arquivo: valida a sequência e imprime o path no layout do repositório; `--overview` aloca o PRD 0000 |
-| `python scripts/seq.py check /docs/prd` | Antes de apresentar: sequência, slugs, substituições recíprocas |
+| `python scripts/seq.py next /docs/prd --slug <domain-slug>-<feature-slug>` | Antes de criar o arquivo: imprime `NNNN-<slug>` com o próximo número; recusa sobre número duplicado |
+| `python scripts/seq.py check /docs/prd` | Antes de apresentar: número duplicado |
 | `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar: seções obrigatórias, prefixo, IDs entre PRDs, links locais que resolvem, PRD 0000 |
 | `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama: parse de todo bloco Mermaid; `--self-test` prova extração e parser; `--setup` instala o parser (`npm ci`, único modo com rede, só com autorização); exit 3 = parser indisponível |
 

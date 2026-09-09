@@ -11,7 +11,6 @@
   <Folder Name="/.claude/skills/prd-writer/references/">
     <File Path=".claude/skills/prd-writer/references/example.md" />
     <File Path=".claude/skills/prd-writer/references/intake.md" />
-    <File Path=".claude/skills/prd-writer/references/output.md" />
     <File Path=".claude/skills/prd-writer/references/review.md" />
     <File Path=".claude/skills/prd-writer/references/writing.md" />
   </Folder>

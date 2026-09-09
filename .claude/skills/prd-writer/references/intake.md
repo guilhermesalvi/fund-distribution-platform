@@ -1,6 +1,6 @@
 # Avaliação do input e pesquisa
 
-Passos 1 e 2 do workflow. Tags usadas aqui: writing.md, Tags. Quando o pedido é reverse PRD ou plataforma, infra, SDK e API como produto: modes.md.
+Passo Entender do workflow. Tags usadas aqui: writing.md, Tags. Quando o pedido é reverse PRD ou plataforma, infra, SDK e API como produto: modes.md.
 
 ## Escopo problemático
 

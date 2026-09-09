@@ -68,7 +68,7 @@ def script_flags(path):
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
-OWN_FILES = "intake|writing|modes|review|example"
+OWN_FILES = "intake|writing|modes|example"
 CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 

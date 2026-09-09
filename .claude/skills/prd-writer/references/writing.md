@@ -1,6 +1,6 @@
 # Redação do PRD
 
-Passo 3 do workflow: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: SKILL.md, Gravar. O que muda em reverse PRD e em plataforma/API: modes.md. Como revisar: review.md.
+Passo Escrever do workflow: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: SKILL.md, Gravar. O que muda em reverse PRD e em plataforma/API: modes.md.
 
 ## Tags
 
@@ -65,7 +65,7 @@ Cada PRD referencia o 0000 na linha de prefixo do header em vez de repetir prop�
 
 Mermaid substitui prosa quando a estrutura é um grafo: `stateDiagram-v2` para máquina de estados, `flowchart` para pipeline de decisão com desigualdades curtas nos nós de decisão, `sequenceDiagram` para fluxo entre contextos (no 0000). Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte. Ao lado do `stateDiagram-v2` vai a tabela estado, identificador, significado (IDs).
 
-Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado); use o nome completo. Todo bloco passa por `lint_mermaid.py` antes de apresentar (review.md, Passada mecânica).
+Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado); use o nome completo. Todo bloco passa por `lint_mermaid.py` antes de apresentar (SKILL.md, Scripts).
 
 ## Seções
 

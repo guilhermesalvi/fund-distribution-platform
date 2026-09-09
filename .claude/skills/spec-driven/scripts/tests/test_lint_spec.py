@@ -307,6 +307,17 @@ class PrdProvenance(Base):
         code, out = self.lint(reqs="- **RSV-01** — WHEN x THEN the system SHALL y\n")
         self.assertWarn(out, "sem nenhuma citacao de ID do PRD")
 
+    def test_prd_prefix_line_with_trailing_text_is_indexed(self):
+        self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.
+",
+                                         "Prefixo dos requisitos: `BOOK`. Mapa de contextos: [PRD 0000](0000-overview.md).
+"))
+        defs, prefixes = lint_spec.prd_index(self.prd)
+        self.assertIn("BOOK", prefixes)
+        code, out = self.lint()
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("nao e declarado", out)
+
     def test_prefix_declared_in_prd_header_table_is_indexed(self):
         self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.\n", "| | |\n|---|---|\n| **Prefixo** | `BOOK` |\n"))
         defs, prefixes = lint_spec.prd_index(self.prd)

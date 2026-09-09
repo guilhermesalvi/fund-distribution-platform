@@ -62,7 +62,7 @@ UBIQ = re.compile(r"^\s*(the\s+\w+|o\s+sistema|a\s+\w+|the\s+system)\s+shall\b",
 REQ_LOOKALIKE = re.compile(r"^\s*[-*]\s+\*\*")
 PREFIX_FORM = re.compile(r"^[A-Z][A-Z0-9]{1,9}$")
 PREFIX_LINE = re.compile(
-    r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*`?([A-Za-z][A-Za-z0-9]{1,9})`?\s*\.?\s*$",
+    r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*`?([A-Za-z][A-Za-z0-9]{1,9})`?(?![\w-])",
     re.IGNORECASE)
 RETIRED_LINE = re.compile(r"^\s*\**\s*(?:Aposentados|Retired)\s*\**\s*:\s*(.*)$", re.IGNORECASE)
 PRD_REV = re.compile(r"^git:[0-9a-f]{40,64}$")

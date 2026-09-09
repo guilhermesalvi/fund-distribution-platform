@@ -56,10 +56,10 @@ dotnet test FundDistributionPlatform.slnx
 │   ├── rules/                        # regras por área: composição do Program.cs, tracing
 │   └── skills/                       # skills de agente: prd-writer e spec-driven (ver Skills)
 ├── .github/
+│   ├── scripts/                      # check_commit.py: política de commit do CLAUDE.md
 │   └── workflows/                    # CI: skills.yml valida skills, PRDs, specs e commits
 ├── docs/
-│   ├── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
-│   └── specs/                        # specs por capability (spec-driven): changes/NNNN-<slug>/
+│   └── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
@@ -90,7 +90,7 @@ Duas skills de agente em `.claude/skills/` cobrem o caminho do problema ao códi
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
 | [prd-writer](.claude/skills/prd-writer/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
-| [spec-driven](.claude/skills/spec-driven/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/changes/NNNN-<slug>/` (`spec.md`, `design.md`, `tasks.md`, `validation.md`) |
+| [spec-driven](.claude/skills/spec-driven/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
 Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede):
 
@@ -106,12 +106,12 @@ python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests
 python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests
 python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
 python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
-python3 .claude/skills/spec-driven/scripts/seq.py check docs/specs
-python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/changes/<NNNN-slug>/spec.md
+python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
+python3 .claude/skills/spec-driven/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
 ```
 
-A CI ainda roda `apply_delta.py check` em cada delta cuja capability já tem spec viva e, em pull requests, valida cada mensagem de commit com o perfil de [CLAUDE.md](CLAUDE.md).
+Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md), e confere que nenhuma skill cita a outra pelo nome.
 
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente, PRD ou spec viva não encontrados), nunca sucesso, e `lint_mermaid.py` sozinho sai com exit 3 nesse caso; `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). No Verify da spec-driven, o veredito `BLOCKED` marca verificação incompleta por ambiente e não fecha a mudança. Cada script imprime o que checa quando chamado sem argumentos.
+Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, e `lint_mermaid.py` sozinho sai com exit 3 nesse caso; `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
 
 A CI executa exatamente esses passos e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

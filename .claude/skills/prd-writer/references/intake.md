@@ -1,6 +1,6 @@
-# Avaliação do input, modos condicionais e pesquisa
+# Avaliação do input e pesquisa
 
-Passos 1 e 2 do workflow. Tags usadas aqui: writing.md, Tags.
+Passos 1 e 2 do workflow. Tags usadas aqui: writing.md, Tags. Quando o pedido é reverse PRD ou plataforma, infra, SDK e API como produto: modes.md.
 
 ## Escopo problemático
 
@@ -19,25 +19,8 @@ PDF, docx, decks, atas, briefs e PRDs antigos são ricos e não autoritativos.
 - Extraia sinais antes de perguntar: problema, evidência, usuário-alvo, direção, métricas, restrições.
 - Inferência do discovery é `[PREMISSA]` derivada do documento. Sem tag (fato) só para fonte autoritativa: regulação oficial, política formalizada, decisão registrada.
 - Sintetize, não reformate: reorganização cosmética produz PRD bonito e falso.
-- Diante de PRD antigo, determine se ele é (a) reverse PRD para incremento, (b) update que substitui ou (c) inspiração. Pergunte se ambíguo.
+- Diante de PRD antigo, determine se ele é (a) reverse PRD para incremento, (b) update a fazer no lugar ou (c) inspiração. Pergunte se ambíguo.
 - Fontes conflitantes viram `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
-
-## Ontologia a partir de transcrições
-
-Reunião com especialista de domínio se grava e se transcreve; a transcrição é a matéria-prima da linguagem do PRD. Não pule da transcrição para regras ou classes: o salto é grande demais e esconde o erro de entendimento. Extraia em passadas separadas, uma por prompt, porque cada passada recebe o orçamento inteiro de atenção e o resultado de uma alimenta a seguinte. Tudo que sai daqui é `[PREMISSA]` derivada da transcrição até o especialista validar.
-
-| Passada | Tabela | Alimenta |
-|---|---|---|
-| 1. Correção | Termos e nomes mal transcritos, com a leitura provável | As demais passadas |
-| 2. Conceitos | Conceito, significado no contexto do texto | Glossário |
-| 3. Relações | Conceito A, conceito B, relação (um verbo) | Solução Proposta, Domain Events, mapa de contextos do 0000. Vale mais que a passada 2: é a relação que dá sentido ao conceito |
-| 4. Termos | Conceito, termos usados por cada especialista, significado | Glossário; conflito de vocabulário → fronteira de contexto (writing.md, Lente DDD) e termos por contexto do 0000 |
-| 5. Instâncias | Classe (conceito), instâncias citadas | Usuário-alvo, exemplos dos Critérios de Aceitação |
-| 6. Atributos | Classe, atributos citados na transcrição; segunda rodada: atributos usuais do domínio que não apareceram | Os ausentes viram `[PREMISSA]` a validar com o especialista, não atributos do PRD |
-| 7. Motivos de mudança | Atributo; em que cenário muda; quem dispara; quem precisa saber | Máquina de estados, FRs de transição, eventos candidatos (writing.md, Lente DDD) |
-| 8. Restrições | Atributo ou relação; valores válidos; cardinalidade | FRs de validação |
-
-Termos e exemplos que não estão na transcrição não entram nas tabelas; a segunda rodada da passada 6 é o único lugar onde o conhecimento geral do domínio entra, e entra como pergunta.
 
 ## Riqueza do contexto
 
@@ -51,25 +34,8 @@ Termos e exemplos que não estão na transcrição não entram nas tabelas; a se
 
 Quando o usuário recusa discovery ("só escreve"), gere com `[LACUNA]` extensivo e siga; ao fim, liste o que precisa ser preenchido antes de qualquer próximo passo.
 
-## Modo reverse PRD
-
-Documentar o que já foi construído ("PRD do módulo X", "documente o que construímos"). O autor olha para código e telas, então o gradiente para descrever mecanismo é máximo; o capability test (writing.md) tem peso extra.
-
-- Peça comportamento observável, regras aplicadas e decisões que o sistema toma. Aceite código, docs, bullets, descrição livre.
-- Derive intenção a partir de resultados (o que usuário ou negócio ganha), não de operações.
-- Intenção inferida é `[PREMISSA]`, marcada pesadamente: intenção engenheirada em reverso é frágil.
-- Comportamento sem justificativa de negócio identificável é `[LACUNA]`: expõe feature órfã (peso morto ou valor escondido).
-- Múltiplas intenções plausíveis para o mesmo comportamento vão para Perguntas em Aberto. Não fabrique coerência inexistente.
-
-## Modo plataforma, infra, SDK ou API como produto
-
-- Usuário é o time ou sistema consumidor; JTBD funciona ("integrar auth sem gerenciar estado de sessão").
-- Métricas primárias são operacionais: percentis de latência, taxa de erro, adoção por consumidores, time-to-integration. Resultado de negócio é de segunda ordem, pertence aos consumidores.
-- Critérios de Aceitação incluem o contrato: estabilidade da forma da API, SLA, janela de backward compatibility.
-- Deprecação entra como não-objetivo ou trade-off quando relevante: interface antiga não coberta, o que não será migrado, cronograma não comprometido.
-
 ## Pesquisa
 
-Busca web proativa para as lacunas: benchmarks e concorrentes, comportamento de usuário, tendências, padrões técnicos. Cite fontes de forma concisa: link, trecho relevante e data de leitura.
+Busca web quando o pedido a exige: benchmarks e concorrentes, comportamento de usuário, tendências, padrões técnicos, norma vigente. Cite fontes de forma concisa: link, trecho relevante e data de leitura.
 
-Regulação (financeiro, saúde, dados pessoais, pagamentos, segurança, KYC/AML, telecom, energia, autoridade setorial) ganha a seção Considerações Regulatórias (writing.md, Seções). Verifique a norma vigente por busca antes de incluir; artigo não conferido no texto é `[PREMISSA]`, e hipótese regulatória nunca é vinculante.
+Regulação (financeiro, saúde, dados pessoais, pagamentos, segurança, KYC/AML, telecom, energia, autoridade setorial) ganha a seção Considerações Regulatórias só com norma identificada e lida (writing.md, Seções). Verifique a norma vigente por busca antes de incluir; artigo não conferido no texto é `[PREMISSA]`, e hipótese regulatória nunca é vinculante.

@@ -35,7 +35,7 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 
 | Passo | O que fazer | Regras em |
 |---|---|---|
-| 1. Avalie o input | Encaixe, escopo, material de discovery, ontologia a partir de transcrições, riqueza do contexto; modos reverse PRD e plataforma/infra | [intake.md](references/intake.md) |
+| 1. Avalie o input | Encaixe, escopo, material de discovery, riqueza do contexto | [intake.md](references/intake.md); reverse PRD e plataforma/API em [modes.md](references/modes.md) |
 | 2. Pesquise | Busca web para benchmarks, comportamento e regulação; cite fontes | [intake.md](references/intake.md), Pesquisa |
 | 3. Redija | Capability test, lente DDD, IDs, PRD 0000, diagramas, seções e sua forma, redação | [writing.md](references/writing.md) |
 | 4. Grave | Path via `seq.py next` e header | Gravar, abaixo |

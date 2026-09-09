@@ -5,12 +5,16 @@
     <File Path=".claude/rules/tracing.md" />
   </Folder>
   <Folder Name="/.claude/skills/" />
+  <Folder Name="/.claude/skills/ontology-from-transcript/">
+    <File Path=".claude/skills/ontology-from-transcript/SKILL.md" />
+  </Folder>
   <Folder Name="/.claude/skills/prd-writer/">
     <File Path=".claude/skills/prd-writer/SKILL.md" />
   </Folder>
   <Folder Name="/.claude/skills/prd-writer/references/">
     <File Path=".claude/skills/prd-writer/references/example.md" />
     <File Path=".claude/skills/prd-writer/references/intake.md" />
+    <File Path=".claude/skills/prd-writer/references/modes.md" />
     <File Path=".claude/skills/prd-writer/references/review.md" />
     <File Path=".claude/skills/prd-writer/references/writing.md" />
   </Folder>

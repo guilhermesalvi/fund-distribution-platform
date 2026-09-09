@@ -1,6 +1,6 @@
 # Redação do PRD
 
-Passo 3 do workflow: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: SKILL.md, Gravar. Como revisar: review.md.
+Passo 3 do workflow: o que entra, em que forma e por quê. Onde o arquivo é gravado e o header: SKILL.md, Gravar. O que muda em reverse PRD e em plataforma/API: modes.md. Como revisar: review.md.
 
 ## Tags
 
@@ -28,8 +28,8 @@ Quando o time opera em DDD ou tem vocabulário de domínio explícito; fora diss
 
 - **Ubiquitous Language.** Termos dos especialistas de domínio, não jargão genérico; o significado importa mais que a palavra, e o idioma não importa. Nomes concorrentes para o mesmo conceito dentro de um contexto viram `[LACUNA]`: alinhe antes de redigir. Entre especialistas de áreas diferentes, o mesmo conflito é sinal de fronteira, não de lacuna.
 - **Subdomínio.** Core (diferencial competitivo): rigor máximo, critérios precisos, não-objetivos explícitos, questione se a solução preserva o diferencial. Supporting: PRD padrão. Generic: questione comprar, contratar ou reusar; pode virar não-objetivo.
-- **Bounded Context como âncora de escopo.** A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos (evidência: passada de termos da ontologia, intake.md); a fronteira se confirma quando regras e motivos de mudança também divergem. A feature tem um contexto originário, nomeado no header. Quando vários contextos são tocados, o originário é dono da decisão e os outros entram em Dependências e Riscos com o impacto na autonomia declarado. Escopo cruzando contextos sem origem clara é risco: force a discussão antes de redigir. Mais de um contexto com PRD próprio exige o PRD 0000.
-- **Domain Events.** Evento é o reconhecimento de uma operação que mudou o estado e interessa a outro contexto: contrato de domínio, não detalhe de implementação; mal documentado, vira acoplamento implícito. Evento, transição da máquina de estados e FR de transição saem da mesma pergunta, feita por atributo: em que cenário muda, quem dispara, quem precisa saber (intake.md, Ontologia, passada 7). O catálogo vive no PRD 0000; cada PRD declara só o que produz e consome.
+- **Bounded Context como âncora de escopo.** A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos, não prova; a fronteira se confirma quando regras e motivos de mudança também divergem. A feature tem um contexto originário, nomeado no header. Quando vários contextos são tocados, o originário é dono da decisão e os outros entram em Dependências e Riscos com o impacto na autonomia declarado. Escopo cruzando contextos sem origem clara é risco: force a discussão antes de redigir. Mais de um contexto com PRD próprio exige o PRD 0000.
+- **Domain Events.** Evento é o reconhecimento de uma operação que mudou o estado e interessa a outro contexto: contrato de domínio, não detalhe de implementação; mal documentado, vira acoplamento implícito. Evento, transição da máquina de estados e FR de transição saem da mesma pergunta, feita por atributo: em que cenário muda, quem dispara, quem precisa saber. O catálogo vive no PRD 0000; cada PRD declara só o que produz e consome.
 
 ## Uma regra, um lugar
 
@@ -56,7 +56,7 @@ Quando há mais de um contexto com PRD próprio, o PRD 0000 (`0000-<slug>-overvi
 | Contextos | Tabela: contexto, responsabilidade, PRD, prefixo de ID, posição (upstream, consome, devolve) e as regras de integração (persistência, direção de mudança de contrato) |
 | Catálogo de eventos | Tabela: evento, produtor, consumidores, gatilho, IDs que o governam. Um evento só entra com consumidor que o PRD consumidor declara; sem consumidor é candidato, listado como tal, porque evento sem consumidor é acoplamento inventado |
 | Fluxos entre contextos | `sequenceDiagram` por fluxo (caminho feliz, revogação, falha); rótulos citam IDs |
-| Termos por contexto | Só quando o mesmo conceito tem nomes diferentes entre contextos: conceito, termo em cada contexto (intake.md, Ontologia). Cada PRD mantém o glossário do seu contexto; o 0000 mantém a correspondência |
+| Termos por contexto | Só quando o mesmo conceito tem nomes diferentes entre contextos: conceito, termo em cada contexto. Cada PRD mantém o glossário do seu contexto; o 0000 mantém a correspondência |
 | Decisões delegadas a ADR | Tabela: decisão, exigência que a ADR precisa satisfazer (cita o NFR); o formato da ADR não é assunto do PRD |
 
 Cada PRD referencia o 0000 na linha de prefixo do header em vez de repetir propósito, mapa ou catálogo.
@@ -79,14 +79,14 @@ Obrigatórias, HARD no linter: Contexto e Problema, Usuário-alvo, Solução Pro
 | Usuário-alvo / JTBD | Sempre | Um bullet por ator com o job |
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
-| Glossário de Domínio | Há termo cujo significado não é óbvio ou tem sinônimos concorrentes | Termo e definição de uma linha, vindos das passadas de conceitos e termos da ontologia quando há transcrição (intake.md); termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
+| Glossário de Domínio | Há termo cujo significado não é óbvio ou tem sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
 | Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (IDs; Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências no 0000 |
 | Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual |
 | Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo: `Art. N: o que diz → ID que o modela`; artigo não conferido no texto é `[PREMISSA]` |
 | Não-objetivos | Há risco de scope creep | Um bullet por exclusão; o que não faremos |
 | Trade-offs Declarados | Há decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas, os dois obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
-| Métricas de Sucesso | Há como medir o resultado | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado), guardrail (o que não pode degradar; sem ele a métrica vira alvo). Plataforma e infra em intake.md |
+| Métricas de Sucesso | Há como medir o resultado | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado), guardrail (o que não pode degradar; sem ele a métrica vira alvo). Plataforma e infra em modes.md |
 | Critérios de Aceitação | Há valor que o FR não expressa | Cenário numérico em tabela: caso, entrada, valores intermediários, ramo, resultado; a primeira coluna nomeia o caso porque teste cita pelo nome. Dado/Quando/Então só para o que a tabela não expressa, citando o FR que exercita; "usuário pode X" é tautologia |
 | Dependências e Riscos | Há dependência ou risco fora do controle do contexto | Tabela item, tipo, impacto; acoplamento entre contextos cita o 0000 e só o lado dono o descreve |
 | Perguntas em Aberto | Há pendência real | Uma linha cada: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Premissa que derruba o PRD vem primeiro, em negrito, com "se falsa, …" e como validar (Tags); `[LACUNA]` que bloqueia decisão também entra. Decisão tomada não entra: com custo vive em Trade-offs, sem custo vive no FR que a aplica; decisão arquitetural delegada é candidata a ADR (PRD 0000) |

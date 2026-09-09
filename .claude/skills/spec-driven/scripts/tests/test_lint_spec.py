@@ -9,6 +9,8 @@ citacoes), tags, links locais e erros de uso.
 import contextlib
 import io
 import os
+import re
+import shutil
 import sys
 import tempfile
 import unittest
@@ -18,6 +20,8 @@ SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, SCRIPTS)
 import _common  # noqa: E402
 import lint_spec  # noqa: E402
+
+SPECIFY_MD = os.path.join(os.path.dirname(SCRIPTS), "references", "specify.md")
 
 PRD = """# PRD do Livro
 
@@ -278,6 +282,18 @@ class PrdProvenance(Base):
         code, out = self.lint(reqs=REQS.replace("RSV-", "BOOK-"), prefix_line="Prefixo dos requisitos: `BOOK`.\n")
         self.assertHard(out, "prefixo da spec 'BOOK' coincide com prefixo de PRD")
 
+    def test_prefix_colliding_with_prd_is_hard_without_prd_field(self):
+        """Sem `prd:` a colisao e conferida em `docs/prd` da raiz do
+        repositorio; sem essa pasta nada e conferido."""
+        reqs = REQS.replace("RSV-", "BOOK-")
+        code, out = self.lint(prd="", reqs=reqs, prefix_line="Prefixo dos requisitos: `BOOK`.\n")
+        self.assertEqual(code, 1, out)
+        self.assertHard(out, "prefixo da spec 'BOOK' coincide com prefixo de PRD")
+        shutil.rmtree(self.prd_dir)
+        code, out = self.lint(prd="", reqs=reqs, prefix_line="Prefixo dos requisitos: `BOOK`.\n")
+        self.assertEqual(code, 0, out)
+        self.assertNoHard(out)
+
     def test_prd_rev_git_matches_when_git_available(self):
         rev = _common.git_blob_rev(self.prd)
         if rev is None:
@@ -310,7 +326,7 @@ class PrdProvenance(Base):
     def test_prd_prefix_line_with_trailing_text_is_indexed(self):
         self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.\n",
                                          "Prefixo dos requisitos: `BOOK`. Mapa de contextos: [PRD 0000](0000-overview.md).\n"))
-        defs, prefixes = lint_spec.prd_index(self.prd)
+        defs, prefixes = lint_spec.prd_index(self.prd_dir)
         self.assertIn("BOOK", prefixes)
         code, out = self.lint()
         self.assertEqual(code, 0, out)
@@ -318,7 +334,7 @@ class PrdProvenance(Base):
 
     def test_prefix_declared_in_prd_header_table_is_indexed(self):
         self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.\n", "| | |\n|---|---|\n| **Prefixo** | `BOOK` |\n"))
-        defs, prefixes = lint_spec.prd_index(self.prd)
+        defs, prefixes = lint_spec.prd_index(self.prd_dir)
         self.assertIn("BOOK", prefixes)
         code, out = self.lint()
         self.assertEqual(code, 0, out)
@@ -330,7 +346,7 @@ class PrdProvenance(Base):
         self.write(os.path.join(folder, "decisions.md"), "# Decisoes\n\nPrefixo dos requisitos: `RSV`.\n\n- **RSV-01 (Must)** — nao e PRD.\n")
         code, out = self.lint()
         self.assertEqual(code, 0, out)
-        defs, prefixes = lint_spec.prd_index(self.prd)
+        defs, prefixes = lint_spec.prd_index(self.prd_dir)
         self.assertNotIn("RSV", prefixes)
         self.assertIn("ONB-01", defs)
 
@@ -380,6 +396,37 @@ class Placeholders(Base):
         code, out = self.lint(prd="", extra="\nTBD: limite.\n")
         self.assertEqual(code, 0, out)
         self.assertWarn(out, "placeholder")
+
+
+class TemplateRegressionTest(Base):
+    """O template de references/specify.md, gravado como spec viva da
+    capability que declara, linta sem HARD contra um PRD com os IDs que ele
+    cita."""
+
+    def template(self):
+        with open(SPECIFY_MD, encoding="utf-8") as f:
+            text = f.read()
+        m = re.search(r"## Template\b[^\n]*\n+`{3,4}markdown\n(.*?)\n`{3,4}\n", text, re.DOTALL)
+        self.assertIsNotNone(m, "bloco de template nao encontrado em references/specify.md")
+        return m.group(1)
+
+    def test_template_is_clean(self):
+        tpl = self.template()
+        lines = tpl.splitlines()
+        fields, _ = _common.parse_machine_comment(lines)
+        self.assertIn("prd", fields, "template sem prd: no comentario de maquina")
+        spec_prefix = next(m.group(1) for m in map(lint_spec.PREFIX_LINE.match, lines) if m)
+        cited = {(p, nfr, n) for p, nfr, n in lint_spec.PRD_ID.findall(tpl) if p != spec_prefix}
+        prd_prefixes = {p for p, _, _ in cited}
+        self.assertEqual(len(prd_prefixes), 1, f"template cita mais de um prefixo de PRD: {prd_prefixes}")
+        prd_prefix = prd_prefixes.pop()
+        prd_path = os.path.join(self.root, *fields["prd"].strip("/").split("/"))
+        defs = "".join(f"- **{p}-{nfr}{n}{'' if nfr else ' (Must)'}** — x.\n" for p, nfr, n in sorted(cited))
+        self.write(prd_path, f"# PRD\n\nPrefixo dos requisitos: `{prd_prefix}`.\n\n## Requisitos Funcionais\n\n{defs}")
+        self.write(self.spec, tpl + "\n")
+        code, out = run(self.spec)
+        self.assertNoHard(out)
+        self.assertEqual(code, 0, out)
 
 
 class Usage(Base):

@@ -128,7 +128,7 @@ Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 
 ## Perguntas em Aberto
 
-- **A prática da corretora permite ajustar a reserva até o fechamento?** Dono: autor do PRD. Bloqueia RSV-13 a RSV-16.
+- **A prática da corretora permite ajustar a reserva até o fechamento?** Dono: autor do PRD. Bloqueia os requisitos de alteração de reserva, que só entram com a resposta.
 
 ## Requisitos
 

@@ -20,8 +20,11 @@ HARD (exit 1):
   da spec que nao e requisito nem consta da lista de aposentados;
 - ID reutilizado: requisito cujo ID esta na lista `Aposentados: RSV-05, RSV-09`
   (ou `Retired:`), em qualquer ponto da spec;
-- com `prd:` no comentario de maquina: PRD nao encontrado; prefixo da spec
-  igual a um prefixo declarado por PRD em `/docs/prd`; citacao `X-nn` ou
+- prefixo da spec igual a um prefixo declarado por PRD: com `prd:` no
+  comentario de maquina, lido na pasta do PRD citado; sem `prd:`, lido em
+  `docs/prd` da raiz do repositorio (ancestral que contem `docs/`), quando a
+  pasta existe;
+- com `prd:` no comentario de maquina: PRD nao encontrado; citacao `X-nn` ou
   `X-NFR-nn` com prefixo de PRD que nao resolve para uma definicao
   `- **X-nn (Must)**` / `- **X-NFR-nn**` em nenhum PRD da pasta; citacao com
   prefixo que nenhum PRD declara ao fim de um requisito;
@@ -261,21 +264,32 @@ def prd_files(root):
     return out
 
 
-def prd_index(prd_path):
-    """(definicoes, prefixos) de todos os PRDs da pasta de PRDs (ancestral
-    `prd`/`prds` do PRD citado)."""
+def prd_dir_for(prd_path):
+    """Pasta de PRDs do PRD citado: ancestral `prd`/`prds`, ou a propria pasta
+    do arquivo quando nenhum ancestral tem esse nome."""
     d = os.path.dirname(os.path.abspath(prd_path))
-    root, cur = d, d
+    cur = d
     while True:
         if os.path.basename(cur).lower() in ("prd", "prds"):
-            root = cur
-            break
+            return cur
         parent = os.path.dirname(cur)
         if parent == cur:
-            break
+            return d
         cur = parent
+
+
+def default_prd_dir(spec_path):
+    """`docs/prd` da raiz do repositorio (ancestral da spec que contem
+    `docs/`), ou None quando a pasta nao existe."""
+    root = repo_root_for(spec_path)
+    cand = os.path.join(root, "docs", "prd") if root else None
+    return cand if cand and os.path.isdir(cand) else None
+
+
+def prd_index(prd_dir):
+    """(definicoes, prefixos) de todos os PRDs abaixo da pasta de PRDs."""
     defs, prefixes = set(), set()
-    for path in prd_files(root):
+    for path in prd_files(prd_dir):
         plines = read_lines(path)
         pmask = fenced_line_mask(plines)
         for i, l in enumerate(plines):
@@ -316,21 +330,30 @@ def check_prd_rev(rep, fields, prd_path):
                  "os requisitos que citam os IDs tocados e atualize prd-rev", 1)
 
 
+def check_prefix_collision(rep, prefix, prefixes, prd_dir):
+    """HARD quando o prefixo da spec e declarado por um PRD da pasta."""
+    if prefix and prefix in prefixes:
+        rep.hard(f"prefixo da spec '{prefix}' coincide com prefixo de PRD em {prd_dir}; "
+                 "IDs de spec e de PRD tem a mesma forma X-nn - use outro prefixo")
+
+
 def lint_prd(rep, lines, mask, fields, spec_path, prefix):
     prd_field = fields.get("prd")
     if not prd_field:
         if fields.get("prd-rev"):
             rep.warn("prd-rev sem prd: no comentario de maquina; revisao nao verificada", 1)
+        prd_dir = default_prd_dir(spec_path)
+        if prd_dir:
+            check_prefix_collision(rep, prefix, prd_index(prd_dir)[1], prd_dir)
         return
     prd_path = resolve_local_path(spec_path, prd_field)
     if not prd_path:
         rep.hard(f"PRD nao encontrado: '{prd_field}' (relativo a pasta da spec ou `/docs/...` da raiz)", 1)
         return
     check_prd_rev(rep, fields, prd_path)
-    defs, prefixes = prd_index(prd_path)
-    if prefix and prefix in prefixes:
-        rep.hard(f"prefixo da spec '{prefix}' coincide com prefixo de PRD em {os.path.dirname(prd_path)}; "
-                 "IDs de spec e de PRD tem a mesma forma X-nn - use outro prefixo")
+    prd_dir = prd_dir_for(prd_path)
+    defs, prefixes = prd_index(prd_dir)
+    check_prefix_collision(rep, prefix, prefixes, prd_dir)
     cited = 0
     seen = set()
     for i, l in enumerate(lines):

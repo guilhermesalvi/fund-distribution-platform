@@ -54,7 +54,7 @@ dotnet test FundDistributionPlatform.slnx
 .
 ├── .claude/
 │   ├── rules/                        # regras por área: composição do Program.cs, tracing
-│   └── skills/                       # skills de agente: prd-writer e spec-driven (ver Skills)
+│   └── skills/                       # skills de agente (ver Skills)
 ├── .github/
 │   ├── scripts/                      # check_commit.py: política de commit do CLAUDE.md
 │   └── workflows/                    # CI: skills.yml valida skills, PRDs, specs e commits
@@ -85,11 +85,12 @@ As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md)
 
 ## Skills
 
-Duas skills de agente em `.claude/skills/` cobrem o caminho do problema ao código verificado; cada uma tem um `SKILL.md` (roteador), `references/` (regras por etapa) e `scripts/` (linters e testes).
+Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método), `references/` (regras por etapa) e `scripts/` (linters e testes); a terceira é um método isolado, só com `SKILL.md`.
 
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
 | [prd-writer](.claude/skills/prd-writer/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
+| [ontology-from-transcript](.claude/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
 | [spec-driven](.claude/skills/spec-driven/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
 Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede):
@@ -106,12 +107,13 @@ python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests
 python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests
 python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
 python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
+python3 .claude/skills/prd-writer/scripts/lint_mermaid.py docs/prd
 python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/spec-driven/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
 ```
 
 Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md), e confere que nenhuma skill cita a outra pelo nome.
 
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, e `lint_mermaid.py` sozinho sai com exit 3 nesse caso; `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
+Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; no `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (o `lint_prd.py` não chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
 
 A CI executa exatamente esses passos e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

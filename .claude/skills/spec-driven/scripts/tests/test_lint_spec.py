@@ -308,10 +308,8 @@ class PrdProvenance(Base):
         self.assertWarn(out, "sem nenhuma citacao de ID do PRD")
 
     def test_prd_prefix_line_with_trailing_text_is_indexed(self):
-        self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.
-",
-                                         "Prefixo dos requisitos: `BOOK`. Mapa de contextos: [PRD 0000](0000-overview.md).
-"))
+        self.write(self.prd, PRD.replace("Prefixo dos requisitos: `BOOK`.\n",
+                                         "Prefixo dos requisitos: `BOOK`. Mapa de contextos: [PRD 0000](0000-overview.md).\n"))
         defs, prefixes = lint_spec.prd_index(self.prd)
         self.assertIn("BOOK", prefixes)
         code, out = self.lint()

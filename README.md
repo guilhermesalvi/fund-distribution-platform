@@ -59,7 +59,8 @@ dotnet test FundDistributionPlatform.slnx
 │   ├── scripts/                      # check_commit.py: política de commit do CLAUDE.md
 │   └── workflows/                    # CI: skills.yml valida skills, PRDs, specs e commits
 ├── docs/
-│   └── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
+│   ├── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
+│   └── specs/                        # spec viva por capability (spec-driven): <contexto>/<capability>/spec.md
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,

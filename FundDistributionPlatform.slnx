@@ -74,6 +74,19 @@
     <File Path="docs/prd/0002-reservation-book-reservation-lifecycle.md" />
     <File Path="docs/prd/0003-allocation-book-processing.md" />
   </Folder>
+  <Folder Name="/docs/specs/" />
+  <Folder Name="/docs/specs/allocation/" />
+  <Folder Name="/docs/specs/allocation/book-processing/">
+    <File Path="docs/specs/allocation/book-processing/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/offering/" />
+  <Folder Name="/docs/specs/offering/offer-lifecycle/">
+    <File Path="docs/specs/offering/offer-lifecycle/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/reservation-book/" />
+  <Folder Name="/docs/specs/reservation-book/reservation-lifecycle/">
+    <File Path="docs/specs/reservation-book/reservation-lifecycle/spec.md" />
+  </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />

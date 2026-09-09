@@ -1,9 +1,8 @@
 # Exemplo de PRD no formato-alvo
 
-PRD tier complexa de um único contexto (sem PRD 0000). Leia quando houver dúvida sobre a forma de uma seção; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos; as referências normativas foram lidas na data indicada e a Circular BCB aparece como `[PREMISSA]` porque o artigo não foi conferido no texto.
+PRD de um único contexto (sem PRD 0000). Leia quando houver dúvida sobre a forma de uma seção; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos; as referências normativas foram lidas na data indicada e a Circular BCB aparece como `[PREMISSA]` porque o artigo não foi conferido no texto.
 
 ````markdown
-<!-- prd-tier: complexa -->
 # Verificação Assíncrona de Documentos para Onboarding
 
 | | |

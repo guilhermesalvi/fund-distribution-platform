@@ -37,11 +37,10 @@ Pedido que é PRD mas chega enquadrado como implementação, tela ou CRUD: reenq
 |---|---|---|
 | 1. Avalie o input | Encaixe, escopo, material de discovery, ontologia a partir de transcrições, riqueza do contexto; modos reverse PRD e plataforma/infra | [intake.md](references/intake.md) |
 | 2. Pesquise | Busca web para benchmarks, comportamento e regulação; cite fontes | [intake.md](references/intake.md), Pesquisa |
-| 3. Declare o tier | Simples, média ou complexa; na dúvida, o maior | [writing.md](references/writing.md), Tier |
-| 4. Redija | Lente DDD, IDs, PRD 0000, diagramas, seções e sua forma, Ponto de Maior Fragilidade, redação | [writing.md](references/writing.md) |
-| 5. Grave | Path via `seq.py next` e header | Gravar, abaixo |
-| 6. Revise | Scripts (nenhum HARD no `lint_prd.py`, nenhum bloco Mermaid sem parse no `lint_mermaid.py`), passada "uma regra, um lugar", três passadas de julgamento | [review.md](references/review.md) |
-| 7. Apresente e itere | Abaixo | — |
+| 3. Redija | Capability test, lente DDD, IDs, PRD 0000, diagramas, seções e sua forma, redação | [writing.md](references/writing.md) |
+| 4. Grave | Path via `seq.py next` e header | Gravar, abaixo |
+| 5. Revise | Scripts (nenhum HARD no `lint_prd.py`, nenhum bloco Mermaid sem parse no `lint_mermaid.py`), passada "uma regra, um lugar", três passadas de julgamento | [review.md](references/review.md) |
+| 6. Apresente e itere | Abaixo | — |
 
 Leia a referência inteira antes de executar o passo; as regras dependem umas das outras.
 
@@ -53,10 +52,9 @@ Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, I
 
 - Path: `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, kebab-case em inglês, sem prefixo `prd-`. `NNNN` é contador de 4 dígitos global na pasta, porque dá referência curta ("PRD 0007") e ordem de chegada; obtenha-o com `seq.py next`, nunca lendo o diretório. `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000). Contador colide em PR paralelo: renumere o branch que entra depois; `seq.py check` acusa a duplicata. Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica.
 - PRD se edita no lugar: o diff é a mudança; o `git log` é autor, data e histórico. Aprovação é o commit: árvore suja é trabalho em elaboração; arquivo commitado é a versão válida. Nenhum campo de status, autor, data, confiança ou aprovação; não há substituição por número novo.
-- Header: primeira linha `# Título`; abaixo, tabela de duas colunas com um único campo, `Contexto Originário` (contexto primário; afetados vão a Dependências e Riscos; rótulo equivalente, módulo ou área, se DDD não se aplica); depois a linha de prefixo (writing.md, IDs), seguida da frase que aponta o PRD 0000 quando ele existe. O PRD 0000 usa `Escopo` no lugar de Contexto Originário e não tem linha de prefixo. O comentário de tier vai antes do `#` (writing.md, Tier). O rótulo segue o idioma do PRD; o nome do contexto preserva o termo do domínio.
+- Header: primeira linha `# Título`; abaixo, tabela de duas colunas com um único campo, `Contexto Originário` (contexto primário; afetados vão a Dependências e Riscos; rótulo equivalente, módulo ou área, se DDD não se aplica); depois a linha de prefixo (writing.md, IDs), seguida da frase que aponta o PRD 0000 quando ele existe. O PRD 0000 usa `Escopo` no lugar de Contexto Originário, não tem linha de prefixo e carrega `<!-- prd: overview -->` na primeira linha, por ser o único que o linter trata diferente; nenhum outro comentário de máquina. O rótulo segue o idioma do PRD; o nome do contexto preserva o termo do domínio.
 
 ```
-<!-- prd-tier: complexa -->
 # Verificação Assíncrona de Documentos
 
 | | |
@@ -79,4 +77,4 @@ Ficam em `scripts/` no diretório desta skill e são executados a partir dele, c
 
 ## Exemplo
 
-PRD tier complexa no formato-alvo em [references/example.md](references/example.md). Leia quando houver dúvida sobre a forma de uma seção; não é template a copiar.
+PRD no formato-alvo em [references/example.md](references/example.md). Leia quando houver dúvida sobre a forma de uma seção; não é template a copiar.

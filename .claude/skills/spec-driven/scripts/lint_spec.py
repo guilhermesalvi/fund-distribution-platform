@@ -1,139 +1,100 @@
 #!/usr/bin/env python3
 """
-lint_spec.py - verificacao deterministica de um spec.md (delta ou spec viva)
-gerado pela skill spec-driven.
+lint_spec.py - verificacao deterministica do esqueleto de uma spec.md.
 
-    Uso:  python3 <skill-dir>/scripts/lint_spec.py <spec.md> [--living <spec-viva.md>]
-          python3 <skill-dir>/scripts/lint_spec.py --print-prd-rev <prd.md>
+    Uso:  python3 <skill-dir>/scripts/lint_spec.py <spec.md>
 
-Checa o esqueleto: comentario de maquina, header (campos obrigatorios, Status
-valido, Data AAAA-MM-DD real, Autor sem placeholder, Prefixo igual ao dos IDs),
-secoes por tier (heading casa por igualdade com os aliases PT/EN, nunca por
-prefixo; secao duplicada e HARD), requisitos EARS-shaped (SHALL), IDs bem
-formados e unicos, linha com aparencia de requisito nao reconhecida (HARD),
-MODIFIED com `Antes:` apontando para ID existente na spec viva e igual ao texto
-vigente nela (HARD se divergente: alteracao concorrente, mesma regra do
-apply_delta.py), REMOVED com razao, RENAMED nao suportado (IDs sao estaveis),
-assumptions sem default vazio,
-tags de confianca, [PREMISSA-CRÍTICA] com "se falsa", rastreabilidade cobrindo
-todo ID, cenarios herdados do PRD, Ponto de Maior Fragilidade, placeholders,
-hedging e meta-narracao. Tudo que esta dentro de bloco de codigo (``` ou ~~~)
-e ignorado.
+A spec e viva e editada no lugar; o linter confere a forma, nunca o conteudo.
+Tudo que esta dentro de bloco de codigo (``` ou ~~~) e ignorado.
 
-Com `prd:` no comentario de maquina, le a pasta do PRD (`/docs/prd`, layout
-flat ou nested) e checa: PRD nao encontrado (HARD INCOMPLETO); `prd-rev:`
-ausente (WARN) ou divergente da revisao atual do arquivo (HARD); o prefixo da
-spec nao coincide com prefixo de PRD (HARD); toda citacao de ID de PRD resolve
-para uma definicao `- **X-nn (Must)**` / `- **X-NFR-nn**` em algum PRD da
-pasta (HARD); citacao com prefixo que nenhum PRD declara (HARD ao fim de um
-requisito, WARN em prosa); cada cenario herdado cita ID do PRD ou casa um caso
-da tabela de Criterios de Aceitacao (HARD); spec a partir do PRD sem nenhuma
-citacao de ID do PRD (WARN). Path `/docs/...` e resolvido a partir da raiz do
-repositorio (ancestral da spec que contem `docs/`).
+HARD (exit 1):
+- comentario de maquina ausente ou malformado: a primeira linha nao vazia e
+  `<!-- sdd: spec | capability: <dominio>/<capability> [| prd: <path> | prd-rev: git:<hash>] -->`;
+- secao obrigatoria ausente: `## Contexto` e `## Requisitos` (heading casa por
+  igualdade com os aliases PT/EN, nunca por prefixo; secao duplicada e HARD);
+- linha de prefixo ausente ou malformada: logo abaixo do `#`, a linha
+  `Prefixo dos requisitos: \\`RSV\\`.` (ou `Requirement prefix:`);
+- requisito sem `SHALL`; linha `- **...**` em Requisitos que nao tem a forma
+  `- **PFX-NN** — texto`;
+- ID com prefixo diferente do declarado; ID duplicado; ID citado com o prefixo
+  da spec que nao e requisito nem consta da lista de aposentados;
+- ID reutilizado: requisito cujo ID esta na lista `Aposentados: RSV-05, RSV-09`
+  (ou `Retired:`), em qualquer ponto da spec;
+- com `prd:` no comentario de maquina: PRD nao encontrado; prefixo da spec
+  igual a um prefixo declarado por PRD em `/docs/prd`; citacao `X-nn` ou
+  `X-NFR-nn` com prefixo de PRD que nao resolve para uma definicao
+  `- **X-nn (Must)**` / `- **X-NFR-nn**` em nenhum PRD da pasta; citacao com
+  prefixo que nenhum PRD declara ao fim de um requisito;
+- tag fora da convencao (`[FATO]`, `[PREMISSA-CRÍTICA]`, grafia errada): sem
+  tag e fato; as tags sao `[PREMISSA]` e `[LACUNA]`;
+- link Markdown `[texto](destino)` para arquivo local que nao resolve: destino
+  relativo a partir da pasta da spec, `/docs/...` a partir da raiz do
+  repositorio (ancestral que contem `docs/`); ancora e removida antes; URL com
+  esquema, ancora pura, code span e bloco de codigo ficam fora.
 
-Links Markdown `[texto](destino)` para arquivo local resolvem (HARD quando nao):
-destino relativo a partir da pasta da spec, `/docs/...` a partir da raiz do
-repositorio; ancora `#...` e removida antes de resolver. URL com esquema
-(`https:`, `mailto:`), ancora pura (`#secao`) e o que esta em bloco de codigo
-ou em code span ficam fora.
+WARN (nao afeta exit):
+- `SHALL` presente mas sem padrao EARS reconhecido (WHEN/WHILE/WHERE/IF ou
+  `The <system> SHALL`); dois `SHALL` na mesma linha; termo vago;
+- `prd-rev` divergente de `git hash-object <prd>` (o PRD mudou desde a spec:
+  re-derive); `prd-rev` ausente ou git indisponivel para conferir;
+- numero pulado na sequencia de IDs sem estar na lista de aposentados;
+- citacao com prefixo desconhecido em prosa; spec com `prd:` sem nenhuma
+  citacao de ID do PRD;
+- placeholder (TBD, TODO, `[nome]`), hedging, meta-narracao.
 
-`prd-rev:` e `git:<hash>` (saida de `git hash-object <prd.md>`) ou
-`sha256:<12 hex>` do conteudo com quebras normalizadas para LF;
-`--print-prd-rev` imprime o valor a usar.
-
-Saida: HARD (exit 1) / WARN (nao afeta exit). HARD com prefixo INCOMPLETO
-marca validacao incompleta (fonte ausente, git indisponivel), nao violacao.
-Spec viva ausente e HARD INCOMPLETO em dois casos: `--living` explicito que
-nao existe (qualquer delta: o chamador afirmou uma fonte que nao pode ser
-lida) e spec viva inferida de changes/../../spec.md ausente quando o delta
-tem MODIFIED/REMOVED. Exit 2 em erro de uso: opcao desconhecida, `--living`
-sem valor, spec ausente ou fora de UTF-8.
-
-NAO julga semantica. Linter verde = esqueleto conforme, nao spec boa.
+Exit 2 em erro de uso: opcao desconhecida, spec ausente ou fora de UTF-8.
+Linter verde e esqueleto conforme, nao spec boa.
 """
 
-import datetime
 import os
 import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    BEFORE_LINE, REQ_ID, REQ_LINE, TIERS, Report, check_tags, content_rev, fenced_line_mask,
-    find_section_exact, find_sections_exact, git_blob_rev, iter_headings,
-    norm_heading, parse_machine_comment, read_lines, scan_placeholders,
-    scan_prose, strip_accents, table_rows, usage,
+    REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
+    find_sections_exact, git_blob_rev, iter_headings, norm_heading, parse_machine_comment,
+    read_lines, scan_placeholders, scan_prose, table_rows, usage,
 )
 
 EARS_LEAD = re.compile(r"^\s*(WHEN|WHILE|WHERE|IF)\b", re.IGNORECASE)
-PRD_ID = re.compile(r"\b([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})\b")
-PRD_DEF = re.compile(r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})(?:\s*\([^)]*\))?\*\*")
-# `| **Prefixo** | X |` (e aliases) no header do PRD: mesma leitura do lint_prd.py
-PRD_PREFIX_ROW = re.compile(
-    r"^\|\s*\*{0,2}\s*(?:prefixo dos requisitos|requirement prefix|prefixo de id|id prefix|prefixo|prefix)"
-    r"\s*\*{0,2}\s*\|\s*`?([A-Z][A-Z0-9]{1,9})`?", re.IGNORECASE)
-PRD_PREFIX_LINE = re.compile(
-    r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*`?([A-Z][A-Z0-9]{1,9})`?",
-    re.IGNORECASE)
 UBIQ = re.compile(r"^\s*(the\s+\w+|o\s+sistema|a\s+\w+|the\s+system)\s+shall\b", re.IGNORECASE)
 REQ_LOOKALIKE = re.compile(r"^\s*[-*]\s+\*\*")
 PREFIX_FORM = re.compile(r"^[A-Z][A-Z0-9]{1,9}$")
-DATE_LEAD = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:\b|$)")
-PRD_REV = re.compile(r"^(git:[0-9a-f]{40,64}|sha256:[0-9a-f]{12})$")
+PREFIX_LINE = re.compile(
+    r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*`?([A-Za-z][A-Za-z0-9]{1,9})`?\s*\.?\s*$",
+    re.IGNORECASE)
+RETIRED_LINE = re.compile(r"^\s*\**\s*(?:Aposentados|Retired)\s*\**\s*:\s*(.*)$", re.IGNORECASE)
+PRD_REV = re.compile(r"^git:[0-9a-f]{40,64}$")
+PRD_ID = re.compile(r"\b([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})\b")
+PRD_DEF = re.compile(r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})(?:\s*\([^)]*\))?\*\*")
+# `| **Prefixo** | X |` ou `Prefixo dos requisitos: \`X\`.` no PRD: mesma leitura do linter de PRD.
+PRD_PREFIX_ROW = re.compile(
+    r"^\|\s*\*{0,2}\s*(?:prefixo dos requisitos|requirement prefix|prefixo de id|id prefix|prefixo|prefix)"
+    r"\s*\*{0,2}\s*\|\s*`?([A-Z][A-Z0-9]{1,9})`?", re.IGNORECASE)
 
-STATUS_DELTA = {"rascunho", "aprovado", "em andamento", "concluido", "descartado",
-                "bloqueado", "draft", "approved", "in progress", "done", "discarded",
-                "blocked"}
-# Spike promovido: "Promovido a <mudanca>" / "Promoted to <change>" (modes.md).
-STATUS_DELTA_PREFIX = ("promovido a ", "promoted to ")
-STATUS_LIVING = {"vigente", "current"}
-HEADER_FIELDS = {
-    # chave -> (rotulos aceitos, obrigatorio em delta, obrigatorio em viva)
-    "status": (("status",), True, True),
-    "autor": (("autor", "author"), True, False),
-    "data": (("data", "date"), True, True),
-    "capability": (("capability",), True, True),
-    "prefixo": (("prefixo", "prefix"), True, True),
-}
-
-DELTA_SECTIONS = {
-    # alias list -> tiers em que e obrigatoria (casamento exato apos norm_heading)
-    ("Contexto", "Context"): {"small", "medium", "large", "complex"},
-    ("Premissas e Perguntas em Aberto", "Premissas e Perguntas", "Assumptions & Open Questions",
-     "Assumptions and Open Questions", "Assumptions"): {"medium", "large", "complex"},
-    ("Rastreabilidade", "Requirement Traceability", "Traceability"): {"medium", "large", "complex"},
-    ("Escopo e Fora de Escopo", "Escopo", "Scope / Out of Scope", "Scope"): {"medium", "large", "complex"},
-    ("Histórias", "User Stories"): {"medium", "large", "complex"},
-    ("Ponto de Maior Fragilidade", "Weakest Point"): {"medium", "large", "complex"},
-    ("Dimensões Implícitas", "Implicit Dimensions"): {"large", "complex"},
-    ("Critérios de Sucesso", "Success Criteria"): {"large", "complex"},
-}
-LIVING_SECTIONS = [
-    ("Propósito", "Purpose"),
+SECTIONS_REQUIRED = [
+    ("Contexto", "Context"),
     ("Requisitos", "Requirements"),
-    ("Histórico de revisões", "Revision History"),
 ]
-DELTA_REQ_SECTIONS = {
-    "ADDED": ("ADDED Requirements", "ADDED"),
-    "MODIFIED": ("MODIFIED Requirements", "MODIFIED"),
-    "REMOVED": ("REMOVED Requirements", "REMOVED"),
-    "RENAMED": ("RENAMED Requirements", "RENAMED"),
-}
-TRACE_ALIASES = ("Rastreabilidade", "Requirement Traceability", "Traceability")
-ASSUMPTION_ALIASES = ("Premissas e Perguntas em Aberto", "Premissas e Perguntas",
-                      "Assumptions & Open Questions", "Assumptions and Open Questions", "Assumptions")
-DIMENSION_ALIASES = ("Dimensões Implícitas", "Implicit Dimensions")
-SCENARIO_HEADER = {"cenario do prd", "prd scenario"}
-ACCEPTANCE_ALIASES = ("Critérios de Aceitação", "Acceptance Criteria")
+SECTIONS_KNOWN = SECTIONS_REQUIRED + [
+    ("Escopo e Fora de Escopo", "Escopo", "Scope / Out of Scope", "Scope"),
+    ("Premissas", "Assumptions"),
+    ("Perguntas em Aberto", "Open Questions"),
+    ("Domain Events",),
+    ("Glossário", "Glossary"),
+    ("Rastreabilidade", "Traceability"),
+    ("Divergências", "Divergences"),
+]
 
 
 def norm_cell(s):
     return norm_heading(re.sub(r"[*`]", "", s))
 
 
-def collect_reqs(rep, lines, start, end, mask, label):
+def collect_reqs(rep, lines, start, end, mask):
     """Requisitos (idx, id, texto) da faixa; linha de lista `- **...**` que
-    nao casa REQ_LINE e HARD (aparencia de requisito nao reconhecida)."""
+    nao casa REQ_LINE e HARD."""
     out = []
     for i in range(start, end):
         if mask[i]:
@@ -142,86 +103,147 @@ def collect_reqs(rep, lines, start, end, mask, label):
         if m:
             out.append((i, m.group(1), m.group(2)))
         elif REQ_LOOKALIKE.match(lines[i]):
-            rep.hard(f"{label}: linha com aparencia de requisito nao reconhecida "
+            rep.hard("linha com aparencia de requisito nao reconhecida "
                      f"(forma: `- **PFX-NN** — texto`): '{lines[i].strip()[:60]}'", i + 1)
     return out
 
 
-def check_ears(rep, reqs, label):
+def check_ears(rep, reqs):
     for i, rid, text in reqs:
         if not re.search(r"\bSHALL\b", text):
-            rep.hard(f"{label} {rid}: requisito sem SHALL (nao testavel / nao EARS)", i + 1)
+            rep.hard(f"{rid}: requisito sem SHALL (nao testavel / nao EARS)", i + 1)
         elif not (EARS_LEAD.match(text) or UBIQ.match(text)):
-            rep.warn(f"{label} {rid}: SHALL presente mas sem padrao EARS reconhecido "
-                     f"(WHEN/WHILE/WHERE/IF ou 'The <system> SHALL')", i + 1)
+            rep.warn(f"{rid}: SHALL presente mas sem padrao EARS reconhecido "
+                     "(WHEN/WHILE/WHERE/IF ou 'The <system> SHALL')", i + 1)
         if re.search(r"\bSHALL\b.*\bSHALL\b", text):
-            rep.warn(f"{label} {rid}: dois SHALL na mesma linha - um requisito por linha?", i + 1)
+            rep.warn(f"{rid}: dois SHALL na mesma linha - um requisito por linha?", i + 1)
         low = text.lower()
         for v in ("rapidamente", "graciosamente", "apropriad", "adequadament", "quickly",
                   "gracefully", "appropriately", "efficiently"):
             if v in low:
-                rep.warn(f"{label} {rid}: termo vago '{v}' - use valor concreto", i + 1)
+                rep.warn(f"{rid}: termo vago '{v}' - use valor concreto", i + 1)
                 break
 
 
-def living_texts(path):
-    """{id: texto} dos requisitos da spec viva (fora de bloco de codigo)."""
+def find_prefix(rep, lines, mask, h1):
+    """Prefixo declarado na linha logo abaixo do H1 (linhas em branco e
+    comentarios HTML sao pulados). None quando ausente ou malformado."""
+    i = h1 + 1
+    while i < len(lines) and (not lines[i].strip() or lines[i].strip().startswith("<!--")):
+        i += 1
+    if i >= len(lines) or mask[i]:
+        rep.hard("linha de prefixo ausente logo abaixo do titulo: `Prefixo dos requisitos: `RSV`.`", h1 + 1)
+        return None
+    m = PREFIX_LINE.match(lines[i])
+    if not m:
+        rep.hard("linha logo abaixo do titulo deve ser `Prefixo dos requisitos: `RSV`.` "
+                 f"(veio '{lines[i].strip()[:60]}')", i + 1)
+        return None
+    prefix = m.group(1)
+    if not PREFIX_FORM.match(prefix):
+        rep.hard(f"prefixo '{prefix}' invalido; forma [A-Z][A-Z0-9]{{1,9}}", i + 1)
+        return None
+    return prefix
+
+
+def retired_ids(lines, mask):
+    """IDs listados em linhas `Aposentados: RSV-05, RSV-09` / `Retired:`."""
     out = {}
-    lines = read_lines(path)
-    mask = fenced_line_mask(lines)
     for i, l in enumerate(lines):
         if mask[i]:
             continue
-        m = REQ_LINE.match(l)
-        if m and m.group(1) not in out:
-            out[m.group(1)] = m.group(2).strip()
+        m = RETIRED_LINE.match(l)
+        if m:
+            for rid in REQ_ID.findall(m.group(1)):
+                out.setdefault(rid, i)
     return out
 
 
-def living_ids(path):
-    ids = set()
-    lines = read_lines(path)
-    mask = fenced_line_mask(lines)
+def check_duplicate_sections(rep, lines, mask):
+    reported = set()
+    for aliases in SECTIONS_KNOWN:
+        found = find_sections_exact(lines, aliases, mask=mask)
+        if len(found) > 1:
+            first = found[0][2]
+            for _, _, hidx in found[1:]:
+                rep.hard(f"secao duplicada ## {aliases[0]} (tambem em L{first + 1})", hidx + 1)
+                reported.add(hidx)
+    seen = {}
+    for i, text in iter_headings(lines, 2, mask):
+        key = norm_heading(text)
+        if key in seen and i not in reported:
+            rep.hard(f"secao duplicada ## {text} (tambem em L{seen[key] + 1})", i + 1)
+        seen.setdefault(key, i)
+
+
+def check_ids(rep, lines, mask, reqs, prefix, retired):
+    """Prefixo, duplicata, reutilizacao de aposentado, citacao orfa e
+    numero pulado."""
+    ids = {}
+    for i, rid, _ in reqs:
+        if rid in ids:
+            rep.hard(f"ID duplicado {rid} (tambem em L{ids[rid] + 1})", i + 1)
+            continue
+        ids[rid] = i
+        if prefix and rid.rsplit("-", 1)[0] != prefix:
+            rep.hard(f"{rid}: prefixo difere do declarado ('{prefix}')", i + 1)
+        if rid in retired:
+            rep.hard(f"{rid}: ID reutilizado - consta da lista de aposentados (L{retired[rid] + 1}); "
+                     "ID removido morre, use um numero novo", i + 1)
+    if not prefix:
+        return set(ids)
+    # citacao orfa: ID com o prefixo da spec que nao e requisito nem aposentado
     for i, l in enumerate(lines):
-        m = REQ_LINE.match(l)
-        if m and not mask[i]:
-            ids.add(m.group(1))
-    return ids
+        if mask[i] or l.strip().startswith("<!--") or RETIRED_LINE.match(l):
+            continue
+        for rid in REQ_ID.findall(l):
+            if rid.rsplit("-", 1)[0] == prefix and rid not in ids and rid not in retired:
+                rep.hard(f"citacao de {rid}, que nao e requisito desta spec nem esta aposentado", i + 1)
+    # numero pulado sem aposentadoria
+    nums = sorted(int(r.rsplit("-", 1)[1]) for r in ids)
+    if nums:
+        width = len(next(iter(ids)).rsplit("-", 1)[1])
+        known = set(nums) | {int(r.rsplit("-", 1)[1]) for r in retired if r.rsplit("-", 1)[0] == prefix}
+        missing = [n for n in range(1, nums[-1]) if n not in known]
+        if missing:
+            shown = ", ".join(f"{prefix}-{n:0{width}d}" for n in missing[:8])
+            rep.warn(f"numero(s) pulado(s) na sequencia sem constar de 'Aposentados:': {shown}")
+    return set(ids)
 
 
-def resolve_local_path(doc_path, target):
-    """Path absoluto de um destino local citado por um documento: como esta,
-    relativo ao documento, ou `/docs/...` a partir da raiz do repositorio
-    (primeiro ancestral do documento que contem `docs/`). None se nada existe."""
-    cands = []
-    if os.path.isabs(target) and os.path.exists(target):
-        return target
-    base = os.path.dirname(os.path.abspath(doc_path))
-    cands.append(os.path.normpath(os.path.join(base, target)))
-    rel = target.lstrip("/\\")
-    cur = base
-    while True:
-        if os.path.isdir(os.path.join(cur, "docs")):
-            cands.append(os.path.normpath(os.path.join(cur, rel)))
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            break
-        cur = parent
-    for c in cands:
-        if os.path.exists(c):
-            return c
-    return None
-
+# --- PRD -------------------------------------------------------------------
 
 PRD_FILE = re.compile(r"^\d{4}-[^/\\]+\.md$", re.IGNORECASE)
 PRD_FOLDER = re.compile(r"^\d{4}-[^/\\]+$")
 
 
+def repo_root_for(doc_path):
+    """Primeiro ancestral do documento que contem `docs/`, ou None."""
+    cur = os.path.dirname(os.path.abspath(doc_path))
+    while True:
+        if os.path.isdir(os.path.join(cur, "docs")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return None
+        cur = parent
+
+
+def resolve_local_path(doc_path, target):
+    """Path absoluto de um destino local: relativo ao documento, ou
+    `/docs/...` a partir da raiz do repositorio. None se nada existe."""
+    base = os.path.dirname(os.path.abspath(doc_path))
+    if target.startswith("/"):
+        root = repo_root_for(doc_path)
+        cand = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else None
+    else:
+        cand = os.path.normpath(os.path.join(base, target))
+    return cand if cand and os.path.exists(cand) else None
+
+
 def prd_files(root):
-    """PRDs abaixo de root, com a mesma regra do lint_prd.py (prd-writer):
-    `NNNN-*.md` (plano) e `NNNN-*/prd.md` (pasta), na raiz ou em subpasta de
-    dominio; `README.md`, `decisions.md`, `assets/` e o resto de uma pasta de
-    PRD sao anexos e ficam fora do indice."""
+    """PRDs abaixo de root: `NNNN-*.md` (plano) e `NNNN-*/prd.md` (pasta), na
+    raiz ou em subpasta de dominio; anexos de pasta de PRD ficam fora."""
     out = []
     for dirpath, dirnames, files in os.walk(root):
         keep = []
@@ -240,11 +262,10 @@ def prd_files(root):
 
 
 def prd_index(prd_path):
-    """(definicoes, prefixos) dos PRDs da pasta de PRDs (ancestral `prd`),
-    com a mesma regra de "o que e PRD" do lint_prd.py."""
-    d = os.path.dirname(os.path.abspath(prd_path)) if os.path.isfile(prd_path) else prd_path
-    root = d
-    cur = d
+    """(definicoes, prefixos) de todos os PRDs da pasta de PRDs (ancestral
+    `prd`/`prds` do PRD citado)."""
+    d = os.path.dirname(os.path.abspath(prd_path))
+    root, cur = d, d
     while True:
         if os.path.basename(cur).lower() in ("prd", "prds"):
             root = cur
@@ -263,41 +284,10 @@ def prd_index(prd_path):
             m = PRD_DEF.match(l)
             if m:
                 defs.add(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}")
-            pm = PRD_PREFIX_LINE.match(l) or PRD_PREFIX_ROW.match(l)
+            pm = PREFIX_LINE.match(l) or PRD_PREFIX_ROW.match(l)
             if pm:
                 prefixes.add(pm.group(1).upper())
     return defs, prefixes
-
-
-def prd_acceptance_cases(prd_path):
-    """Primeira coluna da primeira tabela da secao Criterios de Aceitacao do
-    PRD, normalizada. None se a secao nao existe."""
-    plines = read_lines(prd_path)
-    pmask = fenced_line_mask(plines)
-    sec = find_section_exact(plines, ACCEPTANCE_ALIASES, mask=pmask)
-    if sec is None:
-        return None
-    return {norm_cell(cells[0]) for _, cells in table_rows(plines, *sec) if cells and cells[0]}
-
-
-def check_prd_rev(rep, fields, prd_path):
-    declared = fields.get("prd-rev")
-    if not declared:
-        rep.warn("proveniencia sem revisao; adicione prd-rev "
-                 "(lint_spec.py --print-prd-rev <prd.md>)", 1)
-        return
-    if not PRD_REV.match(declared):
-        rep.hard(f"prd-rev '{declared}' invalido: use git:<hash de `git hash-object`> ou sha256:<12 hex>", 1)
-        return
-    if declared.startswith("git:"):
-        actual = git_blob_rev(prd_path)
-        if actual is None:
-            rep.incomplete("prd-rev declarado como git: mas git indisponivel para calcular a revisao do PRD", 1)
-            return
-    else:
-        actual = content_rev(prd_path)
-    if actual != declared:
-        rep.hard(f"PRD mudou desde a spec; re-derive (prd-rev declarado {declared}, atual {actual})", 1)
 
 
 def is_citation_at_end(line, rid):
@@ -310,96 +300,23 @@ def is_citation_at_end(line, rid):
     return bool(m and re.search(rf"\b{re.escape(rid)}\b", m.group(1)))
 
 
-def lint_inherited_scenarios(rep, lines, mask, defs, prefixes, spec_ids, spec_prefix, prd_path):
-    sec = find_section_exact(lines, TRACE_ALIASES, mask=mask)
-    if sec is None:
+def check_prd_rev(rep, fields, prd_path):
+    declared = fields.get("prd-rev")
+    if not declared:
+        rep.warn("prd-rev ausente no comentario de maquina; use git:<hash de `git hash-object <prd>`>", 1)
         return
-    start, end = sec
-    header = None
-    for i in range(start, end):
-        l = lines[i].strip()
-        if mask[i] or not l.startswith("|"):
-            continue
-        cells = [c.strip() for c in l.strip("|").split("|")]
-        if cells and norm_cell(cells[0]) in SCENARIO_HEADER:
-            header = i
-            break
-    if header is None:
+    if not PRD_REV.match(declared):
+        rep.hard(f"prd-rev '{declared}' invalido: forma git:<hash de `git hash-object`>", 1)
         return
-    cases = prd_acceptance_cases(prd_path)
-    if cases is None:
-        rep.warn(f"PRD {os.path.basename(prd_path)} sem secao Criterios de Aceitacao; "
-                 "cenarios herdados so validam por ID", header + 1)
-        cases = set()
-    for i, cells in table_rows(lines, header, end):
-        if mask[i] or not cells:
-            continue
-        name = cells[0]
-        row = " | ".join(cells)
-        resolved = any(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}" in defs
-                       for m in PRD_ID.finditer(row) if m.group(1) in prefixes)
-        if not resolved and norm_cell(name) not in cases:
-            rep.hard(f"cenario herdado '{name[:50]}' nao cita ID do PRD que resolve nem casa um caso "
-                     "da tabela de Criterios de Aceitacao do PRD", i + 1)
-        if len(cells) >= 2:
-            for rid in REQ_ID.findall(cells[1]):
-                if rid.rsplit("-", 1)[0] == spec_prefix and rid not in spec_ids:
-                    rep.hard(f"cenario herdado '{name[:40]}': requisito EARS {rid} nao existe no delta", i + 1)
+    actual = git_blob_rev(prd_path)
+    if actual is None:
+        rep.warn("git indisponivel: prd-rev nao conferido", 1)
+    elif actual != declared:
+        rep.warn(f"PRD mudou desde a spec (prd-rev {declared}, atual {actual}); re-derive "
+                 "os requisitos que citam os IDs tocados e atualize prd-rev", 1)
 
 
-MD_LINK = re.compile(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)")  # destino em <...> (com espacos) ou sem espacos
-URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
-CODE_SPAN = re.compile(r"`[^`]*`")
-
-
-def repo_root_for(doc_path):
-    """Primeiro ancestral do documento que contem `docs/`, ou None."""
-    cur = os.path.dirname(os.path.abspath(doc_path))
-    while True:
-        if os.path.isdir(os.path.join(cur, "docs")):
-            return cur
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return None
-        cur = parent
-
-
-def link_target(m):
-    """Destino de um match de MD_LINK: forma <...> ou forma simples."""
-    return m.group(1) if m.group(1) is not None else m.group(2)
-
-
-def check_local_links(rep, lines, mask, doc_path):
-    """Todo link Markdown para arquivo local resolve: destino relativo so a
-    partir da pasta do documento (como o GitHub renderiza), `/docs/...` a
-    partir da raiz do repositorio. URL e ancora pura ficam fora. HARD com a
-    linha e o path onde o destino foi procurado."""
-    base = os.path.dirname(os.path.abspath(doc_path))
-    for i, l in enumerate(lines):
-        if mask[i]:
-            continue
-        for m in MD_LINK.finditer(CODE_SPAN.sub("", l)):
-            raw = link_target(m).strip()
-            if not raw or URL_SCHEME.match(raw) or raw.startswith("#"):
-                continue
-            target = raw.split("#", 1)[0]
-            if not target:
-                continue
-            if target.startswith("/"):
-                # so a partir da raiz do repositorio (ancestral com docs/), nunca
-                # do filesystem: `/etc/hostname` nao e link renderizavel
-                root = repo_root_for(doc_path)
-                expected = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else f"<raiz>{target}"
-                ok = root is not None and os.path.exists(expected)
-            else:
-                expected = os.path.normpath(os.path.join(base, target))
-                ok = os.path.exists(expected)
-            if not ok:
-                rep.hard(f"link '{raw}' nao resolve (procurado em {expected}); "
-                         "conte os `../` a partir da pasta deste arquivo", i + 1)
-
-
-def lint_prd_links(rep, lines, mask, fields, spec_path, spec_ids, spec_prefix, is_delta):
+def lint_prd(rep, lines, mask, fields, spec_path, prefix):
     prd_field = fields.get("prd")
     if not prd_field:
         if fields.get("prd-rev"):
@@ -407,17 +324,13 @@ def lint_prd_links(rep, lines, mask, fields, spec_path, spec_ids, spec_prefix, i
         return
     prd_path = resolve_local_path(spec_path, prd_field)
     if not prd_path:
-        rep.incomplete(f"validacao incompleta: PRD nao encontrado ('{prd_field}'); "
-                       "prefixo, citacoes e cenarios herdados nao verificados", 1)
+        rep.hard(f"PRD nao encontrado: '{prd_field}' (relativo a pasta da spec ou `/docs/...` da raiz)", 1)
         return
     check_prd_rev(rep, fields, prd_path)
     defs, prefixes = prd_index(prd_path)
-    spec_prefixes = {rid.rsplit("-", 1)[0] for rid in spec_ids}
-    if spec_prefix:
-        spec_prefixes.add(spec_prefix)
-    for pfx in sorted(spec_prefixes & prefixes):
-        rep.hard(f"prefixo da spec '{pfx}' coincide com prefixo de PRD em {os.path.dirname(prd_path)}; "
-                 "IDs de spec e de PRD tem a mesma forma X-nn - use outro prefixo (specify.md, Origem e modo)")
+    if prefix and prefix in prefixes:
+        rep.hard(f"prefixo da spec '{prefix}' coincide com prefixo de PRD em {os.path.dirname(prd_path)}; "
+                 "IDs de spec e de PRD tem a mesma forma X-nn - use outro prefixo")
     cited = 0
     seen = set()
     for i, l in enumerate(lines):
@@ -425,7 +338,7 @@ def lint_prd_links(rep, lines, mask, fields, spec_path, spec_ids, spec_prefix, i
             continue
         for m in PRD_ID.finditer(l):
             pfx = m.group(1)
-            if pfx in spec_prefixes:
+            if pfx == prefix:
                 continue
             rid = f"{pfx}-{m.group(2) or ''}{m.group(3)}"
             if (rid, i) in seen:
@@ -442,327 +355,105 @@ def lint_prd_links(rep, lines, mask, fields, spec_path, spec_ids, spec_prefix, i
             if rid not in defs:
                 rep.hard(f"citacao de {rid} nao resolve para definicao em nenhum PRD da pasta", i + 1)
     if cited == 0:
-        rep.warn("spec a partir do PRD sem nenhuma citacao de ID do PRD; requisitos EARS citam "
-                 "o ID com prefixo e a Rastreabilidade lista PRD -> EARS (specify.md)")
-    if is_delta:
-        lint_inherited_scenarios(rep, lines, mask, defs, prefixes, spec_ids, spec_prefix, prd_path)
+        rep.warn("spec com prd: sem nenhuma citacao de ID do PRD; requisito derivado do PRD "
+                 "cita o ID ao fim da linha")
 
 
-def parse_header(lines, h1):
-    """dict chave -> (valor, idx) dos campos da tabela de header; None se a
-    tabela nao existe logo abaixo do H1."""
-    i = h1 + 1
-    while i < len(lines) and (not lines[i].strip() or lines[i].strip().startswith("<!--")):
-        i += 1
-    if i >= len(lines) or not lines[i].lstrip().startswith("|"):
-        return None, i
-    out = {}
-    for idx, cells in table_rows(lines, i, min(i + 14, len(lines))):
-        if not cells:
+# --- links ------------------------------------------------------------------
+
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)")
+URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+
+def check_local_links(rep, lines, mask, doc_path):
+    base = os.path.dirname(os.path.abspath(doc_path))
+    for i, l in enumerate(lines):
+        if mask[i]:
             continue
-        label = norm_cell(cells[0])
-        value = cells[1].strip() if len(cells) > 1 else ""
-        for key, (labels, _, _) in HEADER_FIELDS.items():
-            if label in labels and key not in out:
-                out[key] = (value, idx)
-    return out, i
-
-
-def lint_header(rep, lines, mc_idx, is_delta):
-    """Valida o header e devolve o dict de campos (vazio se ausente)."""
-    h1 = next((i for i, l in enumerate(lines) if l.startswith("# ")), None)
-    if h1 is None:
-        rep.hard("sem titulo H1")
-        return {}
-    if mc_idx is not None and mc_idx > h1:
-        rep.hard("comentario de maquina <!-- sdd: ... --> deve vir antes do H1", mc_idx + 1)
-    fields, tbl = parse_header(lines, h1)
-    if fields is None:
-        rep.hard("header deve ser tabela de duas colunas logo abaixo do H1", h1 + 1)
-        return {}
-    for key, (labels, req_delta, req_living) in HEADER_FIELDS.items():
-        required = req_delta if is_delta else req_living
-        if key not in fields:
-            if required:
-                rep.hard(f"header sem campo obrigatorio {key.title()}", tbl + 1)
-            continue
-        value, idx = fields[key]
-        if not value:
-            rep.hard(f"header com campo {key.title()} vazio", idx + 1)
-            continue
-        if key == "status":
-            allowed = STATUS_DELTA if is_delta else STATUS_LIVING
-            sv = strip_accents(value.lower())
-            if sv not in allowed and not (is_delta and sv.startswith(STATUS_DELTA_PREFIX)):
-                rep.hard(f"header: Status '{value}' invalido; use um de {sorted(allowed)}"
-                         + (" ou 'Promovido a <mudanca>'" if is_delta else ""), idx + 1)
-        elif key == "data":
-            m = DATE_LEAD.match(value)
-            if not m:
-                rep.hard(f"header: Data '{value}' invalida; formato AAAA-MM-DD", idx + 1)
+        for m in MD_LINK.finditer(CODE_SPAN.sub("", l)):
+            raw = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
+            if not raw or URL_SCHEME.match(raw) or raw.startswith("#"):
+                continue
+            target = raw.split("#", 1)[0]
+            if not target:
+                continue
+            if target.startswith("/"):
+                root = repo_root_for(doc_path)
+                expected = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else f"<raiz>{target}"
+                ok = root is not None and os.path.exists(expected)
             else:
-                try:
-                    datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-                except ValueError:
-                    rep.hard(f"header: Data '{value}' nao e data de calendario", idx + 1)
-        elif key == "autor":
-            if re.fullmatch(r"\[.*\]", value) or strip_accents(value.lower()) in ("nome", "name"):
-                rep.hard(f"header: Autor '{value}' e placeholder", idx + 1)
-        elif key == "prefixo":
-            if not PREFIX_FORM.match(value.strip("`")):
-                rep.hard(f"header: Prefixo '{value}' invalido; forma [A-Z][A-Z0-9]{{1,9}}", idx + 1)
-    return {k: v for k, (v, _) in fields.items()}
+                expected = os.path.normpath(os.path.join(base, target))
+                ok = os.path.exists(expected)
+            if not ok:
+                rep.hard(f"link '{raw}' nao resolve (procurado em {expected}); "
+                         "conte os `../` a partir da pasta deste arquivo", i + 1)
 
 
-def check_duplicate_sections(rep, lines, mask, groups):
-    """Dois headings H2 casando o mesmo grupo de aliases, ou com o mesmo texto
-    normalizado, e HARD."""
-    reported = set()
-    for aliases in groups:
-        found = find_sections_exact(lines, aliases, mask=mask)
-        if len(found) > 1:
-            first = found[0][2]
-            for _, _, hidx in found[1:]:
-                rep.hard(f"secao duplicada ## {aliases[0]} (tambem em L{first + 1})", hidx + 1)
-                reported.add(hidx)
-    seen = {}
-    for i, text in iter_headings(lines, 2, mask):
-        key = norm_heading(text)
-        if key in seen and i not in reported:
-            rep.hard(f"secao duplicada ## {text} (tambem em L{seen[key] + 1})", i + 1)
-        seen.setdefault(key, i)
-
-
-def check_prefix(rep, header, ids, label):
-    declared = (header.get("prefixo") or "").strip("`")
-    if not PREFIX_FORM.match(declared):
-        return declared or None
-    for rid, i in sorted(ids.items(), key=lambda kv: kv[1]):
-        pfx = rid.rsplit("-", 1)[0]
-        if pfx != declared:
-            rep.hard(f"{label} {rid}: prefixo '{pfx}' difere do Prefixo declarado no header ('{declared}')", i + 1)
-    return declared
-
-
-def lint_delta(rep, lines, mask, fields, flags, living, header, living_reported=False):
-    tier = fields.get("tier", "").lower()
-    if tier not in TIERS:
-        rep.hard(f"tier ausente ou invalido no comentario de maquina: '{tier}' (small|medium|large|complex)", 1)
-        tier = "large"
-    if not fields.get("capability"):
-        rep.hard("comentario de maquina sem 'capability:'", 1)
-
-    check_duplicate_sections(rep, lines, mask, list(DELTA_SECTIONS) + list(DELTA_REQ_SECTIONS.values()))
-    for aliases, tiers in DELTA_SECTIONS.items():
-        if tier in tiers and find_section_exact(lines, aliases, mask=mask) is None:
-            rep.hard(f"secao obrigatoria para tier {tier} ausente: ## {aliases[0]}")
-
-    # requisitos por secao de delta
-    all_ids = {}
-    delta = {}
-    for kind, aliases in DELTA_REQ_SECTIONS.items():
-        sec = find_section_exact(lines, aliases, mask=mask)
-        if kind == "RENAMED":
-            if sec:
-                rep.hard("RENAMED nao suportado: IDs sao estaveis; use REMOVED + ADDED", sec[0])
-            delta[kind] = []
-            continue
-        delta[kind] = collect_reqs(rep, lines, *sec, mask, kind) if sec else []
-        for i, rid, _ in delta[kind]:
-            if rid in all_ids:
-                rep.hard(f"ID duplicado {rid} (tambem em L{all_ids[rid] + 1})", i + 1)
-            all_ids[rid] = i
-
-    if not any(delta.values()):
-        if "no-behavior-change" in flags:
-            rep.warn("delta vazio declarado como no-behavior-change - confirme que e refactor puro")
-        else:
-            rep.hard("nenhum requisito em ADDED/MODIFIED/REMOVED "
-                     "(declare 'no-behavior-change' no comentario se for refactor puro)")
-
-    check_ears(rep, delta["ADDED"], "ADDED")
-    check_ears(rep, delta["MODIFIED"], "MODIFIED")
-    for i, rid, text in delta["REMOVED"]:
-        if not re.search(r"raz[aã]o|reason", text, re.IGNORECASE):
-            rep.hard(f"REMOVED {rid}: sem razao registrada", i + 1)
-    before_of = {}
-    for i, rid, _ in delta["MODIFIED"]:
-        nxt = lines[i + 1] if i + 1 < len(lines) else ""
-        bm = BEFORE_LINE.match(nxt)
-        if not bm:
-            rep.hard(f"MODIFIED {rid}: sem linha 'Antes:' com o texto anterior", i + 1)
-        else:
-            before_of[rid] = (i, bm.group(2))
-
-    changed = {rid: i for kind in ("ADDED", "MODIFIED") for i, rid, _ in delta[kind]}
-    spec_prefix = check_prefix(rep, header, changed, "delta")
-
-    # IDs contra a spec viva
-    if living and os.path.exists(living):
-        ltexts = living_texts(living)
-        lids = living_ids(living)
-        for kind in ("MODIFIED", "REMOVED"):
-            for i, rid, _ in delta[kind]:
-                if rid not in lids:
-                    rep.hard(f"{kind} {rid}: ID nao existe na spec viva {living}", i + 1)
-        for rid, (i, before) in before_of.items():
-            if rid in ltexts and ltexts[rid] != before:
-                rep.hard(f"MODIFIED {rid}: 'Antes:' difere do texto vigente na spec viva "
-                         f"(alteracao concorrente; revise o delta). Vigente: {ltexts[rid][:60]}", i + 2)
-        for i, rid, _ in delta["ADDED"]:
-            if rid in lids:
-                rep.hard(f"ADDED {rid}: ID ja existe na spec viva - use MODIFIED ou ID novo", i + 1)
-    elif (delta["MODIFIED"] or delta["REMOVED"]) and not living_reported:
-        rep.incomplete("spec viva nao encontrada; IDs de MODIFIED/REMOVED e 'Antes:' nao "
-                       "verificados - passe --living com a spec viva da capability")
-
-    # rastreabilidade cobre todo ID de ADDED/MODIFIED
-    sec = find_section_exact(lines, TRACE_ALIASES, mask=mask)
-    if sec and tier != "small":
-        body = "\n".join(l for i, l in enumerate(lines[sec[0]:sec[1]], sec[0]) if not mask[i])
-        traced = set(REQ_ID.findall(body))
-        for kind in ("ADDED", "MODIFIED"):
-            for i, rid, _ in delta[kind]:
-                if rid not in traced:
-                    rep.hard(f"{rid} nao aparece na Rastreabilidade", i + 1)
-
-    # assumptions
-    sec = find_section_exact(lines, ASSUMPTION_ALIASES, mask=mask)
-    if sec:
-        for i, cells in table_rows(lines, *sec):
-            if mask[i]:
-                continue
-            if len(cells) >= 3:
-                if not cells[1].strip():
-                    rep.hard(f"assumption '{cells[0][:40]}' com default vazio", i + 1)
-                if not cells[2].strip():
-                    rep.hard(f"assumption '{cells[0][:40]}' sem racional", i + 1)
-        body = "\n".join(lines[sec[0]:sec[1]]).lower()
-        if "perguntas em aberto" not in body and "open questions" not in body:
-            rep.warn("secao de premissas sem linha 'Perguntas em aberto:' / 'Open questions:'")
-
-    # dimensoes implicitas: celula vazia
-    sec = find_section_exact(lines, DIMENSION_ALIASES, mask=mask)
-    if sec:
-        for i, cells in table_rows(lines, *sec):
-            if mask[i]:
-                continue
-            if len(cells) >= 2 and not cells[1].strip():
-                rep.hard(f"dimensao '{cells[0]}' sem requisito nem 'N/A porque'", i + 1)
-            elif len(cells) >= 2 and re.fullmatch(r"n/?a\.?", cells[1].strip(), re.IGNORECASE):
-                rep.hard(f"dimensao '{cells[0]}': 'N/A' sem 'porque' - a razao e obrigatoria", i + 1)
-
-    # PMF: deve ser a ultima secao (tier >= medium)
-    if tier != "small":
-        hs = iter_headings(lines, 2, mask)
-        if hs:
-            last = hs[-1][1].lower()
-            if "fragilidade" not in last and "weakest" not in last:
-                rep.warn("Ponto de Maior Fragilidade nao e a ultima secao")
-    return set(all_ids), spec_prefix
-
-
-def lint_living(rep, lines, mask, fields, header):
-    if not fields.get("capability"):
-        rep.hard("comentario de maquina sem 'capability:'", 1)
-    check_duplicate_sections(rep, lines, mask, LIVING_SECTIONS + list(DELTA_REQ_SECTIONS.values()))
-    for aliases in LIVING_SECTIONS:
-        if find_section_exact(lines, aliases, mask=mask) is None:
-            rep.hard(f"spec viva sem secao ## {aliases[0]}")
-    ids = {}
-    sec = find_section_exact(lines, ("Requisitos", "Requirements"), mask=mask)
-    if sec:
-        reqs = collect_reqs(rep, lines, *sec, mask, "REQ")
-        if not reqs:
-            rep.hard("spec viva sem requisitos com ID")
-        check_ears(rep, reqs, "REQ")
-        for i, rid, _ in reqs:
-            if rid in ids:
-                rep.hard(f"ID duplicado {rid}", i + 1)
-            ids.setdefault(rid, i)
-    for kind in DELTA_REQ_SECTIONS:
-        if find_section_exact(lines, DELTA_REQ_SECTIONS[kind], mask=mask):
-            rep.hard(f"spec viva nao deve ter secao {kind} - deltas vivem em changes/NNNN-<feature>/spec.md")
-    spec_prefix = check_prefix(rep, header, ids, "REQ")
-    return set(ids), spec_prefix
-
-
-def print_prd_rev(path):
-    if not os.path.isfile(path):
-        usage(f"arquivo nao encontrado: {path}")
-    rev = git_blob_rev(path) or content_rev(path)
-    print(rev)
-    return 0
-
+# --- main -------------------------------------------------------------------
 
 def parse_args(argv):
-    """Retorna ('print', prd_path) ou ('lint', spec_path, living). Opcao
-    desconhecida, valor ausente ou arquivo faltando e erro de uso (exit 2)."""
     args = list(argv[1:])
     if not args:
         usage(__doc__)
-    if "--print-prd-rev" in args:
-        pos = args.index("--print-prd-rev")
-        if pos + 1 >= len(args) or args[pos + 1].startswith("--"):
-            usage("--print-prd-rev exige o path do PRD")
-        if len(args) != 2:
-            usage("--print-prd-rev nao se combina com outras opcoes")
-        return "print", args[pos + 1], None
     if args[0].startswith("--"):
         usage(f"primeiro argumento deve ser o path da spec, veio '{args[0]}'\n\n{__doc__}")
-    path, living, i = args[0], None, 1
-    while i < len(args):
-        a = args[i]
-        if a == "--living":
-            if i + 1 >= len(args) or args[i + 1].startswith("--"):
-                usage("--living exige o path da spec viva")
-            living = args[i + 1]
-            i += 2
-        else:
-            usage(f"opcao desconhecida: {a}\n\n{__doc__}")
-    return "lint", path, living
+    if len(args) > 1:
+        usage(f"opcao desconhecida: {args[1]}\n\n{__doc__}")
+    return args[0]
 
 
 def main(argv):
-    mode, path, living = parse_args(argv)
-    if mode == "print":
-        if not os.path.isfile(path):
-            usage(f"PRD nao encontrado: {path}")
-        return print_prd_rev(path)
+    path = parse_args(argv)
     lines = read_lines(path)
     mask = fenced_line_mask(lines)
     rep = Report("lint_spec")
-    living_reported = False
-    if living is not None and not os.path.isfile(living):
-        rep.incomplete(f"spec viva nao encontrada: {living}")
-        living, living_reported = None, True
 
-    fields, flags, mc_idx = parse_machine_comment(lines)
+    fields, mc_idx = parse_machine_comment(lines)
     if fields is None:
-        rep.hard("primeira linha deve ser <!-- sdd: spec-delta | tier: ... | capability: ... --> "
-                 "ou <!-- sdd: spec | capability: ... -->", (mc_idx or 0) + 1)
+        rep.hard("primeira linha deve ser <!-- sdd: spec | capability: <dominio>/<capability> "
+                 "[| prd: <path> | prd-rev: git:<hash>] -->", (mc_idx or 0) + 1)
         return rep.emit(path)
-    kind = fields["sdd"].lower()
-    is_delta = kind == "spec-delta"
-    header = lint_header(rep, lines, mc_idx, is_delta)
+    if fields["sdd"].lower() != "spec":
+        rep.hard(f"sdd: '{fields['sdd']}' - este linter le `sdd: spec`", 1)
+    if not fields.get("capability"):
+        rep.hard("comentario de maquina sem 'capability:'", 1)
 
-    spec_ids, spec_prefix = set(), None
-    if is_delta:
-        if living is None:
-            cand = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(path)), "..", "..", "spec.md"))
-            if os.path.exists(cand):
-                living = cand
-        spec_ids, spec_prefix = lint_delta(rep, lines, mask, fields, flags, living, header,
-                                           living_reported=living_reported)
-    elif kind == "spec":
-        spec_ids, spec_prefix = lint_living(rep, lines, mask, fields, header)
+    h1 = next((i for i, l in enumerate(lines) if l.startswith("# ") and not mask[i]), None)
+    if h1 is None:
+        rep.hard("sem titulo H1")
+        prefix = None
     else:
-        rep.hard(f"sdd: '{kind}' nao e spec-delta nem spec", 1)
-    lint_prd_links(rep, lines, mask, fields, path, spec_ids, spec_prefix, is_delta)
-    check_local_links(rep, lines, mask, path)
+        if mc_idx is not None and mc_idx > h1:
+            rep.hard("comentario de maquina <!-- sdd: ... --> deve vir antes do H1", mc_idx + 1)
+        prefix = find_prefix(rep, lines, mask, h1)
 
+    check_duplicate_sections(rep, lines, mask)
+    for aliases in SECTIONS_REQUIRED:
+        if find_section_exact(lines, aliases, mask=mask) is None:
+            rep.hard(f"secao obrigatoria ausente: ## {aliases[0]}")
+
+    reqs = []
+    sec = find_section_exact(lines, ("Requisitos", "Requirements"), mask=mask)
+    if sec:
+        reqs = collect_reqs(rep, lines, *sec, mask)
+        if not reqs:
+            rep.hard("secao Requisitos sem requisito com ID")
+        check_ears(rep, reqs)
+    retired = retired_ids(lines, mask)
+    check_ids(rep, lines, mask, reqs, prefix, retired)
+
+    if prefix is None and reqs:
+        # sem linha de prefixo (ja HARD), o prefixo mais comum dos IDs evita
+        # que toda citacao da propria spec vire "prefixo desconhecido"
+        counts = {}
+        for _, rid, _ in reqs:
+            counts[rid.rsplit("-", 1)[0]] = counts.get(rid.rsplit("-", 1)[0], 0) + 1
+        prefix = max(counts, key=counts.get)
+    lint_prd(rep, lines, mask, fields, path, prefix)
+    check_local_links(rep, lines, mask, path)
     check_tags(rep, lines, mask=mask)
-    scan_placeholders(rep, lines, skip_first=mc_idx + 1, mask=mask)
+    scan_placeholders(rep, lines, skip_first=(mc_idx or 0) + 1, mask=mask)
     scan_prose(rep, lines, mask=mask)
     return rep.emit(path)
 

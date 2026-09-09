@@ -1,8 +1,10 @@
 """Consistencia deterministica entre documentacao e scripts da skill:
-todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x` citada junto do nome de um script
-existe no argparse desse script; fences de codigo fecham; toda citacao
-`arquivo.md, Titulo` (a esta skill ou a irma prd-writer, nos dois sentidos)
-aponta para heading ou trecho em negrito existente.
+todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x`
+citada junto do nome de um script existe nesse script; fences de codigo
+fecham; toda citacao `arquivo.md, Titulo` aponta para heading ou trecho em
+negrito existente; a skill nao cita outra skill nem a si mesma pelo nome;
+nenhum artefato, template ou linter carrega campo de status, autor, data,
+confianca ou aprovacao.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_docs_consistency.py"
 """
@@ -15,7 +17,6 @@ import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.dirname(SCRIPTS)
-SIBLING = os.path.join(os.path.dirname(SKILL), "prd-writer")
 sys.path.insert(0, SCRIPTS)
 from _common import fenced_line_mask, norm_heading  # noqa: E402
 
@@ -34,8 +35,7 @@ def script_flags(path):
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
-OWN_FILES = "specify|design|tasks|execute|verify|memory|modes"
-SIBLING_FILES = "intake|writing|output|review|example"
+OWN_FILES = "specify|design|tasks|execute|verify|adr"
 CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 
@@ -130,23 +130,38 @@ class DocsConsistency(unittest.TestCase):
                 self.assertTrue(section_exists(own[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
 
-    def test_sibling_citations_resolve(self):
-        """Citacoes desta skill a arquivos da skill irma (prd-writer) e da
-        irma a esta skill apontam para heading ou trecho em negrito existente."""
-        if not os.path.isdir(SIBLING):
-            self.skipTest("prd-writer ausente")
-        own = {os.path.basename(p): read(p) for p in md_files(SKILL)}
-        sib = {os.path.basename(p): read(p) for p in md_files(SIBLING)}
+    def test_independence_from_other_skills(self):
+        """Nenhuma mencao a outra skill, a arquivos dela ou a arquivos que
+        esta skill nao tem mais; a propria skill so e citada pelo nome no
+        frontmatter e no titulo do SKILL.md, nunca em referencia, template
+        ou script. O acoplamento e so pelo artefato (PRD em /docs/prd)."""
+        others = re.compile(r"prd-writer|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md",
+                            re.IGNORECASE)
+        own_name = re.compile(r"spec-driven", re.IGNORECASE)
+        for path in md_files(SKILL) + sorted(glob.glob(os.path.join(SCRIPTS, "*.py"))):
+            for i, line in enumerate(read(path).splitlines(), 1):
+                self.assertIsNone(others.search(line), f"{path}:{i}: cita outra skill: {line.strip()[:80]}")
+                allowed = path.endswith("SKILL.md") and (line.startswith("name: ") or line.startswith("# "))
+                if not allowed:
+                    self.assertIsNone(own_name.search(line), f"{path}:{i}: cita a propria skill pelo nome: {line.strip()[:80]}")
+
+    def test_no_status_author_date_or_confidence_fields(self):
+        """Aprovacao e o commit: nenhum campo de Status, Autor, Data, Confianca
+        ou aprovacao em template ou linter."""
+        field = re.compile(r"^\|\s*\*\*(Status|Autor|Author|Data|Date|Confian[cç]a|Confidence|Aprovad[oa]|Approved)\*\*\s*\|",
+                           re.IGNORECASE)
         for md in md_files(SKILL):
-            for fname, title, line in cited_sections(read(md), SIBLING_FILES):
-                self.assertIn(fname, sib, f"{md}:{line}: cita {fname} inexistente na prd-writer")
-                self.assertTrue(section_exists(sib[fname], title),
-                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname} (prd-writer)")
-        for md in md_files(SIBLING):
-            for fname, title, line in cited_sections(read(md), OWN_FILES):
-                self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente nesta skill")
-                self.assertTrue(section_exists(own[fname], title),
-                                f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
+            for i, line in enumerate(read(md).splitlines(), 1):
+                self.assertIsNone(field.search(line), f"{md}:{i}: campo de status/autor/data/confianca: {line.strip()}")
+        for py in glob.glob(os.path.join(SCRIPTS, "*.py")):
+            self.assertNotRegex(read(py), r"(?i)(STATUS_DELTA|STATUS_LIVING|HEADER_FIELDS|TIERS)",
+                                f"{py}: linter ainda conhece status/tier")
+
+    def test_no_commit_policy_in_scripts(self):
+        """Politica de commit e do repositorio: os scripts nao validam
+        mensagem nem recebem opcao de commit."""
+        for py in glob.glob(os.path.join(SCRIPTS, "*.py")):
+            self.assertNotRegex(read(py), r"--commit-|check_commit|Conventional Commits", f"{py}: politica de commit no linter")
 
 
 if __name__ == "__main__":

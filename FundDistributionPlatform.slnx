@@ -36,34 +36,23 @@
     <File Path=".claude/skills/spec-driven/SKILL.md" />
   </Folder>
   <Folder Name="/.claude/skills/spec-driven/references/">
+    <File Path=".claude/skills/spec-driven/references/adr.md" />
     <File Path=".claude/skills/spec-driven/references/design.md" />
     <File Path=".claude/skills/spec-driven/references/execute.md" />
-    <File Path=".claude/skills/spec-driven/references/memory.md" />
-    <File Path=".claude/skills/spec-driven/references/modes.md" />
     <File Path=".claude/skills/spec-driven/references/specify.md" />
     <File Path=".claude/skills/spec-driven/references/tasks.md" />
     <File Path=".claude/skills/spec-driven/references/verify.md" />
   </Folder>
   <Folder Name="/.claude/skills/spec-driven/scripts/">
     <File Path=".claude/skills/spec-driven/scripts/_common.py" />
-    <File Path=".claude/skills/spec-driven/scripts/apply_delta.py" />
-    <File Path=".claude/skills/spec-driven/scripts/hotspots.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_spec.py" />
     <File Path=".claude/skills/spec-driven/scripts/lint_tasks.py" />
-    <File Path=".claude/skills/spec-driven/scripts/lint_validation.py" />
-    <File Path=".claude/skills/spec-driven/scripts/sensor_scratch.py" />
-    <File Path=".claude/skills/spec-driven/scripts/seq.py" />
   </Folder>
   <Folder Name="/.claude/skills/spec-driven/scripts/tests/">
     <File Path=".claude/skills/spec-driven/scripts/tests/__init__.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_apply_delta.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_docs_consistency.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_hotspots.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_spec.py" />
     <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_tasks.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_validation.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_sensor_scratch.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_seq.py" />
   </Folder>
   <Folder Name="/.github/" />
   <Folder Name="/.github/scripts/">

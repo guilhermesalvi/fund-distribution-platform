@@ -47,8 +47,8 @@ Não imponha estilo arquitetural: o design fala a língua da base (ports e adapt
 Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois da proposta vira racionalização. A ordem é fixa: critérios, crítica dos critérios e só então abordagens.
 
 1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
-2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem.
-3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, escreva uma linha dizendo isso e a seção não existe.
+2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem. Quando todos os critérios vêm de NFR do PRD, a crítica não encontrou lacuna e não há alternativa real, apresente critérios e abordagem juntos, numa única espera.
+3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
 
 ### As quatro perguntas de uma decisão arquitetural
 
@@ -176,4 +176,4 @@ Fica em `src/ReservationBook`.
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo
 ```
 
-Depois de gravar, apresente o design e espere antes de começar as Tasks.
+Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente o design e espere antes de começar as Tasks.

@@ -1,7 +1,7 @@
 """Testes de lint_spec.py: comentario de maquina, linha de prefixo, secoes
 obrigatorias (igualdade, duplicata, fence), requisitos e IDs (SHALL, prefixo,
 duplicata, aposentados, citacao orfa), PRD (prd, prd-rev, prefixos,
-citacoes), tags, links locais e erros de uso.
+citacoes), Rastreabilidade, tags, links locais e erros de uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_spec.py"
 """
@@ -34,13 +34,18 @@ Prefixo dos requisitos: `BOOK`.
 - **BOOK-NFR-01** — Prazo.
 """
 
+CONTEXT = """\
+Origem no PRD 0002.
+Fronteira: o livro registra reservas; a alocacao e do Allocation.
+Base lida: `src/ReservationBook` tem so a composicao do servico."""
+
 SPEC = """<!-- sdd: spec | capability: reservation-book/reservation-lifecycle{prd} -->
 # Livro
 
 {prefix_line}
 ## Contexto (Context)
 
-Origem no PRD 0002.
+""" + CONTEXT + """
 
 ## Requisitos (Requirements)
 
@@ -52,6 +57,24 @@ REQS = """- **RSV-01** — WHEN o operador registra THEN the system SHALL aceita
 """
 
 PRD_FIELD = " | prd: /docs/prd/0002-reservation-book.md"
+
+REQ_WITH_CITATION = re.compile(r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9}-\d{2,})\*\*.*\[([^\[\]]+)\]\s*$")
+ANY_ID = re.compile(r"\b[A-Z][A-Z0-9]{1,9}-(?:NFR-)?\d{2,}\b")
+
+
+def trace_section(reqs):
+    """Secao Rastreabilidade derivada das citacoes ao fim dos requisitos: com
+    `prd:` no comentario de maquina o linter exige que todo FR em escopo
+    apareca na primeira coluna."""
+    rows = {}
+    for l in reqs.splitlines():
+        m = REQ_WITH_CITATION.match(l)
+        if not m:
+            continue
+        for prd_id in ANY_ID.findall(m.group(2)):
+            rows.setdefault(prd_id, []).append(m.group(1))
+    body = "".join(f"| {k} | {', '.join(v)} |\n" for k, v in rows.items())
+    return "\n## Rastreabilidade\n\n| ID do PRD | IDs EARS |\n|---|---|\n" + body
 
 
 def run(path, *extra):
@@ -81,8 +104,11 @@ class Base(unittest.TestCase):
         with open(path, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
 
-    def lint(self, reqs=REQS, extra="", prd=PRD_FIELD, prefix_line="Prefixo dos requisitos: `RSV`.\n"):
-        self.write(self.spec, SPEC.format(prd=prd, prefix_line=prefix_line, reqs=reqs, extra=extra))
+    def lint(self, reqs=REQS, extra="", prd=PRD_FIELD, prefix_line="Prefixo dos requisitos: `RSV`.\n",
+             trace=None):
+        if trace is None:
+            trace = trace_section(reqs) if prd else ""
+        self.write(self.spec, SPEC.format(prd=prd, prefix_line=prefix_line, reqs=reqs, extra=extra) + trace)
         return run(self.spec)
 
     def assertHard(self, out, fragment):
@@ -206,6 +232,30 @@ class SectionGrammar(Base):
         self.assertEqual(code, 0, out)
 
 
+class ContextSize(Base):
+    def lint_context(self, body):
+        self.write(self.spec, SPEC.format(prd="", prefix_line="Prefixo dos requisitos: `RSV`.\n",
+                                          reqs=REQS, extra="").replace(CONTEXT, body))
+        return run(self.spec)
+
+    def test_three_to_five_lines_are_silent(self):
+        code, out = self.lint_context(CONTEXT)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("secao Contexto com", out)
+        code, out = self.lint_context(CONTEXT + "\nBase ignorada: `src/ReservationBook/Reports`.\n\nADR 0001 restringe a publicacao.")
+        self.assertNotIn("secao Contexto com", out)
+
+    def test_fewer_than_three_lines_is_warn(self):
+        code, out = self.lint_context("Origem no PRD 0002.")
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "secao Contexto com 1 linha(s) nao vazia(s)")
+
+    def test_more_than_five_lines_is_warn(self):
+        code, out = self.lint_context("\n".join(f"Linha {n} do contexto." for n in range(1, 7)))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "secao Contexto com 6 linha(s) nao vazia(s)")
+
+
 class RequirementLines(Base):
     def test_requirement_without_shall_is_hard(self):
         code, out = self.lint(prd="", reqs=REQS + "- **RSV-03** — o sistema aceita\n")
@@ -294,6 +344,18 @@ class PrdProvenance(Base):
         self.assertEqual(code, 0, out)
         self.assertNoHard(out)
 
+    def test_prefix_sharing_two_first_letters_with_prd_is_hard(self):
+        code, out = self.lint(reqs=REQS.replace("RSV-", "BOO-"),
+                              prefix_line="Prefixo dos requisitos: `BOO`.\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "prefixo da spec 'BOO' comeca com as mesmas duas letras do prefixo 'BOOK'")
+        self.assertHard(out, "0002-reservation-book.md")
+
+    def test_prefix_differing_in_the_first_two_letters_passes(self):
+        code, out = self.lint()
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("duas primeiras letras", out)
+
     def test_prd_rev_git_matches_when_git_available(self):
         rev = _common.git_blob_rev(self.prd)
         if rev is None:
@@ -349,6 +411,50 @@ class PrdProvenance(Base):
         defs, prefixes = lint_spec.prd_index(self.prd_dir)
         self.assertNotIn("RSV", prefixes)
         self.assertIn("ONB-01", defs)
+
+
+class Traceability(Base):
+    HEAD = "\n## Rastreabilidade\n\n| ID do PRD | IDs EARS |\n|---|---|\n"
+
+    def test_missing_section_with_prd_is_hard(self):
+        code, out = self.lint(trace="")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "sem secao ## Rastreabilidade")
+
+    def test_missing_section_without_prd_is_silent(self):
+        code, out = self.lint(prd="", trace="")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("Rastreabilidade", out)
+
+    def test_cited_prd_id_outside_first_column_is_hard(self):
+        code, out = self.lint(trace=self.HEAD + "| BOOK-01 | RSV-01, RSV-02 |\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "BOOK-02 e citado por requisito mas nao aparece na primeira coluna")
+
+    def test_first_column_of_any_table_of_the_section_counts(self):
+        trace = (self.HEAD + "| BOOK-01 | RSV-01 |\n"
+                 + "\n| Cenario do PRD | IDs EARS |\n|---|---|\n| Alteracao aceita (BOOK-02) | RSV-02 |\n")
+        code, out = self.lint(trace=trace)
+        self.assertEqual(code, 0, out)
+
+    def test_unknown_ears_id_in_table_is_reported_once(self):
+        code, out = self.lint(trace=self.HEAD + "| BOOK-01 | RSV-01 |\n| BOOK-02 | RSV-02, RSV-77 |\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "citacao de RSV-77, que nao e requisito desta spec")
+        self.assertEqual(len([l for l in out.splitlines() if "RSV-77" in l]), 1, out)
+
+    def test_retired_ears_id_in_table_is_hard(self):
+        code, out = self.lint(extra="\nAposentados: RSV-09\n",
+                              trace=self.HEAD + "| BOOK-01 | RSV-01, RSV-09 |\n| BOOK-02 | RSV-02 |\n")
+        self.assertEqual(code, 1)
+        self.assertHard(out, "Rastreabilidade: RSV-09 nao e requisito definido nesta spec "
+                             "(consta da lista de aposentados)")
+
+    def test_row_without_requirement_that_cites_it_is_warn(self):
+        code, out = self.lint(trace=self.HEAD + "| BOOK-01 | RSV-01 |\n| BOOK-02 | RSV-02 |\n"
+                                              + "| BOOK-NFR-01 | RSV-02 |\n")
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "Rastreabilidade: BOOK-NFR-01 mapeado sem requisito que o cite")
 
 
 class Tags(Base):

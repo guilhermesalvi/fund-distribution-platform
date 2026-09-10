@@ -19,11 +19,11 @@ Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "i
 
 - **O porquê.** A ADR guarda o que código e diagrama não guardam: a razão da decisão.
 - **Alternativas consideradas e consequências.** Sem elas, a IA re-propõe caminhos já descartados e o time re-litiga o que já foi pago.
-- **Participantes.** Decisão de arquitetura raramente é de uma pessoa; o nome de quem decidiu e de quem foi consultado é o que responde "por que fizemos assim?" depois do turnover.
+- **Participantes.** Decisão de arquitetura raramente é de uma pessoa; o nome de quem decidiu e de quem foi consultado é o que responde "por que fizemos assim?" depois do turnover. É conteúdo da decisão, não campo de autoria do arquivo (specify.md, Versionamento).
 
 ## Arquivo
 
-Grave em `docs/adr/NNNN-<slug>.md`. Para obter `NNNN`, leia a pasta e use max+1.
+Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` com `seq.py next docs/adr --slug <slug>`, nunca lendo a pasta; `seq.py check docs/adr` acusa duplicata (SKILL.md, Scripts).
 
 Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo.
 

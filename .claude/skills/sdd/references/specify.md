@@ -16,7 +16,7 @@
 ### Slugs e numeração
 
 - **Slugs** em inglês e kebab-case, espelhando o nome que o código usa: `PartialReservation` vira `partial-reservation`. Capability é uma área funcional de um bounded context, como `reservation-book/reservation-lifecycle`.
-- **`NNNN`** é um contador dentro da capability: leia a pasta e use max+1. A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
+- **`NNNN`** é um contador dentro da capability. Obtenha o número com `seq.py next <capability-dir> --slug <change-slug>`, nunca lendo a pasta; `seq.py check` acusa duplicata quando dois branches alocam o mesmo número (SKILL.md, Scripts). A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
 
 ### Versionamento
 
@@ -33,8 +33,8 @@ A primeira linha de cada artefato, antes do `#`, é um comentário de máquina e
 Campos condicionais:
 
 - `design:` entra no comentário das tasks só quando o `design.md` existe.
-- `scope: RSV-07, RSV-10` entra no comentário das tasks quando a mudança toca só parte dos requisitos da spec.
-- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o PRD commitado. Se o PRD mudar depois, o linter avisa; nesse caso, re-derive os requisitos que citam os IDs tocados e atualize o hash.
+- `scope: RSV-07, RSV-10` entra no comentário do design e das tasks quando a mudança toca só parte dos requisitos da spec; no design, limita a cobertura de `IF ... THEN` exigida em Tratamento de erros aos IDs listados.
+- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que o linter recalcula). Se o PRD mudar depois, o linter avisa; nesse caso, re-derive os requisitos que citam os IDs tocados e atualize o hash.
 
 ### Linha de prefixo
 
@@ -47,7 +47,7 @@ O sinal no pedido determina a origem da spec, o que conta como fato e o cuidado 
 | Sinal no pedido | Origem | O que é fato | Cuidado |
 |---|---|---|---|
 | Há PRD em `/docs/prd` | PRD | O texto sem tag do PRD. O que está marcado `[PREMISSA]` no PRD continua `[PREMISSA]` na spec | Siga as seis regras da subseção A partir do PRD |
-| Não há PRD, mas usuário-alvo, problema e comportamento observável estão no pedido | Ideia | O que o usuário afirmou | Registre usuário, problema e resultado no Contexto. Se faltar usuário ou problema, pare |
+| Não há PRD, mas usuário-alvo e problema estão no pedido | Ideia | O que o usuário afirmou | Registre usuário, problema e resultado no Contexto; comportamento observável ausente vira `[LACUNA]` no Contexto. Se faltar usuário ou problema, pare |
 | Pedido solution-first, sem usuário nem problema ("CRUD para X", "tela de Y") | — | — | Responda "Isso precisa de PRD antes" e pare |
 | Código existente sem spec ("documente a spec do módulo X") | Código | O que o código *faz*: comportamento, testes, docs | Intenção inferida é `[PREMISSA]`; comportamento sem justificativa de negócio é `[LACUNA]`; divergências vão na seção Divergências; a leitura da base segue design.md, Base de código |
 
@@ -71,7 +71,7 @@ Em qualquer origem, leia antes de escrever: a `spec.md` viva da capability, se e
 - **Varra a base antes de perguntar:** o módulo que a capability toca, os padrões que ele usa e ao menos uma feature irmã já implementada. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
 - **Você é par técnico, não entrevistador.** Desafie vagueza ("rápido" é quanto? "usuários" são quem?) e torne o abstrato concreto ("me conduz por um uso disso").
 - **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação. O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
-- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada.
+- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada. Teto: cinco perguntas por spec; da sexta em diante, a decisão vai direto para Perguntas em Aberto, com dono e o que bloqueia.
 - **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Perguntas em Aberto, bloqueia só o que depende dela e nunca vira default.
 - **A fronteira da mudança é fixa:** clarify esclarece *como* algo se comporta, nunca *se* uma capability nova entra.
 
@@ -118,7 +118,7 @@ A spec é editada no lugar; a mudança é o diff.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos.
+Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade.
 
 | Seção | Conteúdo |
 |---|---|
@@ -129,7 +129,7 @@ Cada seção existe quando há o que dizer; o linter exige só Contexto e Requis
 | Requisitos | Lista EARS com IDs; subtítulos `###` por tema quando ajudam a leitura |
 | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
 | Glossário | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
-| Rastreabilidade | Presente quando há PRD: de cada FR em escopo para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem |
+| Rastreabilidade | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções, e os cenários são conferidos na revisão de Specify |
 | Divergências | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
 
 ## Template
@@ -166,7 +166,7 @@ Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 
 ### Registro
 
-- **RSV-01** — WHEN o operador registra uma reserva sem violação de RSV-02 a RSV-05 THEN the system SHALL registrá-la em `Active` com instante e ordem de registro [BOOK-01]
+- **RSV-01** — WHEN o operador registra uma reserva sem violação de RSV-02 e RSV-03 THEN the system SHALL registrá-la em `Active` com instante e ordem de registro [BOOK-01]
 - **RSV-02** — IF a oferta não está `Open` THEN the system SHALL registrar a violação `OFFER_NOT_ACCEPTING_RESERVATIONS` com regra BOOK-01 [BOOK-01]
 - **RSV-03** — IF a posição do investidor com a nova reserva excede o investimento máximo THEN the system SHALL registrar a violação `POSITION_ABOVE_MAXIMUM` [BOOK-04]
 - **RSV-04** — IF o mesmo registro chega duas vezes com o mesmo `idempotencyKey` THEN the system SHALL devolver a reserva original sem duplicar
@@ -186,4 +186,4 @@ Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 | Terceira reserva acima do máximo rejeitada | RSV-03 |
 ```
 
-Depois de gravar a spec, rode `lint_spec.py <spec.md>`; corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`, em no máximo duas rodadas de correção.
+Depois de gravar a spec, rode `lint_spec.py <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts.

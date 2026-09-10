@@ -1,6 +1,6 @@
-"""Helpers compartilhados por lint_spec.py e lint_tasks.py.
+"""Helpers compartilhados por lint_spec.py, lint_design.py e lint_tasks.py.
 
-Saida padrao dos dois linters:
+Saida padrao dos linters:
   HARD  -> violacao mecanica do esqueleto; corrija e rode de novo. Exit code 1.
   WARN  -> heuristica com risco de falso-positivo; julgue. Nao afeta exit.
 """
@@ -176,6 +176,30 @@ def find_section_exact(lines, aliases, level=2, mask=None):
     find_sections_exact). None se ausente."""
     found = find_sections_exact(lines, aliases, level, mask)
     return (found[0][0], found[0][1]) if found else None
+
+
+def repo_root_for(doc_path):
+    """Primeiro ancestral do documento que contem `docs/`, ou None."""
+    cur = os.path.dirname(os.path.abspath(doc_path))
+    while True:
+        if os.path.isdir(os.path.join(cur, "docs")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            return None
+        cur = parent
+
+
+def resolve_local_path(doc_path, target):
+    """Path absoluto de um destino local: relativo ao documento, ou
+    `/docs/...` a partir da raiz do repositorio. None se nada existe."""
+    base = os.path.dirname(os.path.abspath(doc_path))
+    if target.startswith("/"):
+        root = repo_root_for(doc_path)
+        cand = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else None
+    else:
+        cand = os.path.normpath(os.path.join(base, target))
+    return cand if cand and os.path.exists(cand) else None
 
 
 def git_blob_rev(path):

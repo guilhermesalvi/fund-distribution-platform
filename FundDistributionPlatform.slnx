@@ -47,14 +47,18 @@
   </Folder>
   <Folder Name="/.claude/skills/sdd/scripts/">
     <File Path=".claude/skills/sdd/scripts/_common.py" />
+    <File Path=".claude/skills/sdd/scripts/lint_design.py" />
     <File Path=".claude/skills/sdd/scripts/lint_spec.py" />
     <File Path=".claude/skills/sdd/scripts/lint_tasks.py" />
+    <File Path=".claude/skills/sdd/scripts/seq.py" />
   </Folder>
   <Folder Name="/.claude/skills/sdd/scripts/tests/">
     <File Path=".claude/skills/sdd/scripts/tests/__init__.py" />
     <File Path=".claude/skills/sdd/scripts/tests/test_docs_consistency.py" />
+    <File Path=".claude/skills/sdd/scripts/tests/test_lint_design.py" />
     <File Path=".claude/skills/sdd/scripts/tests/test_lint_spec.py" />
     <File Path=".claude/skills/sdd/scripts/tests/test_lint_tasks.py" />
+    <File Path=".claude/skills/sdd/scripts/tests/test_seq.py" />
   </Folder>
   <Folder Name="/.github/" />
   <Folder Name="/.github/scripts/">

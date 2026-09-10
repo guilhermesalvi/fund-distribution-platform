@@ -15,15 +15,24 @@ so esses entram em "requisito sem task".
 HARD (exit 1):
 - comentario de maquina ausente ou sem `sdd: tasks`; `spec:` ausente;
 - secoes `## Comandos de Gate` e `## Plano de execucao` ausentes;
+- paragrafo "Como este repositorio testa" ausente antes de `## Comandos de
+  Gate`, ou sem a contagem-base de testes do gate Build (um inteiro seguido de
+  `teste`/`testes`), que e o numero que o Verify compara;
 - tabela Comandos de Gate sem linhas de dados; celula de Comando vazia; valor
   de `Gate` usado numa task sem linha na tabela;
 - task `### Tn:` ou `### TCn:` com ID duplicado; campo obrigatorio ausente
-  (O que, Onde, Depende de, Requisito, Pronto quando, Tests, Gate) ou vazio;
-  campo duplicado na mesma task;
+  (O que, Onde, Depende de, Requisito, Interfaces, Pronto quando, Tests, Gate)
+  ou vazio; campo duplicado na mesma task;
+- `Pronto quando` sem o comando do gate entre crases, ou so com comando e
+  nenhum criterio de comportamento (item `- [ ]` e item `- [x]` valem igual);
 - task sem Requisito (sem nenhum ID); ID de requisito que nao existe na spec;
   requisito da spec (no escopo) sem task;
+- `## Rastreabilidade`, quando presente, incoerente com os campos `Requisito`:
+  requisito citado por uma task sem linha que ligue os dois, ou task listada
+  numa linha cujo requisito ela nao cita;
 - dependencia: task inexistente; ciclo (reportado com os IDs); dependencia
-  para fase posterior; `T` dependendo de `TC` (task de correcao nasce no
+  para fase posterior ou para task posterior na mesma fase (pela ordem do
+  Plano de execucao); `T` dependendo de `TC` (task de correcao nasce no
   Verify, depois do plano);
 - plano de execucao nos dois sentidos: task citada no plano sem corpo; task
   `T` com corpo fora do plano (tasks `TC` ficam fora dessa exigencia);
@@ -44,8 +53,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, fenced_line_mask, find_section_exact, parse_machine_comment,
-    read_lines, scan_placeholders, table_rows, usage,
+    REQ_ID, REQ_LINE, Report, fenced_line_mask, find_section_exact, find_sections_exact,
+    parse_machine_comment, read_lines, scan_placeholders, strip_accents, table_rows, usage,
 )
 
 FIELDS = {
@@ -58,19 +67,31 @@ FIELDS = {
     "tests": ("tests", "testes"),
     "gate": ("gate",),
 }
-REQUIRED_FIELDS = ("what", "where", "depends", "requirement", "done", "tests", "gate")
+REQUIRED_FIELDS = ("what", "where", "depends", "requirement", "interfaces", "done", "tests", "gate")
 # Campos cujo valor vem na mesma linha; vazio e defeito. Interfaces e Pronto
 # quando sao blocos: o valor esta nas linhas seguintes.
 SCALAR_FIELDS = ("what", "where", "depends", "requirement", "tests", "gate")
 TESTS_OK = {"unit", "integration", "e2e", "none"}
 GATE_OK = {"quick", "full", "build"}
 PATH_RE = re.compile(r"`?[\w./\\\-]+/[\w.\-]+\.[A-Za-z0-9]+`?")
+FIELD_LINE = re.compile(r"^\s*[-*]\s+\*\*([^*]+?)\s*:?\*\*\s*:?\s*(.*)$")
+# Item de `Pronto quando`: `- [ ]`, `- [x]` (task ja concluida) ou hifen puro.
+DONE_ITEM = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s*)?(\S.*?)\s*$")
+CODE_SPAN = re.compile(r"`([^`]+)`")
+# Comando entre crases: token inicial em minuscula seguido de argumento
+# (`dotnet test tests/UnitTests`), nunca identificador (`Create`, `Result<T>`).
+COMMAND_HEAD = re.compile(r"^[a-z][\w.\-]*$")
 TASK_REF = re.compile(r"\b(TC?)(\d+)\b")
 TASK_HEADING = re.compile(r"^###\s+(TC?)(\d+)\s*:\s*(.+)$")
 NO_DEPS = re.compile(r"^\s*(?:nenhuma|nenhum|none|n/?a|-)\s*$", re.IGNORECASE)
 
 SECTION_GATES = ("Comandos de Gate", "Gate Commands")
 SECTION_PLAN = ("Plano de execução", "Plano de execucao", "Execution Plan")
+SECTION_TRACE = ("Rastreabilidade", "Traceability")
+# Paragrafo da descoberta de testes, no topo do documento (references/tasks.md,
+# "Registro no tasks.md"), e a contagem-base que ele tem de carregar.
+TESTING_INTRO = re.compile(r"como este repositorio testa|how this repository tests", re.IGNORECASE)
+TEST_COUNT = re.compile(r"\b\d+\s+(testes?|tests?)\b", re.IGNORECASE)
 
 
 def task_refs(text):
@@ -84,14 +105,16 @@ def task_key(tid):
 
 def parse_tasks(lines, mask):
     """Retorna (tasks, duplicates).
-    tasks: tid -> {'line', 'family', 'num', 'title', 'fields': {key: (idx, value)}, 'dup_fields'}
+    tasks: tid -> {'line', 'family', 'num', 'title', 'fields': {key: (idx, value)},
+    'dup_fields', 'done_items': [(idx, texto)]}
     duplicates: [(idx, tid)] para cada heading repetido (a primeira vale)."""
-    tasks, dups, cur = {}, [], None
+    tasks, dups, cur, in_done = {}, [], None, False
     for i, l in enumerate(lines):
         if mask[i]:
             continue
         m = TASK_HEADING.match(l)
         if m:
+            in_done = False
             tid = f"{m.group(1)}{m.group(2)}"
             if tid in tasks:
                 dups.append((i, tid))
@@ -99,15 +122,17 @@ def parse_tasks(lines, mask):
                 continue
             cur = tid
             tasks[tid] = {"line": i, "family": m.group(1), "num": int(m.group(2)),
-                          "title": m.group(3).strip(), "fields": {}, "dup_fields": []}
+                          "title": m.group(3).strip(), "fields": {}, "dup_fields": [],
+                          "done_items": []}
             continue
         if l.startswith("## ") or l.startswith("### "):
-            cur = None
+            cur, in_done = None, False
             continue
         if cur is None:
             continue
-        fm = re.match(r"^\s*[-*]\s+\*\*([^*]+?)\s*:?\*\*\s*:?\s*(.*)$", l)
+        fm = FIELD_LINE.match(l)
         if fm:
+            in_done = False
             label = fm.group(1).strip().lower()
             for key, aliases in FIELDS.items():
                 if any(label.startswith(a) for a in aliases):
@@ -115,7 +140,17 @@ def parse_tasks(lines, mask):
                         tasks[cur]["dup_fields"].append((i, aliases[0]))
                     else:
                         tasks[cur]["fields"][key] = (i, fm.group(2).strip())
+                        in_done = key == "done"
+                        if in_done and fm.group(2).strip():
+                            tasks[cur]["done_items"].append((i, fm.group(2).strip()))
                     break
+            continue
+        if in_done:
+            im = DONE_ITEM.match(l)
+            if im:
+                tasks[cur]["done_items"].append((i, im.group(1)))
+            elif l.strip():
+                in_done = False
     return tasks, dups
 
 
@@ -159,6 +194,116 @@ def column_index(header, names, default):
 
 def clean_cell(v):
     return v.strip().strip("`*").strip().lower()
+
+
+def gate_commands(lines, mask):
+    """Comandos declarados na tabela Comandos de Gate, normalizados: sao a
+    lista fechada contra a qual um item de `Pronto quando` e comando."""
+    sec = find_section_exact(lines, SECTION_GATES, mask=mask)
+    if sec is None:
+        return set()
+    header = table_header(lines, *sec)
+    cmd_col = column_index(header, ("comando", "command"), len(header) - 1)
+    out = set()
+    for _, cells in table_rows(lines, *sec):
+        if cmd_col >= len(cells):
+            continue
+        cell = cells[cmd_col]
+        for span in CODE_SPAN.findall(cell) or [cell]:
+            value = re.sub(r"\s+", " ", span.strip().strip("`")).strip().lower()
+            if value:
+                out.add(value)
+    return out
+
+
+def is_command(span, commands):
+    """Code span que e comando: declarado em Comandos de Gate, ou verbo em
+    minuscula com argumento."""
+    s = span.strip()
+    if not s:
+        return False
+    if re.sub(r"\s+", " ", s).lower() in commands:
+        return True
+    parts = s.split()
+    return len(parts) > 1 and bool(COMMAND_HEAD.match(parts[0]))
+
+
+def check_done_when(rep, tid, t, commands):
+    """`Pronto quando` precisa do comando do gate e de ao menos um criterio de
+    comportamento; sem o comando nao se verifica, so com ele o criterio da spec
+    nao esta escrito."""
+    if "done" not in t["fields"]:
+        return
+    ln = t["fields"]["done"][0] + 1
+    if not t["done_items"]:
+        rep.hard(f"{tid}: Pronto quando sem item - o criterio binario e o que fecha a task", ln)
+        return
+    gate_items = [idx for idx, text in t["done_items"]
+                  if any(is_command(s, commands) for s in CODE_SPAN.findall(text))]
+    if not gate_items:
+        rep.hard(f"{tid}: Pronto quando sem o comando do gate entre crases "
+                 "(ex.: Gate passa: `dotnet test tests/UnitTests`)", ln)
+    if len(gate_items) == len(t["done_items"]):
+        rep.hard(f"{tid}: Pronto quando so com comando de gate - falta o criterio de "
+                 "comportamento que a spec define", ln)
+
+
+def check_testing_intro(rep, lines, mask):
+    """Paragrafo "Como este repositorio testa" antes de Comandos de Gate, com a
+    contagem-base de testes do gate Build: sem o numero, o Verify nao tem contra
+    o que comparar."""
+    secs = find_sections_exact(lines, SECTION_GATES, mask=mask)
+    end = secs[0][2] if secs else len(lines)
+    start = next((i for i in range(end)
+                  if not mask[i] and TESTING_INTRO.search(strip_accents(lines[i]))), None)
+    if start is None:
+        rep.hard("paragrafo 'Como este repositorio testa' ausente antes de ## Comandos de Gate - "
+                 "o executor precisa da descoberta de testes deste repositorio")
+        return
+    stop = next((i for i in range(start, end) if not lines[i].strip()), end)
+    if not TEST_COUNT.search(strip_accents(" ".join(lines[start:stop]))):
+        rep.hard("paragrafo 'Como este repositorio testa' sem a contagem-base do gate Build "
+                 "(ex.: 'O gate Build executa 212 testes antes desta mudanca')", start + 1)
+
+
+def traceability_rows(lines, mask):
+    """[(requisito, [tasks], idx)] da tabela de Rastreabilidade, ou None quando
+    a secao nao existe."""
+    sec = find_section_exact(lines, SECTION_TRACE, mask=mask)
+    if sec is None:
+        return None
+    header = table_header(lines, *sec)
+    req_col = column_index(header, ("requisito", "requirement"), 0)
+    task_col = column_index(header, ("task",), 1)
+    rows = []
+    for i, cells in table_rows(lines, *sec):
+        req = cells[req_col] if req_col < len(cells) else ""
+        tids = task_refs(cells[task_col]) if task_col < len(cells) else []
+        for rid in REQ_ID.findall(req):
+            rows.append((rid, tids, i))
+    return rows
+
+
+def check_traceability(rep, lines, mask, tasks, req_refs):
+    """A Rastreabilidade e a mesma informacao dos campos `Requisito` vista por
+    requisito: tabela e tasks discordarem esconde escopo de um dos dois lados."""
+    rows = traceability_rows(lines, mask)
+    if rows is None:
+        return
+    traced = {}
+    for rid, tids, i in rows:
+        traced.setdefault(rid, set()).update(tids)
+        for tid in tids:
+            if tid not in tasks:
+                rep.hard(f"Rastreabilidade: {rid} lista {tid}, que nao existe na lista de tasks", i + 1)
+            elif rid not in req_refs.get(tid, ()):
+                rep.hard(f"Rastreabilidade: {rid} lista {tid}, que nao cita esse requisito "
+                         "no campo Requisito", i + 1)
+    for tid in sorted(req_refs, key=task_key):
+        for rid in sorted(req_refs[tid]):
+            if tid not in traced.get(rid, ()):
+                rep.hard(f"Rastreabilidade: {tid} cita {rid} sem linha na tabela que ligue os dois",
+                         tasks[tid]["fields"]["requirement"][0] + 1)
 
 
 def check_gate_table(rep, lines, mask, gates_used):
@@ -246,7 +391,8 @@ def parse_tests(value):
     return items, errs
 
 
-def check_dependencies(rep, tasks, phase_of):
+def check_dependencies(rep, tasks, phase_of, plan_ids):
+    order = {t: n for n, t in enumerate(plan_ids)}
     graph = {}
     for tid in sorted(tasks, key=task_key):
         t = tasks[tid]
@@ -273,6 +419,11 @@ def check_dependencies(rep, tasks, phase_of):
                 continue
             if tid in phase_of and d in phase_of and phase_of[d] > phase_of[tid]:
                 rep.hard(f"{tid} (fase {phase_of[tid]}) depende de {d} (fase {phase_of[d]}) - dependencia para fase posterior", ln)
+                continue
+            if (tid in phase_of and d in phase_of and phase_of[d] == phase_of[tid]
+                    and order.get(d, -1) > order.get(tid, -1)):
+                rep.hard(f"{tid} depende de {d}, que vem depois dele na fase {phase_of[tid]} do "
+                         "Plano de execucao - as tasks executam na ordem do plano", ln)
                 continue
             if dt["family"] == t["family"] and dt["num"] >= t["num"]:
                 same_or_earlier = tid in phase_of and d in phase_of and phase_of[d] <= phase_of[tid]
@@ -371,12 +522,16 @@ def main(argv):
         return rep.emit(path)
 
     plan_ids, phase_of, plan_sec = parse_plan(lines, mask)
+    commands = gate_commands(lines, mask)
     gates_used, req_refs = {}, {}
     for tid in sorted(tasks, key=task_key):
         check_task(rep, tid, tasks[tid], gates_used, req_refs)
-    check_dependencies(rep, tasks, phase_of)
+        check_done_when(rep, tid, tasks[tid], commands)
+    check_dependencies(rep, tasks, phase_of, plan_ids)
     check_plan(rep, tasks, plan_ids, plan_sec)
     check_gate_table(rep, lines, mask, gates_used)
+    check_testing_intro(rep, lines, mask)
+    check_traceability(rep, lines, mask, tasks, req_refs)
 
     if spec is None:
         rep.hard("--spec obrigatorio: cobertura requisito -> task nao verificada")

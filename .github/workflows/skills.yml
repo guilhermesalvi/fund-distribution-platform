@@ -1,6 +1,6 @@
 # Validates the agent skills (.claude/skills) and the artifacts they produce
 # (docs/prd, docs/specs): Python test suites, Mermaid parser self-test, PRD,
-# spec and tasks linters, the independence between skills, and the
+# spec, design and tasks linters, the independence between skills, and the
 # commit-message policy of pull requests. Everything runs from the repository
 # root.
 name: skills
@@ -69,14 +69,20 @@ jobs:
           status=0
           [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
           for spec in $(find docs/specs -mindepth 3 -maxdepth 3 -name spec.md | sort); do
+            python3 .claude/skills/sdd/scripts/seq.py check "$(dirname "$spec")" || status=1
             python3 .claude/skills/sdd/scripts/lint_spec.py "$spec" || status=1
           done
+          [ -d docs/adr ] && { python3 .claude/skills/sdd/scripts/seq.py check docs/adr || status=1; }
           exit $status
 
-      - name: Lint tasks against their living spec (docs/specs/*/*/*/tasks.md)
+      - name: Lint design and tasks against their living spec (docs/specs/*/*/*)
         run: |
           status=0
           [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
+          for design in $(find docs/specs -mindepth 4 -maxdepth 4 -name design.md | sort); do
+            spec="$(dirname "$design")/../spec.md"
+            python3 .claude/skills/sdd/scripts/lint_design.py "$design" --spec "$spec" || status=1
+          done
           for tasks in $(find docs/specs -mindepth 4 -maxdepth 4 -name tasks.md | sort); do
             spec="$(dirname "$tasks")/../spec.md"
             python3 .claude/skills/sdd/scripts/lint_tasks.py "$tasks" --spec "$spec" || status=1

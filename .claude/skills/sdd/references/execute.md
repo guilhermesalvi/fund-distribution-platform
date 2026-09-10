@@ -4,11 +4,11 @@
 
 ## Antes da primeira task
 
-1. **Pré-requisito.** O `tasks.md` está commitado ou, quando a entrada Tasks foi dispensada, o plano inline foi apresentado e aprovado. O pedido "implementa" autoriza editar os arquivos da mudança; commit é uma autorização própria, dada uma vez por mudança (SKILL.md, Aprovação e autorizações).
+1. **Pré-requisito.** O `tasks.md` está commitado ou, quando a entrada Tasks foi dispensada, o plano inline foi apresentado e aprovado. O pedido "implementa" autoriza editar os arquivos da mudança; commit é uma autorização própria, dada uma vez por mudança e válida para todos os commits dela (SKILL.md, Aprovação e autorizações).
 2. **Contexto.** Leia a task, o trecho do design que ela referencia e os requisitos da spec que ela atende. Não carregue outras mudanças no contexto.
 3. **`[LACUNA]` no caminho.** Uma lacuna encontrada em artefato que a task usa se resolve de uma destas três formas, e de nenhuma outra:
    - decida e registre a decisão, quando ela cabe na autonomia concedida;
-   - marque `[PREMISSA]` na spec, com default e racional;
+   - marque `[PREMISSA]` na spec, com default e racional; a spec alterada entra no commit da task, e o Verify lê a spec commitada;
    - pergunte ao usuário ("O design tem uma lacuna: […]. Opções: […]. Recomendo […].") e execute só o que não depende da resposta.
 
    Nunca resolva a lacuna em silêncio, e nunca trate o silêncio do usuário como resposta.
@@ -19,14 +19,14 @@ Quando a entrada Tasks foi dispensada, o Execute começa por um plano inline, ap
 
 ```markdown
 ## Plano
-Requisitos (só sem spec.md): - **XYZ-01** — WHEN … THEN the system SHALL …
+Requisitos: [IDs da spec.md que o plano cobre]
 Estrutura: [uma ou duas linhas: onde entra, o que reusa]
-Gate: [comando de build e teste do repositório]
+Gate: [comando de build e teste do repositório]; [total de testes que ele executa antes da mudança]
 1. [passo] → arquivos: […] → verifica: [como]
 2. …
 ```
 
-Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista passar de cinco passos, ou algum passo depender de outro que não é o imediatamente anterior, ou houver risco nomeado, pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
+Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista disparar qualquer gatilho de `design.md` ou de `tasks.md` (SKILL.md, Abrir uma mudança), pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
 
 ## Ciclo por task
 
@@ -46,9 +46,9 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
 6. **Revisar depois do gate.** Com o gate verde, confira:
    - todo item de `Pronto quando` está atendido, inclusive os critérios de comportamento;
    - nenhum `SPEC_DEVIATION` ficou sem registro em `## Desvios`;
-   - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo;
-   - a tabela de evidência: para cada critério, o `file:line` e a assertion que o provam; e, no sentido inverso, todo teste novo mapeia para um critério, requisito ou edge case.
-7. **Fechar.** Marque a task como concluída no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task e o `tasks.md`, com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
+   - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo, uma única vez: se ficar vermelho, desfaça a simplificação, porque o teto de correções do passo 5 já foi usado;
+   - a tabela de evidência: para cada critério, o `file:line` e a assertion que o provam; e, no sentido inverso, todo teste novo mapeia para um critério, requisito ou edge case. A tabela vai no chat ao fechar a task e não é persistida em arquivo.
+7. **Fechar.** Marque a task como concluída: todos os itens `- [ ]` de `Pronto quando` passam a `- [x]` no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task e o `tasks.md`, com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
 
 ## Refine o contexto, não o erro
 
@@ -72,4 +72,4 @@ O princípio geral está em SKILL.md, Tags e dúvidas. Durante uma task, ele se 
 
 - **Verify.** Fechada a última task, passe ao Verify com olhos frescos (verify.md, Olhos frescos).
 - **Handoff.** Um branch aberto e o `git log` são o handoff da mudança.
-- **Retomar.** Retomar uma mudança é ler o `tasks.md` e o `git status`. Uma task só conta como concluída quando tem gate verde registrado; `git status` é indício de progresso, não prova.
+- **Retomar.** Retomar uma mudança é ler o `tasks.md` e o `git status`. Uma task só conta como concluída quando todos os itens de `Pronto quando` estão marcados `[x]`, o que só acontece com gate verde; `git status` é indício de progresso, não prova.

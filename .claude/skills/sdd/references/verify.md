@@ -6,14 +6,14 @@
 
 Re-derive a cobertura sem consultar a tabela de evidência que você produziu no Execute, e declare no relatório qual foi o grau de independência da verificação:
 
-- **Sub-agente fresco:** verificação independente, feita por quem não escreveu o código.
-- **Passada do próprio autor:** independência parcial; diga isso explicitamente.
+- **Sub-agente fresco:** verificação independente, feita por quem não escreveu o código. É o modo obrigatório quando a ferramenta de sub-agente existe no ambiente.
+- **Passada do próprio autor:** independência parcial, só quando não há ferramenta de sub-agente; diga isso explicitamente.
 
 O grau de independência não muda o resto: cada requisito tem evidência ou conta como zero, e os dois eixos são verificados.
 
 ## Escopo
 
-O objeto da verificação é o diff da mudança: `git diff <base>`, mais os arquivos staged, unstaged e untracked pertinentes à mudança. Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
+O objeto da verificação é o diff da mudança: `git diff <base>`, onde `<base>` é o `git merge-base` entre o branch da mudança e o branch principal, mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline). Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
 
 ## Eixo 1: conformidade à spec
 
@@ -32,7 +32,7 @@ Para cada requisito em escopo, preencha uma linha da tabela de evidência. A col
 
 Rode o gate Build: o comando da tabela Comandos de Gate (tasks.md, Comandos de Gate) ou, quando a mudança usa plano inline, o gate declarado no plano. Registre no relatório o comando, o total de testes, os passados, os falhos, os pulados e o exit code.
 
-Compare a contagem de testes com a de antes da mudança e investigue qualquer queda: só a aposentadoria de requisito com razão registrada justifica menos testes.
+Compare a contagem de testes com a contagem-base registrada no parágrafo "Como este repositório testa" do `tasks.md` ou na linha `Gate` do plano inline (tasks.md, Como o repositório testa) e investigue qualquer queda: só a aposentadoria de requisito com razão registrada justifica menos testes; queda sem essa razão é gap.
 
 - Teste pulado não é evidência.
 - Zero testes executados não é gate verde.

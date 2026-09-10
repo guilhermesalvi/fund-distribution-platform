@@ -32,7 +32,7 @@ Antes de escrever qualquer task, descubra como este repositório testa; não pre
 
 O resultado da descoberta entra no `tasks.md` de duas formas:
 
-- um parágrafo "Como este repositório testa", com guias, piso e camadas;
+- um parágrafo "Como este repositório testa", com guias, piso, camadas e o total de testes que o gate Build executa antes da mudança, a contagem-base que o Verify compara;
 - a tabela **Comandos de Gate**, gerada a partir do repositório:
 
 | Gate | Quando | Comando |
@@ -43,7 +43,7 @@ O resultado da descoberta entra no `tasks.md` de duas formas:
 
 ## Task atômica
 
-Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas: se o campo `O quê` precisa de "e" para ligar um entregável ao outro, são duas tasks.
+Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas: se o campo `O quê` precisa de "e" para ligar dois entregáveis, são duas tasks; teste e registro do mesmo entregável não contam como segundo entregável.
 
 ### Teste co-locado
 
@@ -59,7 +59,7 @@ Toda task tem os campos abaixo:
 |---|---|
 | **O quê** | Uma frase: o entregável exato |
 | **Onde** | Paths reais de todos os arquivos que a task cria ou modifica |
-| **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás ou para a mesma fase e não forma ciclo |
+| **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás na ordem do Plano de execução (fase anterior ou task anterior da mesma fase); o linter acusa o contrário |
 | **Requisito** | IDs da spec que a task atende; task de refactor cita os IDs que preserva |
 | **Interfaces** | *Consome:* o que a task usa de tasks anteriores, com assinatura. *Produz:* o que tasks posteriores vão usar: nomes, parâmetros, retornos. O executor só vê a própria task |
 | **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando de gate |
@@ -77,7 +77,6 @@ Nenhum destes entra numa task:
 ## Fases e dependências
 
 - **Fases por coesão e dependência**, não por tamanho: fundação, depois domínio, depois adapters, depois integração. As fases executam em sequência, e as tasks executam em ordem dentro da fase.
-- **Dependência aponta só para trás ou para a mesma fase**, sem ciclo.
 
 ## Seções do `tasks.md`
 
@@ -94,7 +93,7 @@ Nenhum destes entra numa task:
 <!-- sdd: tasks | spec: ../spec.md | design: ./design.md -->
 # Reserva Parcial — Tasks
 
-Como este repositório testa: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `tests/IntegrationTests`; a amostra usa `[Fact]` + FluentAssertions, um arquivo por classe; domínio 1:1 com requisitos.
+Como este repositório testa: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `tests/IntegrationTests`; a amostra usa `[Fact]` + FluentAssertions, um arquivo por classe; domínio 1:1 com requisitos. O gate Build executa 212 testes antes desta mudança.
 
 ## Comandos de Gate
 
@@ -138,4 +137,4 @@ T1 → T2
 
 ## Antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>`. Corrija todo `HARD`, rode de novo e, com a saída em `0 HARD`, apresente e espere; são no máximo duas rodadas de correção.
+Rode `lint_tasks.py <tasks.md> --spec <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente e espere.

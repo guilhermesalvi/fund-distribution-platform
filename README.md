@@ -109,7 +109,9 @@ python3 -m unittest discover -s .claude/skills/sdd/scripts/tests
 python3 .claude/skills/prd/scripts/seq.py check docs/prd
 python3 .claude/skills/prd/scripts/lint_prd.py docs/prd
 python3 .claude/skills/prd/scripts/lint_mermaid.py docs/prd
+python3 .claude/skills/sdd/scripts/seq.py check docs/specs/<contexto>/<capability>
 python3 .claude/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
+python3 .claude/skills/sdd/scripts/lint_design.py docs/specs/<contexto>/<capability>/<NNNN-slug>/design.md --spec docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
 ```
 

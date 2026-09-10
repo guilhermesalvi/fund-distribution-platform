@@ -1,6 +1,8 @@
-"""Testes do lint_tasks.py: comentario de maquina, Comandos de Gate, plano e
-fases, campos por task, Tests/Gate, dependencias e cobertura contra a spec
-viva (com e sem `scope:`).
+"""Testes do lint_tasks.py: comentario de maquina, paragrafo "Como este
+repositorio testa", Comandos de Gate, plano e fases, campos por task, `Pronto
+quando` (comando do gate e criterio de comportamento), Tests/Gate,
+dependencias, Rastreabilidade e cobertura contra a spec viva (com e sem
+`scope:`).
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_tasks.py"
 """
@@ -24,6 +26,8 @@ GATES = """\
 | Full | task com integration/e2e | `dotnet test` |
 | Build | ultima da fase; task sem teste | `dotnet build && dotnet test` |"""
 PLAN = "### Fase 1: Dominio\nT1 → T2\n\n### Fase 2: Adapters\nT3"
+INTRO = ("Como este repositorio testa: xUnit em `tests/`, `dotnet test` na raiz. "
+         "O gate Build executa 212 testes antes desta mudanca.")
 
 SPEC = """\
 <!-- sdd: spec | capability: reservation-book/reservation-lifecycle -->
@@ -61,13 +65,13 @@ def task(tid, deps="nenhuma", req="RSV-07", tests="unit", gate="quick", done=Non
 """
 
 
-def doc(tasks=None, plan=PLAN, gates=GATES, extra="", comment="<!-- sdd: tasks | spec: ../spec.md | design: ./design.md -->"):
+def doc(tasks=None, plan=PLAN, gates=GATES, extra="", comment="<!-- sdd: tasks | spec: ../spec.md | design: ./design.md -->", intro=INTRO):
     if tasks is None:
         tasks = [task("T1"), task("T2", deps="T1"), task("T3", deps="T2")]
     return f"""{comment}
 # Coisa — Tasks
 
-Como este repositorio testa: xUnit em `tests/`, `dotnet test` na raiz.
+{intro}
 
 ## Comandos de Gate
 
@@ -183,6 +187,12 @@ class DependencyTest(LintTasksBase):
         code, out = self.run_lint(doc(tasks))
         self.assertHard(out, "T1 (fase 1) depende de T3 (fase 2) - dependencia para fase posterior")
 
+    def test_dependency_on_later_task_of_the_same_phase_is_hard(self):
+        tasks = [task("T1"), task("T2", deps="T3"), task("T3", deps="T1")]
+        code, out = self.run_lint(doc(tasks, plan="### Fase 1: X\nT1 → T2 → T3"))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T2 depende de T3, que vem depois dele na fase 1 do Plano de execucao")
+
     def test_higher_number_without_phase_is_hard(self):
         tasks = [task("T1", deps="T2"), task("T2"), task("T3", deps="T2")]
         code, out = self.run_lint(doc(tasks, plan="T1, T2, T3"))
@@ -236,6 +246,63 @@ class GateTableTest(LintTasksBase):
         self.assertNoHard(out)
 
 
+class TestingIntroTest(LintTasksBase):
+    def test_missing_paragraph_is_hard(self):
+        code, out = self.run_lint(doc(intro="Mudanca sem design; a estrutura esta nas tasks."))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "paragrafo 'Como este repositorio testa' ausente antes de ## Comandos de Gate")
+
+    def test_paragraph_after_the_gate_table_does_not_count(self):
+        code, out = self.run_lint(doc(intro="", extra=INTRO))
+        self.assertHard(out, "paragrafo 'Como este repositorio testa' ausente antes de ## Comandos de Gate")
+
+    def test_paragraph_without_test_count_is_hard(self):
+        code, out = self.run_lint(doc(intro="Como este repositorio testa: xUnit em `tests/`, `dotnet test` na raiz."))
+        self.assertHard(out, "paragrafo 'Como este repositorio testa' sem a contagem-base do gate Build")
+
+    def test_count_in_another_line_of_the_paragraph_counts(self):
+        intro = ("Como este repositório testa: xUnit em `tests/`.\n"
+                 "O gate Build executa 212 testes antes desta mudança.")
+        code, out = self.run_lint(doc(intro=intro))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_english_paragraph_and_count_are_accepted(self):
+        intro = "How this repository tests: xUnit under `tests/`. The Build gate runs 212 tests before this change."
+        code, out = self.run_lint(doc(intro=intro))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+
+class TraceabilityTest(LintTasksBase):
+    @staticmethod
+    def trace(rows):
+        body = "".join(f"| {rid} | {tids} |\n" for rid, tids in rows)
+        return f"\n## Rastreabilidade\n\n| Requisito | Tasks |\n|---|---|\n{body}"
+
+    def test_absent_section_is_not_checked(self):
+        code, out = self.run_lint(doc())
+        self.assertNoHard(out)
+
+    def test_coherent_table_passes(self):
+        code, out = self.run_lint(doc(extra=self.trace([("RSV-07", "T1, T2, T3")])))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_task_citing_requirement_outside_the_table_is_hard(self):
+        code, out = self.run_lint(doc(extra=self.trace([("RSV-07", "T1, T2")])))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "Rastreabilidade: T3 cita RSV-07 sem linha na tabela que ligue os dois")
+
+    def test_row_listing_a_task_that_does_not_cite_it_is_hard(self):
+        code, out = self.run_lint(doc(extra=self.trace([("RSV-07", "T1, T2, T3"), ("RSV-08", "T2")])))
+        self.assertHard(out, "Rastreabilidade: RSV-08 lista T2, que nao cita esse requisito no campo Requisito")
+
+    def test_row_listing_a_task_that_does_not_exist_is_hard(self):
+        code, out = self.run_lint(doc(extra=self.trace([("RSV-07", "T1, T2, T3, T9")])))
+        self.assertHard(out, "Rastreabilidade: RSV-07 lista T9, que nao existe na lista de tasks")
+
+
 class FieldsTest(LintTasksBase):
     def test_duplicate_field_is_hard(self):
         tasks = [task("T1", extra="- **Tests:** unit"), task("T2", deps="T1"), task("T3", deps="T2")]
@@ -250,11 +317,13 @@ class FieldsTest(LintTasksBase):
         self.assertHard(out, "T2: Tests invalido: tipo(s) invalido(s): 'fuzz'")
         self.assertHard(out, "T3: campo obrigatorio ausente: tests")
 
-    def test_interfaces_is_optional(self):
-        content = doc().replace("- **Interfaces:**\n  - Consome: `Money`\n  - Produz: `Thing.Create(Money m): Result<Thing>`\n", "")
-        code, out = self.run_lint(content)
+    def test_missing_interfaces_is_hard(self):
+        block = "- **Interfaces:**\n  - Consome: `Money`\n  - Produz: `Thing.Create(Money m): Result<Thing>`\n"
+        code, out = self.run_lint(doc().replace(block, "", 1))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T1: campo obrigatorio ausente: interfaces")
+        code, out = self.run_lint(doc())
         self.assertNoHard(out)
-        self.assertNotIn("interfaces", out.lower())
 
     def test_where_without_path_is_warn(self):
         content = doc().replace("- **Onde:** `src/Domain/ThingT1.cs`; `tests/Domain.Tests/ThingT1Tests.cs`", "- **Onde:** no dominio", 1)
@@ -288,10 +357,62 @@ class FieldsTest(LintTasksBase):
         self.assertNoHard(out)
 
     def test_placeholder_is_warn(self):
-        tasks = [task("T1", done=["similar à T3", "Gate passa"]), task("T2", deps="T1"), task("T3", deps="T2")]
+        tasks = [task("T1", done=["similar à T3", "Gate passa: `dotnet test tests/Domain.Tests`"]),
+                 task("T2", deps="T1"), task("T3", deps="T2")]
         code, out = self.run_lint(doc(tasks))
         self.assertEqual(code, 0, out)
         self.assertWarn(out, "placeholder")
+
+
+class DoneWhenTest(LintTasksBase):
+    def rest(self):
+        return [task("T2", deps="T1"), task("T3", deps="T2")]
+
+    def test_behaviour_and_gate_pass(self):
+        code, out = self.run_lint(doc())
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_without_gate_command_is_hard(self):
+        tasks = [task("T1", done=["`Create` rejeita valor abaixo do lote com `MinLotNotMet`",
+                                  "Testes verdes"])] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertHard(out, "T1: Pronto quando sem o comando do gate entre crases")
+
+    def test_only_gate_command_is_hard(self):
+        tasks = [task("T1", done=["Gate passa: `dotnet test tests/Domain.Tests`",
+                                  "Build passa: `dotnet build FundDistributionPlatform.slnx`"])] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertHard(out, "T1: Pronto quando so com comando de gate")
+
+    def test_empty_done_block_is_hard(self):
+        items = ("  - [ ] `Create` rejeita valor abaixo do lote com `MinLotNotMet`\n"
+                 "  - [ ] Gate passa: `dotnet test tests/Domain.Tests`\n")
+        code, out = self.run_lint(doc().replace(items, "", 1))
+        self.assertHard(out, "T1: Pronto quando sem item")
+
+    def test_identifier_code_span_is_not_a_command(self):
+        """`Result<Thing>` e `Create` sao identificadores: sem o comando do
+        gate a task nao passa, mesmo com crase em todo item."""
+        tasks = [task("T1", done=["`Create` devolve `Result<Thing>` com o valor preservado",
+                                  "`PartialReservation.Create` rejeita abaixo do minimo"])] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertHard(out, "T1: Pronto quando sem o comando do gate entre crases")
+
+    def test_single_word_command_declared_in_gate_table_counts(self):
+        tasks = [task("T1", done=["`Create` rejeita valor abaixo do lote", "Gate passa: `pytest`"],
+                      tests="unit", gate="quick")] + self.rest()
+        gates = "| Quick | task com unit test | `pytest` |\n| Build | fase | `pytest && ruff check` |"
+        code, out = self.run_lint(doc(tasks, gates=gates))
+        self.assertNoHard(out)
+
+    def test_checked_items_are_accepted_like_unchecked(self):
+        done = ["`Create` rejeita valor abaixo do lote com `MinLotNotMet`",
+                "Gate passa: `dotnet test tests/Domain.Tests`"]
+        content = doc([task("T1", done=done), task("T2", deps="T1"), task("T3", deps="T2")])
+        code, out = self.run_lint(content.replace("- [ ]", "- [x]"))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
 
 
 class CoverageTest(LintTasksBase):
@@ -369,13 +490,28 @@ class TemplateRegressionTest(LintTasksBase):
         self.assertIsNotNone(m, "bloco de template nao encontrado em references/tasks.md")
         return m.group(1)
 
+    @staticmethod
+    def traced(tpl, tid):
+        """Requisitos que a Rastreabilidade do template atribui a `tid`: a T2
+        elidida cita o que a tabela ja diz que ela atende."""
+        out = []
+        for l in tpl.splitlines():
+            if not l.strip().startswith("|"):
+                continue
+            cells = [c.strip() for c in l.strip().strip("|").split("|")]
+            if len(cells) == 2 and re.fullmatch(r"RSV-\d{2}", cells[0]) and tid in re.findall(r"\bTC?\d+\b", cells[1]):
+                out.append(cells[0])
+        return out
+
     def test_template_is_clean(self):
         tpl = self.template()
         ids = sorted(set(re.findall(r"\bRSV-\d{2}\b", tpl)))
         self.assertTrue(ids, "template sem IDs RSV")
         spec = self.write("spec.md", SPEC.replace("- **RSV-07** — WHEN amount < lot THEN the system SHALL reject with MIN_LOT_NOT_MET\n",
                                                   "".join(f"- **{r}** — WHEN x THEN the system SHALL y\n" for r in ids)))
-        tpl = re.sub(r"### T2: …\n(?:<!--.*?-->\n)?", task("T2", deps="T1", req=ids[0]), tpl)
+        t2 = self.traced(tpl, "T2")
+        self.assertTrue(t2, "Rastreabilidade do template nao atribui requisito a T2")
+        tpl = re.sub(r"### T2: …\n(?:<!--.*?-->\n)?", task("T2", deps="T1", req=", ".join(t2)), tpl)
         code, out = self.run_lint(tpl, spec=spec)
         self.assertNoHard(out)
         self.assertEqual(code, 0)

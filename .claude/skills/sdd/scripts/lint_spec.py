@@ -20,14 +20,18 @@ HARD (exit 1):
   da spec que nao e requisito nem consta da lista de aposentados;
 - ID reutilizado: requisito cujo ID esta na lista `Aposentados: RSV-05, RSV-09`
   (ou `Retired:`), em qualquer ponto da spec;
-- prefixo da spec igual a um prefixo declarado por PRD: com `prd:` no
-  comentario de maquina, lido na pasta do PRD citado; sem `prd:`, lido em
-  `docs/prd` da raiz do repositorio (ancestral que contem `docs/`), quando a
-  pasta existe;
+- prefixo da spec igual a um prefixo declarado por PRD, ou compartilhando com
+  ele as duas primeiras letras (`OFR` vs `OFF`): com `prd:` no comentario de
+  maquina, lido na pasta do PRD citado; sem `prd:`, lido em `docs/prd` da raiz
+  do repositorio (ancestral que contem `docs/`), quando a pasta existe;
 - com `prd:` no comentario de maquina: PRD nao encontrado; citacao `X-nn` ou
   `X-NFR-nn` com prefixo de PRD que nao resolve para uma definicao
   `- **X-nn (Must)**` / `- **X-NFR-nn**` em nenhum PRD da pasta; citacao com
   prefixo que nenhum PRD declara ao fim de um requisito;
+- com `prd:` no comentario de maquina, secao `## Rastreabilidade` ausente; ID
+  de PRD citado ao fim de um requisito (FR em escopo) que nao aparece na
+  primeira coluna de nenhuma tabela dessa secao; ID EARS listado nas tabelas
+  dessa secao que nao e requisito definido na spec;
 - tag fora da convencao (`[FATO]`, `[PREMISSA-CRÍTICA]`, grafia errada): sem
   tag e fato; as tags sao `[PREMISSA]` e `[LACUNA]`;
 - link Markdown `[texto](destino)` para arquivo local que nao resolve: destino
@@ -41,8 +45,10 @@ WARN (nao afeta exit):
 - `prd-rev` divergente de `git hash-object <prd>` (o PRD mudou desde a spec:
   re-derive); `prd-rev` ausente ou git indisponivel para conferir;
 - numero pulado na sequencia de IDs sem estar na lista de aposentados;
+- secao `## Contexto` com menos de 3 ou mais de 5 linhas nao vazias;
 - citacao com prefixo desconhecido em prosa; spec com `prd:` sem nenhuma
-  citacao de ID do PRD;
+  citacao de ID do PRD; linha de Rastreabilidade so com IDs de PRD que nenhum
+  requisito cita;
 - placeholder (TBD, TODO, `[nome]`), hedging, meta-narracao.
 
 Exit 2 em erro de uso: opcao desconhecida, spec ausente ou fora de UTF-8.
@@ -57,7 +63,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
     REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
     find_sections_exact, git_blob_rev, iter_headings, norm_heading, parse_machine_comment,
-    read_lines, scan_placeholders, scan_prose, table_rows, usage,
+    read_lines, repo_root_for, resolve_local_path, scan_placeholders, scan_prose, table_rows,
+    usage,
 )
 
 EARS_LEAD = re.compile(r"^\s*(WHEN|WHILE|WHERE|IF)\b", re.IGNORECASE)
@@ -80,6 +87,9 @@ SECTIONS_REQUIRED = [
     ("Contexto", "Context"),
     ("Requisitos", "Requirements"),
 ]
+# Contexto e enquadramento, nao capitulo: abaixo do minimo nao situa quem le,
+# acima do maximo vira prosa que ninguem mantem.
+CONTEXT_MIN, CONTEXT_MAX = 3, 5
 SECTIONS_KNOWN = SECTIONS_REQUIRED + [
     ("Escopo e Fora de Escopo", "Escopo", "Scope / Out of Scope", "Scope"),
     ("Premissas", "Assumptions"),
@@ -179,10 +189,24 @@ def check_duplicate_sections(rep, lines, mask):
         seen.setdefault(key, i)
 
 
+def check_context_size(rep, lines, mask):
+    """Tamanho da secao Contexto, em linhas nao vazias."""
+    found = find_sections_exact(lines, ("Contexto", "Context"), mask=mask)
+    if not found:
+        return
+    start, end, hidx = found[0]
+    n = sum(1 for i in range(start, end) if lines[i].strip())
+    if n < CONTEXT_MIN or n > CONTEXT_MAX:
+        rep.warn(f"secao Contexto com {n} linha(s) nao vazia(s); o esperado e de "
+                 f"{CONTEXT_MIN} a {CONTEXT_MAX} - origem, fronteira e base lida, sem virar capitulo",
+                 hidx + 1)
+
+
 def check_ids(rep, lines, mask, reqs, prefix, retired):
     """Prefixo, duplicata, reutilizacao de aposentado, citacao orfa e
-    numero pulado."""
+    numero pulado. Retorna (IDs definidos, IDs de citacao orfa ja reportados)."""
     ids = {}
+    orphans = set()
     for i, rid, _ in reqs:
         if rid in ids:
             rep.hard(f"ID duplicado {rid} (tambem em L{ids[rid] + 1})", i + 1)
@@ -194,7 +218,7 @@ def check_ids(rep, lines, mask, reqs, prefix, retired):
             rep.hard(f"{rid}: ID reutilizado - consta da lista de aposentados (L{retired[rid] + 1}); "
                      "ID removido morre, use um numero novo", i + 1)
     if not prefix:
-        return set(ids)
+        return set(ids), orphans
     # citacao orfa: ID com o prefixo da spec que nao e requisito nem aposentado
     for i, l in enumerate(lines):
         if mask[i] or l.strip().startswith("<!--") or RETIRED_LINE.match(l):
@@ -202,6 +226,7 @@ def check_ids(rep, lines, mask, reqs, prefix, retired):
         for rid in REQ_ID.findall(l):
             if rid.rsplit("-", 1)[0] == prefix and rid not in ids and rid not in retired:
                 rep.hard(f"citacao de {rid}, que nao e requisito desta spec nem esta aposentado", i + 1)
+                orphans.add(rid)
     # numero pulado sem aposentadoria
     nums = sorted(int(r.rsplit("-", 1)[1]) for r in ids)
     if nums:
@@ -211,37 +236,13 @@ def check_ids(rep, lines, mask, reqs, prefix, retired):
         if missing:
             shown = ", ".join(f"{prefix}-{n:0{width}d}" for n in missing[:8])
             rep.warn(f"numero(s) pulado(s) na sequencia sem constar de 'Aposentados:': {shown}")
-    return set(ids)
+    return set(ids), orphans
 
 
 # --- PRD -------------------------------------------------------------------
 
 PRD_FILE = re.compile(r"^\d{4}-[^/\\]+\.md$", re.IGNORECASE)
 PRD_FOLDER = re.compile(r"^\d{4}-[^/\\]+$")
-
-
-def repo_root_for(doc_path):
-    """Primeiro ancestral do documento que contem `docs/`, ou None."""
-    cur = os.path.dirname(os.path.abspath(doc_path))
-    while True:
-        if os.path.isdir(os.path.join(cur, "docs")):
-            return cur
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return None
-        cur = parent
-
-
-def resolve_local_path(doc_path, target):
-    """Path absoluto de um destino local: relativo ao documento, ou
-    `/docs/...` a partir da raiz do repositorio. None se nada existe."""
-    base = os.path.dirname(os.path.abspath(doc_path))
-    if target.startswith("/"):
-        root = repo_root_for(doc_path)
-        cand = os.path.normpath(os.path.join(root, target.lstrip("/"))) if root else None
-    else:
-        cand = os.path.normpath(os.path.join(base, target))
-    return cand if cand and os.path.exists(cand) else None
 
 
 def prd_files(root):
@@ -287,8 +288,9 @@ def default_prd_dir(spec_path):
 
 
 def prd_index(prd_dir):
-    """(definicoes, prefixos) de todos os PRDs abaixo da pasta de PRDs."""
-    defs, prefixes = set(), set()
+    """(definicoes, prefixos) de todos os PRDs abaixo da pasta de PRDs; os
+    prefixos vem como {prefixo: path do PRD que o declara}."""
+    defs, prefixes = set(), {}
     for path in prd_files(prd_dir):
         plines = read_lines(path)
         pmask = fenced_line_mask(plines)
@@ -300,7 +302,7 @@ def prd_index(prd_dir):
                 defs.add(f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}")
             pm = PREFIX_LINE.match(l) or PRD_PREFIX_ROW.match(l)
             if pm:
-                prefixes.add(pm.group(1).upper())
+                prefixes.setdefault(pm.group(1).upper(), path)
     return defs, prefixes
 
 
@@ -330,11 +332,31 @@ def check_prd_rev(rep, fields, prd_path):
                  "os requisitos que citam os IDs tocados e atualize prd-rev", 1)
 
 
+def prd_label(path, prd_dir):
+    """Nome do PRD relativo a pasta de PRDs, para citar na mensagem."""
+    try:
+        return os.path.relpath(path, prd_dir)
+    except ValueError:
+        return path
+
+
 def check_prefix_collision(rep, prefix, prefixes, prd_dir):
-    """HARD quando o prefixo da spec e declarado por um PRD da pasta."""
-    if prefix and prefix in prefixes:
-        rep.hard(f"prefixo da spec '{prefix}' coincide com prefixo de PRD em {prd_dir}; "
+    """HARD quando o prefixo da spec e declarado por um PRD da pasta, ou
+    compartilha com ele as duas primeiras letras (`OFR` vs `OFF`): a leitura
+    rapida de um ID confunde os dois."""
+    if not prefix:
+        return
+    up = prefix.upper()
+    if up in prefixes:
+        rep.hard(f"prefixo da spec '{prefix}' coincide com prefixo de PRD em {prd_dir} "
+                 f"({prd_label(prefixes[up], prd_dir)}); "
                  "IDs de spec e de PRD tem a mesma forma X-nn - use outro prefixo")
+        return
+    near = sorted(p for p in prefixes if p[:2] == up[:2])
+    if near:
+        rep.hard(f"prefixo da spec '{prefix}' comeca com as mesmas duas letras do prefixo "
+                 f"'{near[0]}', declarado por {prd_label(prefixes[near[0]], prd_dir)} em {prd_dir}; "
+                 "IDs quase iguais se confundem na leitura - use outro prefixo")
 
 
 def lint_prd(rep, lines, mask, fields, spec_path, prefix):
@@ -380,6 +402,90 @@ def lint_prd(rep, lines, mask, fields, spec_path, prefix):
     if cited == 0:
         rep.warn("spec com prd: sem nenhuma citacao de ID do PRD; requisito derivado do PRD "
                  "cita o ID ao fim da linha")
+
+
+# --- rastreabilidade --------------------------------------------------------
+
+SECTION_TRACE = ("Rastreabilidade", "Traceability")
+SEPARATOR_CELL = re.compile(r":?-{2,}:?")
+
+
+def all_table_rows(lines, start, end, mask):
+    """Linhas de dados de TODAS as tabelas markdown da faixa (header e
+    separador ficam fora). Lista de (idx, [celulas])."""
+    rows, after_sep = [], False
+    for i in range(start, end):
+        if mask[i]:
+            continue
+        l = lines[i].strip()
+        if not l.startswith("|"):
+            after_sep = False
+            continue
+        cells = [c.strip() for c in l.strip("|").split("|")]
+        if all(SEPARATOR_CELL.fullmatch(c) for c in cells if c):
+            after_sep = True
+            continue
+        if after_sep:
+            rows.append((i, cells))
+    return rows
+
+
+def cited_prd_ids(lines, mask, prefix):
+    """FR em escopo: {ID de PRD citado ao fim de um requisito: linha}."""
+    out = {}
+    for i, l in enumerate(lines):
+        if mask[i]:
+            continue
+        for m in PRD_ID.finditer(l):
+            if m.group(1) == prefix:
+                continue
+            rid = f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}"
+            if is_citation_at_end(l, rid):
+                out.setdefault(rid, i)
+    return out
+
+
+def id_only_cell(cell):
+    """Celula que so tem IDs e pontuacao - linha de mapeamento, nao prosa."""
+    return not re.sub(r"[,;/\s]", "", PRD_ID.sub("", cell))
+
+
+def check_traceability(rep, lines, mask, prefix, defined, orphans, retired):
+    """Com `prd:` no comentario de maquina: secao obrigatoria, todo FR em
+    escopo mapeado e todo ID EARS das tabelas definido na spec."""
+    sec = find_section_exact(lines, SECTION_TRACE, mask=mask)
+    if sec is None:
+        rep.hard("spec com prd: no comentario de maquina sem secao ## Rastreabilidade; "
+                 "cada FR do PRD em escopo mapeia para os IDs EARS que o atendem")
+        return
+    first_col, mapped_only, ears = {}, {}, {}
+    for i, cells in all_table_rows(lines, sec[0], sec[1], mask):
+        if not cells:
+            continue
+        for m in PRD_ID.finditer(cells[0]):
+            if m.group(1) == prefix:
+                continue
+            rid = f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}"
+            first_col.setdefault(rid, i)
+            if id_only_cell(cells[0]):
+                mapped_only.setdefault(rid, i)
+        for c in cells:
+            for rid in REQ_ID.findall(c):
+                if prefix and rid.rsplit("-", 1)[0] == prefix:
+                    ears.setdefault(rid, i)
+    cited = cited_prd_ids(lines, mask, prefix)
+    for rid, idx in cited.items():
+        if rid not in first_col:
+            rep.hard(f"{rid} e citado por requisito mas nao aparece na primeira coluna da "
+                     "Rastreabilidade; FR em escopo sem mapeamento", idx + 1)
+    for rid, idx in mapped_only.items():
+        if rid not in cited:
+            rep.warn(f"Rastreabilidade: {rid} mapeado sem requisito que o cite ao fim da linha", idx + 1)
+    for rid, idx in ears.items():
+        if rid in defined or rid in orphans:
+            continue
+        extra = " (consta da lista de aposentados)" if rid in retired else ""
+        rep.hard(f"Rastreabilidade: {rid} nao e requisito definido nesta spec{extra}", idx + 1)
 
 
 # --- links ------------------------------------------------------------------
@@ -455,6 +561,7 @@ def main(argv):
     for aliases in SECTIONS_REQUIRED:
         if find_section_exact(lines, aliases, mask=mask) is None:
             rep.hard(f"secao obrigatoria ausente: ## {aliases[0]}")
+    check_context_size(rep, lines, mask)
 
     reqs = []
     sec = find_section_exact(lines, ("Requisitos", "Requirements"), mask=mask)
@@ -464,7 +571,7 @@ def main(argv):
             rep.hard("secao Requisitos sem requisito com ID")
         check_ears(rep, reqs)
     retired = retired_ids(lines, mask)
-    check_ids(rep, lines, mask, reqs, prefix, retired)
+    defined, orphans = check_ids(rep, lines, mask, reqs, prefix, retired)
 
     if prefix is None and reqs:
         # sem linha de prefixo (ja HARD), o prefixo mais comum dos IDs evita
@@ -474,6 +581,8 @@ def main(argv):
             counts[rid.rsplit("-", 1)[0]] = counts.get(rid.rsplit("-", 1)[0], 0) + 1
         prefix = max(counts, key=counts.get)
     lint_prd(rep, lines, mask, fields, path, prefix)
+    if fields.get("prd"):
+        check_traceability(rep, lines, mask, prefix, defined, orphans, retired)
     check_local_links(rep, lines, mask, path)
     check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, skip_first=(mc_idx or 0) + 1, mask=mask)

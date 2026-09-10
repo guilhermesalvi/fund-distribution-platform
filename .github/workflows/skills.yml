@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: .claude/skills/prd-writer/scripts/mermaid-parser/package-lock.json
+          cache-dependency-path: .claude/skills/prd/scripts/mermaid-parser/package-lock.json
 
       - name: Print tool versions
         run: |
@@ -38,38 +38,38 @@ jobs:
           git --version
 
       - name: Install the pinned Mermaid parser (npm ci)
-        run: python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --setup
+        run: python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
 
       - name: Mermaid parser self-test
-        run: python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --self-test
+        run: python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
 
-      - name: prd-writer test suite
-        run: python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests -v
+      - name: prd test suite
+        run: python3 -m unittest discover -s .claude/skills/prd/scripts/tests -v
 
-      - name: spec-driven test suite
-        run: python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests -v
+      - name: sdd test suite
+        run: python3 -m unittest discover -s .claude/skills/sdd/scripts/tests -v
 
       - name: check_commit test suite (.github/scripts)
         run: python3 -m unittest discover -s .github/scripts/tests -v
 
       - name: No skipped tests (the parser is installed, so nothing may be skipped)
         run: |
-          out=$(python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests 2>&1; python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests 2>&1; python3 -m unittest discover -s .github/scripts/tests 2>&1)
+          out=$(python3 -m unittest discover -s .claude/skills/prd/scripts/tests 2>&1; python3 -m unittest discover -s .claude/skills/sdd/scripts/tests 2>&1; python3 -m unittest discover -s .github/scripts/tests 2>&1)
           echo "$out" | tail -n 8
           if echo "$out" | grep -q "skipped="; then echo "::error::test suite reported skipped tests"; exit 1; fi
 
       - name: Lint PRDs (docs/prd)
         run: |
-          python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
-          python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
-          python3 .claude/skills/prd-writer/scripts/lint_mermaid.py docs/prd
+          python3 .claude/skills/prd/scripts/seq.py check docs/prd
+          python3 .claude/skills/prd/scripts/lint_prd.py docs/prd
+          python3 .claude/skills/prd/scripts/lint_mermaid.py docs/prd
 
       - name: Lint living specs (docs/specs/*/*/spec.md)
         run: |
           status=0
           [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
           for spec in $(find docs/specs -mindepth 3 -maxdepth 3 -name spec.md | sort); do
-            python3 .claude/skills/spec-driven/scripts/lint_spec.py "$spec" || status=1
+            python3 .claude/skills/sdd/scripts/lint_spec.py "$spec" || status=1
           done
           exit $status
 
@@ -79,28 +79,28 @@ jobs:
           [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
           for tasks in $(find docs/specs -mindepth 4 -maxdepth 4 -name tasks.md | sort); do
             spec="$(dirname "$tasks")/../spec.md"
-            python3 .claude/skills/spec-driven/scripts/lint_tasks.py "$tasks" --spec "$spec" || status=1
+            python3 .claude/skills/sdd/scripts/lint_tasks.py "$tasks" --spec "$spec" || status=1
           done
           exit $status
 
       - name: Skills are independent of each other (coupled only by the PRD artifact)
         run: |
           status=0
-          # spec-driven: no mention of the other skill, its files, or files this skill no longer has;
-          # its own name only in the SKILL.md frontmatter and title.
-          hits=$(grep -rIiE "prd-writer|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md" .claude/skills/spec-driven --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites another skill or a removed file"; status=1; fi
-          hits=$(grep -rIiE "spec-driven" .claude/skills/spec-driven --exclude-dir=__pycache__ --exclude=test_docs_consistency.py | grep -vE "SKILL\.md:(name: spec-driven|# Spec-Driven Development)$" || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::spec-driven cites itself by name outside the SKILL.md frontmatter/title"; status=1; fi
-          # prd-writer: no mention of the other skill, its files or its artifacts; its own name only in the
-          # SKILL.md frontmatter (the npm package name under mermaid-parser is not a skill citation).
-          hits=$(grep -rIiE "spec-driven|specify\.md|design\.md|memory\.md|/docs/specs|prd-rev" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites spec-driven or its artifacts"; status=1; fi
-          hits=$(grep -rIiE "prd-writer" .claude/skills/prd-writer --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude-dir=mermaid-parser | grep -vE "SKILL\.md:name: prd-writer$" || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd-writer cites itself by name outside the SKILL.md frontmatter"; status=1; fi
-          # commit policy belongs to the repository: the spec-driven scripts know nothing about it.
-          hits=$(grep -rIi "commit" .claude/skills/spec-driven/scripts --exclude-dir=__pycache__ --exclude-dir=tests || true)
-          if [ -n "$hits" ]; then echo "$hits"; echo "::error::commit policy inside the spec-driven scripts"; status=1; fi
+          # sdd: no mention of the other skill (by path: "prd" alone is the artifact, not the skill), its files,
+          # or files this skill no longer has; itself never by path.
+          hits=$(grep -rIiE "skills/prd\b|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md" .claude/skills/sdd --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::sdd cites another skill or a removed file"; status=1; fi
+          hits=$(grep -rIiE "skills/sdd\b" .claude/skills/sdd --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::sdd cites itself by path"; status=1; fi
+          # prd: no mention of the other skill, its files or its artifacts; itself never by path
+          # (the npm package name under mermaid-parser is not a skill citation).
+          hits=$(grep -rIiE "skills/sdd\b|specify\.md|design\.md|memory\.md|/docs/specs|prd-rev" .claude/skills/prd --exclude-dir=__pycache__ --exclude-dir=node_modules || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd cites sdd or its artifacts"; status=1; fi
+          hits=$(grep -rIiE "skills/prd\b" .claude/skills/prd --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude-dir=mermaid-parser || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd cites itself by path"; status=1; fi
+          # commit policy belongs to the repository: the sdd scripts know nothing about it.
+          hits=$(grep -rIi "commit" .claude/skills/sdd/scripts --exclude-dir=__pycache__ --exclude-dir=tests || true)
+          if [ -n "$hits" ]; then echo "$hits"; echo "::error::commit policy inside the sdd scripts"; status=1; fi
           exit $status
 
       - name: Commit messages follow CLAUDE.md (pull requests only)

@@ -8,53 +8,53 @@
   <Folder Name="/.claude/skills/ontology-from-transcript/">
     <File Path=".claude/skills/ontology-from-transcript/SKILL.md" />
   </Folder>
-  <Folder Name="/.claude/skills/prd-writer/">
-    <File Path=".claude/skills/prd-writer/SKILL.md" />
+  <Folder Name="/.claude/skills/prd/">
+    <File Path=".claude/skills/prd/SKILL.md" />
   </Folder>
-  <Folder Name="/.claude/skills/prd-writer/references/">
-    <File Path=".claude/skills/prd-writer/references/example.md" />
-    <File Path=".claude/skills/prd-writer/references/intake.md" />
-    <File Path=".claude/skills/prd-writer/references/modes.md" />
-    <File Path=".claude/skills/prd-writer/references/writing.md" />
+  <Folder Name="/.claude/skills/prd/references/">
+    <File Path=".claude/skills/prd/references/example.md" />
+    <File Path=".claude/skills/prd/references/intake.md" />
+    <File Path=".claude/skills/prd/references/modes.md" />
+    <File Path=".claude/skills/prd/references/writing.md" />
   </Folder>
-  <Folder Name="/.claude/skills/prd-writer/scripts/">
-    <File Path=".claude/skills/prd-writer/scripts/lint_mermaid.py" />
-    <File Path=".claude/skills/prd-writer/scripts/lint_prd.py" />
-    <File Path=".claude/skills/prd-writer/scripts/seq.py" />
+  <Folder Name="/.claude/skills/prd/scripts/">
+    <File Path=".claude/skills/prd/scripts/lint_mermaid.py" />
+    <File Path=".claude/skills/prd/scripts/lint_prd.py" />
+    <File Path=".claude/skills/prd/scripts/seq.py" />
   </Folder>
-  <Folder Name="/.claude/skills/prd-writer/scripts/mermaid-parser/">
-    <File Path=".claude/skills/prd-writer/scripts/mermaid-parser/package-lock.json" />
-    <File Path=".claude/skills/prd-writer/scripts/mermaid-parser/package.json" />
-    <File Path=".claude/skills/prd-writer/scripts/mermaid-parser/parse.mjs" />
+  <Folder Name="/.claude/skills/prd/scripts/mermaid-parser/">
+    <File Path=".claude/skills/prd/scripts/mermaid-parser/package-lock.json" />
+    <File Path=".claude/skills/prd/scripts/mermaid-parser/package.json" />
+    <File Path=".claude/skills/prd/scripts/mermaid-parser/parse.mjs" />
   </Folder>
-  <Folder Name="/.claude/skills/prd-writer/scripts/tests/">
-    <File Path=".claude/skills/prd-writer/scripts/tests/__init__.py" />
-    <File Path=".claude/skills/prd-writer/scripts/tests/test_docs_consistency.py" />
-    <File Path=".claude/skills/prd-writer/scripts/tests/test_lint_mermaid.py" />
-    <File Path=".claude/skills/prd-writer/scripts/tests/test_lint_prd.py" />
-    <File Path=".claude/skills/prd-writer/scripts/tests/test_seq.py" />
+  <Folder Name="/.claude/skills/prd/scripts/tests/">
+    <File Path=".claude/skills/prd/scripts/tests/__init__.py" />
+    <File Path=".claude/skills/prd/scripts/tests/test_docs_consistency.py" />
+    <File Path=".claude/skills/prd/scripts/tests/test_lint_mermaid.py" />
+    <File Path=".claude/skills/prd/scripts/tests/test_lint_prd.py" />
+    <File Path=".claude/skills/prd/scripts/tests/test_seq.py" />
   </Folder>
-  <Folder Name="/.claude/skills/spec-driven/">
-    <File Path=".claude/skills/spec-driven/SKILL.md" />
+  <Folder Name="/.claude/skills/sdd/">
+    <File Path=".claude/skills/sdd/SKILL.md" />
   </Folder>
-  <Folder Name="/.claude/skills/spec-driven/references/">
-    <File Path=".claude/skills/spec-driven/references/adr.md" />
-    <File Path=".claude/skills/spec-driven/references/design.md" />
-    <File Path=".claude/skills/spec-driven/references/execute.md" />
-    <File Path=".claude/skills/spec-driven/references/specify.md" />
-    <File Path=".claude/skills/spec-driven/references/tasks.md" />
-    <File Path=".claude/skills/spec-driven/references/verify.md" />
+  <Folder Name="/.claude/skills/sdd/references/">
+    <File Path=".claude/skills/sdd/references/adr.md" />
+    <File Path=".claude/skills/sdd/references/design.md" />
+    <File Path=".claude/skills/sdd/references/execute.md" />
+    <File Path=".claude/skills/sdd/references/specify.md" />
+    <File Path=".claude/skills/sdd/references/tasks.md" />
+    <File Path=".claude/skills/sdd/references/verify.md" />
   </Folder>
-  <Folder Name="/.claude/skills/spec-driven/scripts/">
-    <File Path=".claude/skills/spec-driven/scripts/_common.py" />
-    <File Path=".claude/skills/spec-driven/scripts/lint_spec.py" />
-    <File Path=".claude/skills/spec-driven/scripts/lint_tasks.py" />
+  <Folder Name="/.claude/skills/sdd/scripts/">
+    <File Path=".claude/skills/sdd/scripts/_common.py" />
+    <File Path=".claude/skills/sdd/scripts/lint_spec.py" />
+    <File Path=".claude/skills/sdd/scripts/lint_tasks.py" />
   </Folder>
-  <Folder Name="/.claude/skills/spec-driven/scripts/tests/">
-    <File Path=".claude/skills/spec-driven/scripts/tests/__init__.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_docs_consistency.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_spec.py" />
-    <File Path=".claude/skills/spec-driven/scripts/tests/test_lint_tasks.py" />
+  <Folder Name="/.claude/skills/sdd/scripts/tests/">
+    <File Path=".claude/skills/sdd/scripts/tests/__init__.py" />
+    <File Path=".claude/skills/sdd/scripts/tests/test_docs_consistency.py" />
+    <File Path=".claude/skills/sdd/scripts/tests/test_lint_spec.py" />
+    <File Path=".claude/skills/sdd/scripts/tests/test_lint_tasks.py" />
   </Folder>
   <Folder Name="/.github/" />
   <Folder Name="/.github/scripts/">

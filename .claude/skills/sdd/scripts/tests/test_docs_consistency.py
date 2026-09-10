@@ -2,7 +2,7 @@
 todo link Markdown local (fora de bloco de codigo) resolve; toda flag `--x`
 citada junto do nome de um script existe nesse script; fences de codigo
 fecham; toda citacao `arquivo.md, Titulo` aponta para heading ou trecho em
-negrito existente; a skill nao cita outra skill nem a si mesma pelo nome;
+negrito existente; a skill nao cita outra skill nem a si mesma pelo caminho;
 nenhum artefato, template ou linter carrega campo de status, autor, data,
 confianca ou aprovacao.
 
@@ -131,13 +131,14 @@ class DocsConsistency(unittest.TestCase):
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
 
     def test_independence_from_other_skills(self):
-        """Nenhuma mencao a outra skill, a arquivos dela ou a arquivos que
-        esta skill nao tem mais; a propria skill so e citada pelo nome no
-        frontmatter e no titulo do SKILL.md, nunca em referencia, template
-        ou script. O acoplamento e so pelo artefato (PRD em /docs/prd)."""
-        others = re.compile(r"prd-writer|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md",
+        """Nenhuma mencao a outra skill (pelo caminho `skills/prd`: "prd"
+        sozinho e o artefato, nao a skill), a arquivos dela ou a arquivos que
+        esta skill nao tem mais; a propria skill nunca e citada pelo caminho
+        em referencia, template ou script. O acoplamento e so pelo artefato
+        (PRD em /docs/prd)."""
+        others = re.compile(r"skills/prd\b|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md",
                             re.IGNORECASE)
-        own_name = re.compile(r"spec-driven", re.IGNORECASE)
+        own_name = re.compile(r"skills/sdd\b", re.IGNORECASE)
         for path in md_files(SKILL) + sorted(glob.glob(os.path.join(SCRIPTS, "*.py"))):
             for i, line in enumerate(read(path).splitlines(), 1):
                 self.assertIsNone(others.search(line), f"{path}:{i}: cita outra skill: {line.strip()[:80]}")
@@ -154,7 +155,7 @@ class DocsConsistency(unittest.TestCase):
             for i, line in enumerate(read(md).splitlines(), 1):
                 self.assertIsNone(field.search(line), f"{md}:{i}: campo de status/autor/data/confianca: {line.strip()}")
         for py in glob.glob(os.path.join(SCRIPTS, "*.py")):
-            self.assertNotRegex(read(py), r"(?i)(STATUS_DELTA|STATUS_LIVING|HEADER_FIELDS|TIERS)",
+            self.assertNotRegex(read(py), r"(?i)\b(STATUS_DELTA|STATUS_LIVING|HEADER_FIELDS|TIERS)\b",
                                 f"{py}: linter ainda conhece status/tier")
 
     def test_no_commit_policy_in_scripts(self):

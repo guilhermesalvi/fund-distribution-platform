@@ -59,8 +59,8 @@ dotnet test FundDistributionPlatform.slnx
 │   ├── scripts/                      # check_commit.py: política de commit do CLAUDE.md
 │   └── workflows/                    # CI: skills.yml valida skills, PRDs, specs e commits
 ├── docs/
-│   ├── prd/                          # PRDs (prd-writer), um por contexto + 0000 overview
-│   └── specs/                        # spec viva por capability (spec-driven): <contexto>/<capability>/spec.md
+│   ├── prd/                          # PRDs (prd), um por contexto + 0000 overview
+│   └── specs/                        # spec viva por capability (sdd): <contexto>/<capability>/spec.md
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
@@ -90,27 +90,27 @@ Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema a
 
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
-| [prd-writer](.claude/skills/prd-writer/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
+| [prd](.claude/skills/prd/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
 | [ontology-from-transcript](.claude/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
-| [spec-driven](.claude/skills/spec-driven/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
+| [sdd](.claude/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
 Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede):
 
 ```bash
-python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --setup
+python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
 ```
 
 Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`):
 
 ```bash
-python3 .claude/skills/prd-writer/scripts/lint_mermaid.py --self-test
-python3 -m unittest discover -s .claude/skills/prd-writer/scripts/tests
-python3 -m unittest discover -s .claude/skills/spec-driven/scripts/tests
-python3 .claude/skills/prd-writer/scripts/seq.py check docs/prd
-python3 .claude/skills/prd-writer/scripts/lint_prd.py docs/prd
-python3 .claude/skills/prd-writer/scripts/lint_mermaid.py docs/prd
-python3 .claude/skills/spec-driven/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
-python3 .claude/skills/spec-driven/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
+python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
+python3 -m unittest discover -s .claude/skills/prd/scripts/tests
+python3 -m unittest discover -s .claude/skills/sdd/scripts/tests
+python3 .claude/skills/prd/scripts/seq.py check docs/prd
+python3 .claude/skills/prd/scripts/lint_prd.py docs/prd
+python3 .claude/skills/prd/scripts/lint_mermaid.py docs/prd
+python3 .claude/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
+python3 .claude/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
 ```
 
 Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md), e confere que nenhuma skill cita a outra pelo nome.

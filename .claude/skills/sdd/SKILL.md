@@ -1,5 +1,5 @@
 ---
-name: spec-driven
+name: sdd
 description: 'SDD em cinco entradas (Specify, Design, Tasks, Execute, Verify): de requisitos técnicos testáveis (EARS, IDs rastreáveis, spec viva por capability) a design orientado a risco, tasks com teste co-locado e verificação com evidência. Começa onde o PRD termina. TRIGGER: "tech spec", "especificação técnica", "spec" de requisitos técnicos ou de comportamento do sistema, "SDD", "design da solução", "quebre em tasks", "implemente a spec", "verifique a implementação", "retome" uma mudança existente, "documente a spec do módulo X"; também ao implementar feature não trivial sem citar spec. NÃO acionar para PRD/discovery, ADR isolada, code review sem spec, refactor mecânico.'
 ---
 

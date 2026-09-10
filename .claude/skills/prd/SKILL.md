@@ -121,7 +121,7 @@ Depois do linter, dê a cada um dos cinco itens abaixo uma nota de 0 a 100: item
 ## Apresentar e iterar
 
 - Ao apresentar, aponte o que existe no PRD: o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas.
-- Mudança que toca duas ou mais seções ou altera a narrativa regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual. Em dúvida, regenere.
+- Mudança que toca duas ou mais seções ou altera a narrativa regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual.
 - Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts

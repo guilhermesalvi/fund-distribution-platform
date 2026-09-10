@@ -57,7 +57,7 @@ Quando a origem é o PRD, valem seis regras:
 
 1. **Cite o ID, não reescreva a regra.** O requisito EARS cita o ID do PRD ao fim da linha (`[BOOK-04]`) e descreve o comportamento observável que realiza a regra (valor, status, evento, prazo), sem reescrevê-la. Regra escrita em dois lugares diverge. Estado, evento e enumeração usam o identificador que o PRD fixa.
 2. **Regra de negócio se corrige no PRD.** Lacuna ou inconsistência de regra de negócio se corrige no PRD e nunca vira premissa na spec. `[PREMISSA]` na spec é só de solution space: formato de erro, prazo técnico, ordem de processamento.
-3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não confundível com ele: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. O linter acusa colisão lendo `/docs/prd`.
+3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não compartilha com nenhum deles as duas primeiras letras: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. O linter acusa colisão lendo `/docs/prd`.
 4. **PRD 0000.** Quando existe, o PRD 0000 fornece o mapa de contextos, o catálogo de eventos e as decisões delegadas a ADR. Evento que a capability produz ou consome vira requisito citando o ID que o governa; decisão delegada a ADR entra em Perguntas em Aberto com dono "Design/ADR".
 5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios) e aparece na Rastreabilidade como tal.
 6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz. A Rastreabilidade os lista pelo nome do caso (primeira coluna da tabela do PRD) ou pelo FR que exercitam, com os IDs EARS que os cobrem. Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
@@ -68,16 +68,16 @@ Em qualquer origem, leia antes de escrever: a `spec.md` viva da capability, se e
 
 ## Clarify
 
-- **Varra a base antes de perguntar:** código vizinho, padrões, features irmãs. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
+- **Varra a base antes de perguntar:** o módulo que a capability toca, os padrões que ele usa e ao menos uma feature irmã já implementada. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
 - **Você é par técnico, não entrevistador.** Desafie vagueza ("rápido" é quanto? "usuários" são quem?) e torne o abstrato concreto ("me conduz por um uso disso").
 - **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação. O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
-- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e opções concretas, com a recomendada primeiro. Ofereça "você decide" quando razoável; a delegação vira decisão registrada.
+- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada.
 - **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Perguntas em Aberto, bloqueia só o que depende dela e nunca vira default.
 - **A fronteira da mudança é fixa:** clarify esclarece *como* algo se comporta, nunca *se* uma capability nova entra.
 
 ## Dimensões implícitas
 
-Percorra a lista ao fechar o entendimento. Só o que gera requisito é escrito, e é escrito como requisito; o resto não deixa rastro.
+Percorra as dez dimensões abaixo, uma a uma, ao fechar o entendimento. Só o que gera requisito é escrito, e é escrito como requisito; o resto não deixa rastro.
 
 - Validação de entrada e limites
 - Falha e falha parcial: timeout, gravação parcial, compensação
@@ -125,7 +125,7 @@ Cada seção existe quando há o que dizer; o linter exige só Contexto e Requis
 | Contexto | 3–5 linhas: a origem (o PRD e o que foi corrigido nele; a ideia; ou o código e por que está sendo especificado), a base lida, e o que a capability produz e consome |
 | Escopo e Fora de Escopo | O que entra; tabela item / razão para o que fica fora |
 | Premissas | Tabela premissa / default / racional, cada linha marcada `[PREMISSA]` |
-| Perguntas em Aberto | Pergunta, dono e o que ela bloqueia; a mais pesada primeiro, em negrito |
+| Perguntas em Aberto | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
 | Requisitos | Lista EARS com IDs; subtítulos `###` por tema quando ajudam a leitura |
 | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
 | Glossário | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
@@ -186,4 +186,4 @@ Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 | Terceira reserva acima do máximo rejeitada | RSV-03 |
 ```
 
-Depois de gravar a spec, rode `lint_spec.py <spec.md>`; corrija o que ele acusar, rode de novo e apresente.
+Depois de gravar a spec, rode `lint_spec.py <spec.md>`; corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`, em no máximo duas rodadas de correção.

@@ -38,7 +38,7 @@ Exceção: quando a mudança de UX ou de interface pública é a própria capabi
 
 ## Lente DDD
 
-Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio explícito. Fora disso, Bounded Context, Ubiquitous Language e Domain Events usam o rótulo do time (módulo, área, integração).
+Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio explícito: glossário, catálogo de eventos ou nomes de contexto no material recebido. Fora disso, Bounded Context, Ubiquitous Language e Domain Events usam o rótulo do time (módulo, área, integração).
 
 ### Ubiquitous Language
 
@@ -59,7 +59,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 - A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos, não prova. A fronteira se confirma quando regras e motivos de mudança também divergem.
 - A feature tem um contexto originário, nomeado no header (SKILL.md, Gravar).
 - Quando vários contextos são tocados, o originário é dono da decisão; os outros entram em Dependências e Riscos, com o impacto na autonomia deles declarado.
-- Escopo que cruza contextos sem origem clara é risco: force a discussão antes de redigir.
+- Escopo que cruza contextos sem origem clara é risco: não redija enquanto o dono da decisão não for nomeado; pergunte qual contexto é o originário.
 - Mais de um contexto com PRD próprio exige o PRD 0000 (ver PRD 0000, abaixo).
 
 ### Domain Events
@@ -100,11 +100,11 @@ Cada PRD referencia o 0000 na linha de prefixo do header, em vez de repetir prop
 
 ## Diagramas
 
-Mermaid substitui prosa quando a estrutura é um grafo:
+Mermaid substitui prosa quando a estrutura é um grafo do tamanho indicado abaixo; abaixo do limiar, prosa:
 
-- `stateDiagram-v2` para máquina de estados;
-- `flowchart` para pipeline de decisão, com desigualdades curtas nos nós de decisão;
-- `sequenceDiagram` para fluxo entre contextos, no PRD 0000.
+- `stateDiagram-v2` para máquina de estados, a partir de 3 estados;
+- `flowchart` para pipeline de decisão, a partir de 2 pontos de decisão, com desigualdades curtas nos nós de decisão;
+- `sequenceDiagram` para fluxo entre contextos, a partir de 3 contextos trocando mensagens, no PRD 0000.
 
 Regras:
 
@@ -127,18 +127,18 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 | Usuário-alvo / JTBD | Sempre | Um bullet por ator com o job |
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
-| Glossário de Domínio | Há termo cujo significado não é óbvio ou tem sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
+| Glossário de Domínio | Há termo de domínio que o PRD usa sem definir e cujo significado muda a leitura de um requisito, ou que tem sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
 | Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (ver IDs e Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências ficam no 0000 |
 | Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual ADR |
 | Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, no formato `Art. N: o que diz → ID que o modela`; artigo não conferido no texto é `[PREMISSA]` |
-| Não-objetivos | Há risco de scope creep | Um bullet por exclusão: o que não faremos |
+| Não-objetivos | O material recebido ou a conversa cita funcionalidade adjacente que o PRD não cobre | Um bullet por exclusão: o que não faremos |
 | Trade-offs Declarados | Há decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso | Há como medir o resultado | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado), guardrail (o que não pode degradar; sem ele a métrica vira alvo). Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
 | Critérios de Aceitação | Há valor que o FR não expressa | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
 | Dependências e Riscos | Há dependência ou risco fora do controle do contexto | Tabela: item, tipo, impacto; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
-| Perguntas em Aberto | Há pendência real | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
-| Ponto de Maior Fragilidade | Há decisão de julgamento que um revisor cético e competente atacaria primeiro | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
+| Perguntas em Aberto | Há `[PREMISSA]` ou `[LACUNA]` que bloqueia decisão | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
+| Ponto de Maior Fragilidade | Há decisão de julgamento sobre fatos conhecidos: corte de escopo, threshold, priorização ou usuário-alvo | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
 | Referências | Há fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
 
 ### Critérios de Aceitação
@@ -156,7 +156,7 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 
 - É distinto das tags. `[PREMISSA]` pode ser falsa (risco factual); `[LACUNA]` é informação que falta (risco de cobertura). Aqui a decisão é sobre fatos, sem lacuna, e ainda assim contestável: corte de escopo, threshold, priorização, usuário-alvo.
 - É exposição, não auto-correção: quem tem contexto para resolver é o autor.
-- Calibre ao custo do erro. Fraqueza menor nomeada para parecer rigor é auto-crítica cosmética.
+- Calibre ao custo do erro: a decisão só entra se, estando errada, invalida a Solução Proposta ou a métrica primária. Fraqueza menor nomeada para parecer rigor é auto-crítica cosmética.
 - Com `[LACUNA]` material, aponte a decisão que depende da lacuna e o que a validação mudaria, sem fabricar vetor de ataque.
 
 ## Redação

@@ -22,13 +22,13 @@ Não leia a base inteira; a spec é o guia de foco.
 1. Identifique os módulos e arquivos ligados ao escopo. Leia a estrutura de diretórios antes de abrir qualquer arquivo.
 2. Leia nesta ordem: interfaces e contratos; entidades de domínio; serviços e casos de uso; infraestrutura. Abra a implementação completa só quando assinatura e nome não bastam.
 3. Declare o que foi lido e o que foi ignorado, na forma: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
-4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em dois arquivos não é convenção do projeto.
+4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto.
 5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Riscos, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[PREMISSA]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
 6. Reuso: cada componente novo referencia o componente existente que ele segue; componente sem reuso justifica por quê.
 
 ## Do risco à técnica
 
-Antes de preencher as seções do design, liste o que pode falhar caro nesta mudança. As fontes são as dimensões implícitas da spec, as preocupações encontradas na base, integrações, dinheiro, regulação, contrato público e migração. Para cada risco, escolha a técnica que o reduz e faça só aquele trabalho. Risco sem técnica é um aceite registrado, na forma "aceito porque …".
+Antes de preencher as seções do design, liste o que pode falhar caro nesta mudança. Percorra as sete fontes: as dimensões implícitas da spec, as preocupações encontradas na base, integrações, dinheiro, regulação, contrato público e migração. Para cada risco, escolha a técnica que o reduz e faça só aquele trabalho. Risco sem técnica é um aceite registrado, na forma "aceito porque …".
 
 | Risco típico | Técnica proporcional |
 |---|---|
@@ -48,7 +48,7 @@ Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois 
 
 1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
 2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem.
-3. **Abordagens.** A seção existe só quando há alternativa real. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, escreva uma linha dizendo isso e a seção não existe.
+3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, escreva uma linha dizendo isso e a seção não existe.
 
 ### As quatro perguntas de uma decisão arquitetural
 
@@ -94,7 +94,7 @@ Desvio da ordem de preferência registra o porquê na tabela de Decisões técni
 
 ## Decisões técnicas
 
-Registre só as decisões não óbvias, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
+Registre só as decisões em que outra escolha era defensável, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
 
 - **Contrato público:** API, evento, formato persistido ou exposto a terceiros. Muda com versionamento e aviso.
 - **Decisão interna:** muda sem aviso.

@@ -14,7 +14,7 @@ Antes de escrever qualquer task, descubra como este repositório testa; não pre
 
 ### Descoberta
 
-1. **Guias:** leia `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` e o que houver em `docs/` sobre testes, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
+1. **Guias:** leia `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` e todo arquivo em `docs/` com `test` no nome, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
 2. **Amostra:** leia 5–10 arquivos de teste existentes e registre camada, nível (unit, integration, e2e), estilo, localização e framework. A amostra é piso, nunca teto: nenhuma task fica menos rigorosa que o existente na mesma camada; o teto vem da spec.
 3. **Comandos:** extraia os comandos de manifests, config e CI (`*.csproj`/`*.slnx` + `dotnet test`, `package.json`, `Makefile`, `pyproject.toml`, workflows), incluindo lint, format e typecheck, porque o gate Build roda tudo isso.
 
@@ -43,7 +43,7 @@ O resultado da descoberta entra no `tasks.md` de duas formas:
 
 ## Task atômica
 
-Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas.
+Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas: se o campo `O quê` precisa de "e" para ligar um entregável ao outro, são duas tasks.
 
 ### Teste co-locado
 
@@ -138,4 +138,4 @@ T1 → T2
 
 ## Antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>`. Corrija o que ele reportar, rode de novo, apresente e espere.
+Rode `lint_tasks.py <tasks.md> --spec <spec.md>`. Corrija todo `HARD`, rode de novo e, com a saída em `0 HARD`, apresente e espere; são no máximo duas rodadas de correção.

@@ -14,7 +14,7 @@ description: 'Cria e refina PRDs (Product Requirements Documents) de features, p
 
 ## Quando é PRD
 
-É PRD a feature, o produto digital ou a iniciativa tecnológica com impacto funcional para um usuário. Iniciativa técnica com impacto funcional real ganha PRD focado no impacto, não na implementação.
+É PRD a feature, o produto digital ou a iniciativa tecnológica com impacto funcional para um usuário: depois dela o usuário observa um resultado novo, um dado novo ou um prazo novo. Iniciativa técnica que produz um desses três ganha PRD focado no impacto, não na implementação.
 
 | Não é PRD | Artefato certo |
 |---|---|
@@ -32,7 +32,7 @@ Dois enquadramentos têm tratamento próprio:
 
 1. **Entender.** Avalie o escopo, a riqueza do contexto, o material de discovery e a necessidade de pesquisa conforme intake.md. Contexto vago pede no máximo três perguntas. Se o usuário recusa discovery, gere o PRD com `[LACUNA]` e siga.
 2. **Escrever.** Aplique o que está em writing.md: capability test, lente DDD, uma regra, um lugar, IDs, PRD 0000, diagramas, seções e redação. Grave o arquivo conforme a seção Gravar, abaixo.
-3. **Checar.** Rode os scripts da tabela em Scripts. Corrija todo HARD e rode de novo. WARN é você quem julga; se ignorar um de propósito, diga em uma linha no chat. Depois, faça a revisão de cinco itens de Revisão antes de apresentar.
+3. **Checar.** Rode os scripts da tabela em Scripts. Corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD. São no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado. WARN é você quem julga; se ignorar um de propósito, diga em uma linha no chat. Depois, faça a revisão de cinco itens de Revisão antes de apresentar.
 
 ## Gravar
 
@@ -94,7 +94,7 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 - Sem tradução de mesma força, o termo fica em inglês: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off.
 - Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem.
-- O critério é: traduza quando o leitor do idioma do input reconhece a tradução tão rápido quanto o original.
+- Fora da tabela, o critério é a fonte: traduza quando a tradução do termo aparece na fonte primária do domínio (norma, prospecto, documentação oficial) no idioma do input; se a busca não a encontrar, mantenha o original em inglês.
 - O linter aceita o par PT/EN de cada heading como alias.
 - O idioma da conversa não muda o do artefato.
 
@@ -106,7 +106,7 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 ## Revisão antes de apresentar
 
-Depois do linter, verifique os cinco itens abaixo. Falha em qualquer um exige ajuste antes de apresentar.
+Depois do linter, dê a cada um dos cinco itens abaixo uma nota de 0 a 100: item abaixo de 90 é corrigido, item com 90 ou mais fica como está. Corrigido o item, repontue só ele: são no máximo duas passadas. Item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
 
 1. **Capability test.** A Solução Proposta e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test).
 2. **Uma regra, um lugar.** Cada regra existe em um único FR e o resto cita o ID. Paráfrase que diverge do FR é a informação, não o ruído (writing.md, Uma regra, um lugar).
@@ -115,13 +115,13 @@ Depois do linter, verifique os cinco itens abaixo. Falha em qualquer um exige aj
    - não há "Nenhuma.", bullet inserido para completar contagem nem seção vazia;
    - métrica só entra com guardrail;
    - trade-off tem custo e razão;
-   - Ponto de Maior Fragilidade só entra quando há decisão que um revisor cético atacaria, e então não é cosmético.
+   - Ponto de Maior Fragilidade só entra quando há decisão de julgamento sobre fatos conhecidos — corte de escopo, threshold, priorização ou usuário-alvo — e então não é cosmético.
 5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação).
 
 ## Apresentar e iterar
 
 - Ao apresentar, aponte o que existe no PRD: o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas.
-- Mudança que cruza seções ou altera a narrativa regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual. Em dúvida, regenere.
+- Mudança que toca duas ou mais seções ou altera a narrativa regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual. Em dúvida, regenere.
 - Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts
@@ -141,4 +141,4 @@ Depois do linter, verifique os cinco itens abaixo. Falha em qualquer um exige aj
 
 ## Exemplo
 
-PRD no formato-alvo em [references/example.md](references/example.md). Leia quando houver dúvida sobre a forma de uma seção; não é template a copiar.
+PRD no formato-alvo em [references/example.md](references/example.md). Leia a seção correspondente quando a coluna Forma da tabela (writing.md, Seções) não bastar para instanciá-la; não é template a copiar.

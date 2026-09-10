@@ -24,7 +24,7 @@ Para cada requisito em escopo, preencha uma linha da tabela de evidência. A col
 | RSV-07 | rejeita com `MIN_INVESTMENT_NOT_MET`, livro inalterado | `tests/…/PartialReservationTests.cs:41` — `result.Error.Should().Be(ReservationError.MinInvestmentNotMet)` | coberto / gap / lacuna de precisão |
 
 - A assertion precisa mirar exatamente o resultado que a spec define; a existência de uma assertion qualquer não basta.
-- Requisito sem `file:line` conta como não coberto. Antes de declarar ausência, procure a evidência e mostre no relatório a busca que fez.
+- Requisito sem `file:line` conta como não coberto. Antes de declarar ausência, busque o ID do requisito e o identificador do resultado que a spec define (erro, evento, status) nos testes do diff e nos testes da camada, e mostre no relatório os termos buscados.
 - Requisito cuja spec não define um resultado preciso é lacuna de precisão: entra no relatório como tal e nunca é aprovado em silêncio.
 - Requisito aposentado na spec (specify.md, Spec viva) exige confirmar que o comportamento não existe mais: o teste foi removido com a razão registrada e nenhum caminho de código vivo ainda o implementa.
 
@@ -73,14 +73,14 @@ O relatório segue esta ordem:
 1. **Cobertura**, na primeira linha: N/N requisitos com evidência.
 2. **Gate:** comando, contagens e exit code.
 3. **Aderência ao design:** só as ressalvas.
-4. **Gaps**, ordenados por severidade.
+4. **Gaps**, ordenados por severidade: requisito sem evidência, depois lacuna de precisão, depois desvio de design.
 5. **Próximo passo.**
 
 Verificação bloqueada por ambiente diz o que faltou e não fecha a mudança.
 
 ## Gaps e tasks de correção
 
-Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Se o ciclo não converge, escale ao usuário em vez de girar.
+Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar.
 
 ## Desvios
 

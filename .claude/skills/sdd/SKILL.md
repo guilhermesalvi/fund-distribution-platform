@@ -15,7 +15,7 @@ Esta skill é um método de escrita e de execução em cinco entradas, cada uma 
 
 O PRD, em `/docs/prd` e com IDs no formato `<PREFIXO>-nn`, é a entrada do método e a fonte das regras de negócio. Esta skill começa onde o PRD termina.
 
-O linter é feedback para o agente, não carimbo no artefato. O ciclo é: grave o artefato, rode o linter, corrija o que ele apontou, rode de novo e só então apresente. O artefato nunca carrega estado de validação. Se o linter não rodar por falha de ambiente, diga isso no chat.
+O linter é feedback para o agente, não carimbo no artefato. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. O artefato nunca carrega estado de validação. Se o linter não rodar por falha de ambiente, diga isso no chat.
 
 ## Abrir uma mudança
 
@@ -23,8 +23,8 @@ O linter é feedback para o agente, não carimbo no artefato. O ciclo é: grave 
 
 Duas perguntas decidem quais artefatos a mudança pede, além da spec:
 
-1. Há decisão arquitetural, padrão novo, interação entre componentes a planejar ou risco nomeado (integração externa, estado e concorrência, dinheiro, dado regulado, contrato público, novo deployável)? Se sim, a mudança pede `design.md`.
-2. Há mais de cinco passos ou dependência não trivial? Se sim, a mudança pede `tasks.md`.
+1. Há decisão arquitetural, padrão novo, interação entre três ou mais componentes a planejar ou risco nomeado (integração externa, estado e concorrência, dinheiro, dado regulado, contrato público, novo deployável)? Se sim, a mudança pede `design.md`.
+2. Há mais de cinco passos, ou algum passo depende de outro que não é o imediatamente anterior? Se sim, a mudança pede `tasks.md`.
 
 **Catraca.** A resposta só sobe. Complexidade descoberta no meio da mudança promove o nível de artefato: pare, diga o que descobriu e crie o artefato que faltou. Nada rebaixa o nível já decidido.
 
@@ -77,7 +77,7 @@ Leia a referência inteira antes de agir em qualquer entrada. O layout de arquiv
 Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py`; rodar sem argumentos imprime a docstring completa.
 
 - `HARD` exige correção e nova rodada.
-- `WARN` é heurística: julgue.
+- `WARN` é heurística: cada um termina de uma de duas formas, corrigido ou mantido com uma linha de razão no chat.
 - Linter verde é esqueleto conforme, não artefato bom.
 - Sem ferramenta de execução, faça as mesmas checagens lendo o artefato e diga que a verificação foi manual.
 
@@ -98,13 +98,15 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 
 ### Redação
 
-- Declarativo, sem hedging, sem meta-narração, sem placeholder.
+- Declarativo, sem hedging, sem meta-narração, sem placeholder. `lint_spec.py` acusa os três na spec e `lint_tasks.py` acusa placeholder nas tasks; no design e na ADR, que não têm linter, a checagem é sua.
 - Um conceito por parágrafo.
 - Contexto de decisão (racional, mitigação) preservado: é sinal para humanos e para o próximo agente.
 
 ## Revisão por entrada
 
 Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
+
+A lista da entrada é fechada. Dê a cada item uma nota de 0 a 100: item abaixo de 90 é reescrito, item com 90 ou mais fica como está. Reescreveu, dê nota de novo — são no máximo duas passadas por artefato. Item que continuar abaixo de 90 na segunda passada não segura o artefato: apresente e diga no chat qual item é, com a nota e o que falta.
 
 ### Specify
 
@@ -116,7 +118,7 @@ Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. 
 
 ### Design
 
-- Profundidade proporcional ao risco: seção longa sem risco é inflação; risco sem técnica ou aceite é buraco.
+- Profundidade proporcional ao risco: seção com mais de dez linhas cujo assunto não aparece em Riscos e técnicas é inflação; risco sem técnica ou aceite é buraco.
 - Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
 - Nenhum comportamento decidido aqui que devia estar na spec.
 - Interfaces com tipos, e todo `IF/THEN` da spec aparece no tratamento de erros.
@@ -145,4 +147,4 @@ Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. 
 - Toda linha de evidência com `file:line` e assertion.
 - Lacuna de precisão reportada, nunca aprovada.
 - Os dois eixos percorridos: conformidade à spec e aderência ao design.
-- Gaps ordenados por severidade e convertidos em tasks de correção `TCn`.
+- Gaps ordenados por severidade — requisito sem evidência, depois lacuna de precisão, depois desvio de design — e convertidos em tasks de correção `TCn`.

@@ -26,7 +26,7 @@ Gate: [comando de build e teste do repositório]
 2. …
 ```
 
-Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista passar de cinco passos, ou revelar dependência não trivial ou risco nomeado, pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
+Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista passar de cinco passos, ou algum passo depender de outro que não é o imediatamente anterior, ou houver risco nomeado, pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
 
 ## Ciclo por task
 
@@ -42,11 +42,11 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
    - Não "melhore" código adjacente nem formatação; siga o estilo existente mesmo discordando dele.
    - Problema vizinho (bug, dívida, dead code) é reportado ao usuário, não corrigido na task.
    - Arquivo indispensável descoberto durante a implementação (registro, config) entra no campo `Onde` da task, com uma nota dizendo por que entrou.
-5. **Rodar o gate.** Rode o comando do nível da task, lido da tabela Comandos de Gate do `tasks.md` da mudança (descrita em tasks.md, Comandos de Gate) ou da linha `Gate` do plano inline. Exit diferente de zero: corrija e rode de novo. Gate que não pode rodar (SDK ausente, dependência indisponível) não é gate verde: a task fica bloqueada, com o motivo registrado.
+5. **Rodar o gate.** Rode o comando do nível da task, lido da tabela Comandos de Gate do `tasks.md` da mudança (descrita em tasks.md, Comandos de Gate) ou da linha `Gate` do plano inline. Exit diferente de zero: corrija e rode de novo, no máximo duas vezes; se a terceira execução ainda não sair com exit 0, pare e relate a falha como ela é, sem enfraquecer o teste. Gate que não pode rodar (SDK ausente, dependência indisponível) não é gate verde: a task fica bloqueada, com o motivo registrado.
 6. **Revisar depois do gate.** Com o gate verde, confira:
    - todo item de `Pronto quando` está atendido, inclusive os critérios de comportamento;
    - nenhum `SPEC_DEVIATION` ficou sem registro em `## Desvios`;
-   - "um sênior chamaria isso de complicado demais?" — se sim, simplifique e rode o gate de novo;
+   - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo;
    - a tabela de evidência: para cada critério, o `file:line` e a assertion que o provam; e, no sentido inverso, todo teste novo mapeia para um critério, requisito ou edge case.
 7. **Fechar.** Marque a task como concluída no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task e o `tasks.md`, com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
 

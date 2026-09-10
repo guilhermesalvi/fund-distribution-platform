@@ -1,41 +1,48 @@
 # Avaliação do input e pesquisa
 
-Passo Entender do workflow. Tags usadas aqui: writing.md, Tags. Quando o pedido é reverse PRD ou plataforma, infra, SDK e API como produto: modes.md.
+Este arquivo cobre o passo Entender do workflow descrito em SKILL.md: avaliar o escopo do pedido, extrair o que o material de discovery contém, classificar a riqueza do contexto e decidir quando pesquisar. As tags `[PREMISSA]` e `[LACUNA]` usadas aqui são as definidas em writing.md (writing.md, Tags). Quando o pedido é um reverse PRD, ou trata plataforma, infra, SDK e API como produto, aplique também o que muda em modes.md.
 
 ## Escopo problemático
 
+Antes de gerar, verifique se o escopo do pedido comporta um PRD. Três sintomas pedem intervenção antes de qualquer geração:
+
 | Sintoma | Ação |
 |---|---|
-| Muito amplo: domínio inteiro, múltiplas iniciativas sem corte ("plataforma de crédito") | Não gere; peça um corte específico ou proponha um para validação |
-| Enquadrado como implementação ("PRD para o microserviço X", "PRD para a tela Y") | Redirecione: PRD começa do problema |
-| CRUD ou entidade-cêntrico ("CRUD para X", "tela de cadastro para Y") | Redirecione: que capability ou JTBD isso serve? Que decisão de negócio acontece ali? Problemas são vividos por pessoas, não por tabelas precisando de telas |
+| Muito amplo: domínio inteiro ou múltiplas iniciativas sem corte (ex.: "plataforma de crédito") | Não gere. Peça um corte específico ou proponha um corte para o usuário validar |
+| Enquadrado como implementação (ex.: "PRD para o microserviço X", "PRD para a tela Y") | Redirecione: o PRD começa do problema, não da implementação |
+| CRUD ou entidade-cêntrico (ex.: "CRUD para X", "tela de cadastro para Y") | Redirecione com duas perguntas: que capability ou JTBD isso serve? Que decisão de negócio acontece ali? Problemas são vividos por pessoas, não por tabelas precisando de telas |
 
-Em qualquer caso, pergunte: que problema de usuário ou de negócio essa implementação resolve?
+Em qualquer um dos três casos, faça ao usuário a pergunta de base: que problema de usuário ou de negócio essa implementação resolve?
 
 ## Material de discovery
 
-PDF, docx, decks, atas, briefs e PRDs antigos são ricos e não autoritativos.
+Documentos recebidos como input (PDF, docx, decks, atas, briefs e PRDs antigos) são ricos em sinais, mas não são fonte autoritativa. Trate-os assim:
 
-- Extraia sinais antes de perguntar: problema, evidência, usuário-alvo, direção, métricas, restrições.
-- Inferência do discovery é `[PREMISSA]` derivada do documento. Sem tag (fato) só para fonte autoritativa: regulação oficial, política formalizada, decisão registrada.
-- Sintetize, não reformate: reorganização cosmética produz PRD bonito e falso.
-- Diante de PRD antigo, determine se ele é (a) reverse PRD para incremento, (b) update a fazer no lugar ou (c) inspiração. Pergunte se ambíguo.
-- Fontes conflitantes viram `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
+- **Extraia antes de perguntar.** Levante do material os sinais que o PRD precisa (problema, evidência, usuário-alvo, direção, métricas, restrições) antes de fazer qualquer pergunta ao usuário.
+- **Inferência do discovery é `[PREMISSA]`.** O que você deduz do documento entra como `[PREMISSA]` derivada dele. Texto sem tag (fato) só cabe quando a fonte é autoritativa: regulação oficial, política formalizada, decisão registrada.
+- **Sintetize, não reformate.** Reorganizar o material cosmeticamente produz um PRD bonito e falso.
+- **PRD antigo pede classificação.** Diante de um PRD antigo, determine qual é o caso: (a) ele serve de reverse PRD para um incremento, (b) ele é o documento a atualizar no lugar, ou (c) ele é só inspiração. Se for ambíguo, pergunte.
+- **Fontes conflitantes viram `[LACUNA]`.** Quando duas fontes se contradizem, registre a `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
 
 ## Riqueza do contexto
 
+Classifique o contexto recebido em um dos três níveis e siga a ação correspondente:
+
 | Nível | Definição | Ação |
 |---|---|---|
-| Rico | Usuário-alvo identificado + (problema ou direção de solução) | Gere e refine |
+| Rico | Usuário-alvo identificado + (problema ou direção de solução) | Gere o PRD e refine com o usuário |
 | Sinais parciais | Bullets ou fragmentos com informação real, mesmo incompleta | Gere com `[PREMISSA]` e `[LACUNA]`; não force discovery |
-| Vago | Só nome de feature, palavra única, ideia genérica | Máximo 3 perguntas: que problema real resolve? quem é o usuário-alvo? como saberemos que funcionou? |
+| Vago | Só nome de feature, palavra única ou ideia genérica | Faça no máximo 3 perguntas: que problema real resolve? quem é o usuário-alvo? como saberemos que funcionou? |
 
-"Problema + solução" sem usuário-alvo não é rico: é solution-first desancorado. Trate como sinais parciais e peça o usuário primeiro.
+### Casos de borda
 
-Quando o usuário recusa discovery ("só escreve"), gere com `[LACUNA]` extensivo e siga; ao fim, liste o que precisa ser preenchido antes de qualquer próximo passo.
+- **Solução sem usuário-alvo não é contexto rico.** "Problema + solução" sem usuário-alvo identificado é solution-first desancorado. Trate como sinais parciais e peça o usuário-alvo antes de qualquer outra pergunta.
+- **Recusa de discovery não bloqueia a geração.** Quando o usuário recusa as perguntas ("só escreve"), gere com `[LACUNA]` extensivo e siga. Ao fim, liste o que precisa ser preenchido antes de qualquer próximo passo.
 
 ## Pesquisa
 
-Busca web quando o pedido a exige: benchmarks e concorrentes, comportamento de usuário, tendências, padrões técnicos, norma vigente. Cite fontes de forma concisa: link, trecho relevante e data de leitura.
+Faça busca web quando o pedido exige: benchmarks e concorrentes, comportamento de usuário, tendências, padrões técnicos, norma vigente. Cite cada fonte de forma concisa: link, trecho relevante e data de leitura.
 
-Regulação (financeiro, saúde, dados pessoais, pagamentos, segurança, KYC/AML, telecom, energia, autoridade setorial) ganha a seção Considerações Regulatórias só com norma identificada e lida (writing.md, Seções). Verifique a norma vigente por busca antes de incluir; artigo não conferido no texto é `[PREMISSA]`, e hipótese regulatória nunca é vinculante.
+### Regulação
+
+Em domínio regulado (financeiro, saúde, dados pessoais, pagamentos, segurança, KYC/AML, telecom, energia, ou outro sob autoridade setorial), a seção Considerações Regulatórias entra só quando a norma foi identificada e lida; a forma da seção está em writing.md (writing.md, Seções). Verifique por busca qual é a norma vigente antes de incluí-la. Artigo cuja redação não foi conferida no texto da norma é `[PREMISSA]`, e hipótese regulatória nunca é vinculante.

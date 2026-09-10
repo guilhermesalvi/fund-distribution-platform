@@ -1,29 +1,34 @@
 # Design
 
-**Objetivo:** definir *como* construir (estrutura, componentes, interfaces, o que reusar) com profundidade proporcional ao **risco**, não ao tamanho. Design não decide comportamento: se precisar, volte à spec.
+**Objetivo:** definir *como* construir — estrutura, componentes, interfaces e o que reusar — com profundidade proporcional ao **risco** da mudança, não ao seu tamanho. O design não decide comportamento: se uma decisão de comportamento for necessária, volte à spec e resolva lá.
 
-Pré-requisito: spec commitada. Grave em `<capability>/NNNN-<change-slug>/design.md` (layout em specify.md, Layout).
+Pré-requisito: a spec está commitada. Grave o design em `<capability>/NNNN-<change-slug>/design.md`; o layout de pastas e o comentário de máquina estão descritos em specify.md (specify.md, Layout).
 
 ## Carregar contexto
 
-1. `spec.md` da capability: é o contrato; o design não a reinterpreta.
-2. ADRs ativas em `/docs/adr`: cada uma é restrição de projeto. Conflito entre uma decisão anterior e o melhor para esta feature exige escolha explícita: conformar ou superseder (adr.md). Ignorar em silêncio cria inconsistência invisível entre features.
-3. PRD, quando existe: Trade-offs Declarados e Dependências e Riscos são restrições e fonte de riscos; NFRs são a origem primeira dos critérios de avaliação. PRD 0000: o mapa de contextos fixa quem é upstream e a direção de mudança de contrato; o catálogo de eventos fixa produtor e consumidores; as decisões delegadas a ADR são decisões deste design ou de ADR própria.
+Leia, nesta ordem, antes de projetar:
+
+1. **A `spec.md` da capability.** É o contrato; o design não a reinterpreta.
+2. **As ADRs ativas em `/docs/adr`.** Cada uma é uma restrição de projeto. Quando uma decisão anterior conflita com o que seria melhor para esta feature, a escolha é explícita: conformar-se à ADR ou supersedê-la, pelo procedimento descrito em adr.md. Ignorar a ADR em silêncio cria inconsistência invisível entre features.
+3. **O PRD, quando existe.**
+   - As seções Trade-offs Declarados e Dependências e Riscos são restrições do design e fonte de riscos.
+   - Os NFRs são a origem primeira dos critérios de avaliação.
+   - No PRD 0000: o mapa de contextos fixa quem é upstream e a direção de mudança de contrato; o catálogo de eventos fixa o produtor e os consumidores de cada evento; as decisões delegadas a ADR são decisões deste design ou de uma ADR própria.
 
 ## Base de código
 
-Não leia tudo; a spec é o guia de foco.
+Não leia a base inteira; a spec é o guia de foco.
 
-1. Identifique módulos e arquivos ligados ao escopo; leia a estrutura de diretórios antes de abrir arquivos.
-2. Ordem: interfaces e contratos → entidades de domínio → serviços e casos de uso → infraestrutura. Implementação completa só quando assinatura e nome não bastam.
-3. Declare o que foi lido e o que foi ignorado: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
-4. O que a base impõe é fato; o que você inferiu de padrão é `[PREMISSA]`. Padrão visto em dois arquivos não é convenção do projeto.
-5. Preocupação encontrada (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho) vira linha em Riscos, com mitigação ou aceite. Preocupação vira `[PREMISSA]` até achar a decisão que a explica (ADR, commit, PR): um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
-6. Reuso: cada componente novo referencia o existente que segue; componente sem reuso justifica por quê.
+1. Identifique os módulos e arquivos ligados ao escopo. Leia a estrutura de diretórios antes de abrir qualquer arquivo.
+2. Leia nesta ordem: interfaces e contratos; entidades de domínio; serviços e casos de uso; infraestrutura. Abra a implementação completa só quando assinatura e nome não bastam.
+3. Declare o que foi lido e o que foi ignorado, na forma: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
+4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em dois arquivos não é convenção do projeto.
+5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Riscos, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[PREMISSA]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
+6. Reuso: cada componente novo referencia o componente existente que ele segue; componente sem reuso justifica por quê.
 
-## Risco → técnica
+## Do risco à técnica
 
-Antes de preencher seções, liste o que pode falhar caro nesta mudança (dimensões da spec, preocupações da base, integrações, dinheiro, regulação, contrato público, migração). Para cada risco, escolha a técnica que o reduz e só faça aquele trabalho. Risco sem técnica é aceite registrado ("aceito porque").
+Antes de preencher as seções do design, liste o que pode falhar caro nesta mudança. As fontes são as dimensões implícitas da spec, as preocupações encontradas na base, integrações, dinheiro, regulação, contrato público e migração. Para cada risco, escolha a técnica que o reduz e faça só aquele trabalho. Risco sem técnica é um aceite registrado, na forma "aceito porque …".
 
 | Risco típico | Técnica proporcional |
 |---|---|
@@ -35,44 +40,83 @@ Antes de preencher seções, liste o que pode falhar caro nesta mudança (dimens
 | Performance | Orçamento (p95, throughput) e onde é gasto; índice; paginação |
 | Segurança, dado regulado | Fronteira de autorização; retenção; mascaramento; auditoria |
 
-Não imponha estilo arquitetural: o design fala a língua da base (ports e adapters, aggregates, ou o que houver). Introduzir estilo novo é decisão de projeto (adr.md). Cerimônia sem risco que a justifique é peso morto.
+Não imponha estilo arquitetural: o design fala a língua da base (ports e adapters, aggregates, ou o que houver nela). Introduzir um estilo novo é decisão de projeto e segue adr.md. Cerimônia sem risco que a justifique é peso morto.
 
 ## Critérios antes das abordagens
 
-Quem propõe e julga é o mesmo agente; critério escrito depois da proposta vira racionalização.
+Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois da proposta vira racionalização. A ordem é fixa: critérios, crítica dos critérios e só então abordagens.
 
-1. **Critérios**, cada um com origem (NFR do PRD, dimensão da spec, ADR, custo ou prazo). Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha", não "usar Bloom filter".
-2. **Crítica dos critérios.** Que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space o usuário fixa aqui. Apresente e espere antes de propor abordagem.
-3. **Abordagens**, só quando há alternativa real: 2–3 materialmente viáveis, mesmo escopo, avaliadas contra os critérios (colunas da tabela) e as quatro perguntas abaixo; recomendada primeiro, com racional; confirmada antes de detalhar componentes. Sem alternativa real, uma linha dizendo isso e a seção não existe.
+1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
+2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem.
+3. **Abordagens.** A seção existe só quando há alternativa real. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, escreva uma linha dizendo isso e a seção não existe.
 
-As quatro perguntas de uma decisão arquitetural: atende aos objetivos de negócio? Respeita os atributos de qualidade? Respeita as restrições (ADRs, base, regulação, time)? **Existe forma mais barata ou menos arriscada de fazer o mesmo?** A quarta é sempre respondida: complexidade (componentes × interconexões) é custo, e complexidade não justificada é custo desnecessário.
+### As quatro perguntas de uma decisão arquitetural
+
+1. Atende aos objetivos de negócio?
+2. Respeita os atributos de qualidade?
+3. Respeita as restrições (ADRs, base, regulação, time)?
+4. **Existe forma mais barata ou menos arriscada de fazer o mesmo?**
+
+A quarta é sempre respondida: complexidade (componentes × interconexões) é custo, e complexidade não justificada é custo desnecessário.
 
 ## Componentes, contratos e dados
 
-- **Componentes.** Propósito em uma frase (sem "e"), path real, interfaces com tipos, dependências, o que reusa. Interfaces vêm antes da implementação: são o que as tasks consomem.
-- **Domain events.** Por evento: produtor, consumidores conhecidos, payload semântico, chave de partição ou ordenação, garantia de entrega (at-least-once é o normal; idempotência do consumidor torna a reentrega segura), versionamento. Evento mal documentado é acoplamento implícito entre contextos.
-- **Modelo de dados** quando a feature toca persistência: entidades, relacionamentos, invariantes, migração.
-- **Tratamento de erro.** Cenário (ID), tratamento, impacto. Todo `IF … THEN` da spec aparece aqui com o mecanismo escolhido.
+- **Componentes.** Para cada componente: propósito em uma frase (sem "e"), path real, interfaces com tipos, dependências e o que reusa. As interfaces vêm antes da implementação: são o que as tasks consomem.
+- **Domain events.** Para cada evento: produtor, consumidores conhecidos, payload semântico, chave de partição ou de ordenação, garantia de entrega e versionamento. At-least-once é a garantia normal; a idempotência do consumidor é o que torna a reentrega segura. Evento mal documentado é acoplamento implícito entre contextos.
+- **Modelo de dados.** Presente quando a feature toca persistência: entidades, relacionamentos, invariantes e migração.
+- **Tratamento de erro.** Uma linha por cenário: cenário (com o ID do requisito), tratamento e impacto. Todo `IF … THEN` da spec aparece aqui, com o mecanismo escolhido para tratá-lo.
 
 ## Unidade de deploy e reuso
 
-Três conceitos distintos: **módulo** (fronteira de código: assembly, pacote, namespace com interface pública), **pacote de release** (o que é versionado e publicado) e **unidade de deploy** (o que sobe e cai junto). Diga de qual está falando.
+### Três conceitos
 
-Ordem de preferência: mudança no deployável existente → módulo novo no deployável existente → deployável novo. O que justifica deployável novo é demanda de **deploy independente** (time com ritmo próprio, stack diferente, estrangulamento de legado); escalabilidade, resiliência e "separação de responsabilidades" não justificam sozinhos, porque réplica e módulo entregam. Deployável novo carrega contrato de interface, versionamento, compatibilidade retroativa e um dono nomeado.
+São conceitos distintos; diga sempre de qual está falando:
 
-Biblioteca compartilhada só com dono, estabilidade (o custo de release contra o custo de divergência) e ausência de pacote público equivalente; sem regra de negócio em biblioteca de plataforma; `Utils`/`Shared` como destino é o cheiro da regra não aplicada. Sem ciclo entre módulos com fronteira própria; módulo é consumido só pela sua interface pública.
+- **Módulo:** fronteira de código — assembly, pacote ou namespace com interface pública.
+- **Pacote de release:** o que é versionado e publicado.
+- **Unidade de deploy:** o que sobe e cai junto.
+
+### Ordem de preferência
+
+1. Mudança no deployável existente.
+2. Módulo novo no deployável existente.
+3. Deployável novo.
+
+O que justifica um deployável novo é demanda de **deploy independente**: time com ritmo próprio, stack diferente, estrangulamento de legado. Escalabilidade, resiliência e "separação de responsabilidades" não justificam sozinhos, porque réplica e módulo entregam o mesmo. Um deployável novo carrega contrato de interface, versionamento, compatibilidade retroativa e um dono nomeado.
 
 Desvio da ordem de preferência registra o porquê na tabela de Decisões técnicas, não em seção própria.
 
+### Biblioteca compartilhada e fronteiras de módulo
+
+- Biblioteca compartilhada só entra com três condições: um dono; estabilidade, avaliada pelo custo de release contra o custo de divergência; e ausência de pacote público equivalente.
+- Regra de negócio não vive em biblioteca de plataforma. `Utils` ou `Shared` como destino é o cheiro dessa regra não aplicada.
+- Sem ciclo entre módulos com fronteira própria; um módulo é consumido só pela sua interface pública.
+
 ## Decisões técnicas
 
-Só as não óbvias: decisão, escolha, racional, tipo. O tipo distingue **contrato público** (API, evento, formato persistido ou exposto a terceiros: muda com versionamento e aviso) de **decisão interna** (muda sem aviso). Decisão que fixa convenção, restrição ou padrão para features futuras vira ADR (adr.md); local à feature fica só na tabela.
+Registre só as decisões não óbvias, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
+
+- **Contrato público:** API, evento, formato persistido ou exposto a terceiros. Muda com versionamento e aviso.
+- **Decisão interna:** muda sem aviso.
+
+Decisão que fixa convenção, restrição ou padrão para features futuras vira ADR, no formato de adr.md; decisão local à feature fica só na tabela.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; nenhuma seção vazia.
+Cada seção existe quando há o que dizer; nenhuma seção vazia. Na ordem do documento:
 
-Contexto de design (restrições da spec, do PRD e das ADRs; base lida vs ignorada) · Critérios de avaliação · Riscos e técnicas · Abordagens (quando há alternativa) · Visão da arquitetura · Unidade de deploy (uma linha quando fica no existente) · Componentes · Domain Events · Modelo de dados · Tratamento de erros · Decisões técnicas · Arquivos a criar ou modificar (insumo direto do tasks.md).
+1. Contexto de design — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
+2. Critérios de avaliação.
+3. Riscos e técnicas.
+4. Abordagens — só quando há alternativa real.
+5. Visão da arquitetura.
+6. Unidade de deploy — uma linha quando a mudança fica no deployável existente.
+7. Componentes.
+8. Domain Events.
+9. Modelo de dados.
+10. Tratamento de erros.
+11. Decisões técnicas.
+12. Arquivos a criar ou modificar — insumo direto do `tasks.md`.
 
 ## Template
 
@@ -132,4 +176,4 @@ Fica em `src/ReservationBook`.
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo
 ```
 
-Apresente e espere antes de Tasks.
+Depois de gravar, apresente o design e espere antes de começar as Tasks.

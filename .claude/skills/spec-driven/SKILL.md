@@ -5,16 +5,32 @@ description: 'SDD em cinco entradas (Specify, Design, Tasks, Execute, Verify): d
 
 # Spec-Driven Development
 
-Método de escrita e execução: a spec diz o quê, o design diz como, as tasks dizem em que ordem, o Execute entrega uma task por vez e o Verify prova com evidência. O PRD (em `/docs/prd`, IDs `<PREFIXO>-nn`) é a entrada e a fonte das regras de negócio; esta skill começa onde ele termina. Linter é feedback para o agente: gravar → rodar → corrigir → rodar de novo → apresentar; o artefato nunca carrega estado de validação, e falha de ambiente é dita no chat.
+Esta skill é um método de escrita e de execução em cinco entradas, cada uma com um papel fixo:
+
+- **Specify:** a spec diz *o quê* construir.
+- **Design:** o design diz *como*.
+- **Tasks:** as tasks dizem *em que ordem*.
+- **Execute:** entrega uma task por vez.
+- **Verify:** prova com evidência que a implementação atende à spec e ao design.
+
+O PRD, em `/docs/prd` e com IDs no formato `<PREFIXO>-nn`, é a entrada do método e a fonte das regras de negócio. Esta skill começa onde o PRD termina.
+
+O linter é feedback para o agente, não carimbo no artefato. O ciclo é: grave o artefato, rode o linter, corrija o que ele apontou, rode de novo e só então apresente. O artefato nunca carrega estado de validação. Se o linter não rodar por falha de ambiente, diga isso no chat.
 
 ## Abrir uma mudança
 
-Duas perguntas decidem quanto artefato a mudança pede:
+### Quanto artefato a mudança pede
 
-- `design.md` quando há decisão arquitetural, padrão novo, interação entre componentes a planejar ou risco nomeado (integração externa, estado e concorrência, dinheiro, dado regulado, contrato público, novo deployável).
-- `tasks.md` quando há mais de cinco passos ou dependência não trivial.
+Duas perguntas decidem quais artefatos a mudança pede, além da spec:
 
-Catraca: complexidade descoberta no meio promove (pare, diga, crie o artefato que faltou); nada rebaixa. Specify e Execute nunca são pulados: sempre se sabe o quê antes de fazer. Sem `tasks.md`, o Execute começa por um plano inline (execute.md).
+1. Há decisão arquitetural, padrão novo, interação entre componentes a planejar ou risco nomeado (integração externa, estado e concorrência, dinheiro, dado regulado, contrato público, novo deployável)? Se sim, a mudança pede `design.md`.
+2. Há mais de cinco passos ou dependência não trivial? Se sim, a mudança pede `tasks.md`.
+
+**Catraca.** A resposta só sobe. Complexidade descoberta no meio da mudança promove o nível de artefato: pare, diga o que descobriu e crie o artefato que faltou. Nada rebaixa o nível já decidido.
+
+Specify e Execute nunca são pulados: sempre se sabe *o quê* antes de fazer. Quando não há `tasks.md`, o Execute começa por um plano inline (execute.md, Plano inline).
+
+### Entradas e pré-requisitos
 
 | Entrada | Pré-requisito | Referência |
 |---|---|---|
@@ -25,31 +41,45 @@ Catraca: complexidade descoberta no meio promove (pare, diga, crie o artefato qu
 | Verify | última task fechada | [verify.md](references/verify.md) |
 | ADR | decisão que fixa convenção para features futuras | [adr.md](references/adr.md) |
 
-Leia a referência inteira antes de agir. Layout de arquivos e comentários de máquina em specify.md, Layout.
+Leia a referência inteira antes de agir em qualquer entrada. O layout de arquivos e os comentários de máquina estão definidos na referência de Specify (specify.md, Layout).
 
 ## Aprovação e autorizações
 
-Aprovação é o commit: árvore suja é trabalho em elaboração; arquivo commitado é a versão válida. Apresente cada artefato e espere antes de começar o seguinte. "Implementa" autoriza editar os arquivos da mudança; "commita" autoriza commit local, uma vez por mudança; push, deploy e qualquer efeito externo perguntam sempre. Silêncio nunca é aprovação.
+- **Aprovação é o commit.** Árvore suja é trabalho em elaboração; arquivo commitado é a versão válida.
+- **Apresente e espere.** Apresente cada artefato e espere a aprovação antes de começar o seguinte.
+- **Cada palavra autoriza uma coisa.** "Implementa" autoriza editar os arquivos da mudança. "Commita" autoriza commit local, uma vez por mudança. Push, deploy e qualquer efeito externo perguntam sempre.
+- **Silêncio nunca é aprovação.**
 
 ## Tags e dúvidas
 
-- `[PREMISSA]` é inferência com default e racional; `[LACUNA]` é informação insuficiente para decidir. Sem tag é fato (PRD, usuário, código, documentação). Aprovação não converte premissa em fato.
-- **Fatos você procura; decisões você pergunta.** Cadeia de pesquisa: base de código → docs do projeto → documentação oficial → web → sinalizar incerteza. Nunca fabrique API, padrão ou comportamento; "não encontrei" é resposta válida.
-- Toda dúvida cai em uma de três categorias: decisão dentro da autonomia concedida (decida, registre, siga); `[PREMISSA]` com default e racional (avance, fica revisável); decisão material do usuário (escopo, regra de negócio, trade-off, efeito externo: pergunte e bloqueie só o que depende dela). Sem resposta, o item fica bloqueado; nada é adotado por default.
-- **Refine o contexto, não o erro.** Artefato downstream errado (teste que não deveria passar, código que contradiz o design, task impossível) não se remenda: corrija o artefato upstream que carregava a causa e re-derive. Regra de negócio errada volta ao PRD.
-- Precedência: pedido da sessão > convenção do repositório > defaults desta skill.
+- **Tags.** `[PREMISSA]` marca inferência com default e racional; `[LACUNA]` marca informação insuficiente para decidir. Texto sem tag é fato, com origem no PRD, no usuário, no código ou na documentação. Aprovação não converte premissa em fato.
+- **Fatos você procura; decisões você pergunta.** A cadeia de pesquisa para um fato, nesta ordem: base de código, docs do projeto, documentação oficial, web; se nada responder, sinalize a incerteza. Nunca fabrique API, padrão ou comportamento; "não encontrei" é resposta válida.
+- **Toda dúvida cai em uma de três categorias:**
+  1. Decisão dentro da autonomia concedida: decida, registre e siga.
+  2. `[PREMISSA]` com default e racional: avance; a premissa fica revisável.
+  3. Decisão material do usuário (escopo, regra de negócio, trade-off, efeito externo): pergunte e bloqueie só o que depende dela. Sem resposta, o item fica bloqueado; nada é adotado por default.
+- **Refine o contexto, não o erro.** Artefato downstream errado (teste que não deveria passar, código que contradiz o design, task impossível) não se remenda: corrija o artefato upstream que carregava a causa e re-derive o downstream. Regra de negócio errada volta ao PRD.
+- **Precedência**, do que prevalece para o que cede:
+  1. Pedido da sessão.
+  2. Convenção do repositório.
+  3. Defaults desta skill.
 
 ## Contrato de execução
 
-1. Testes derivam da spec, nunca da implementação: cada teste afirma o resultado que a spec define.
-2. O gate decide, não a auto-avaliação: task pronta é comando de gate com exit 0; gate que não roda é bloqueio com motivo.
-3. Um commit atômico por task, quando autorizado, no formato que o repositório convenciona; se ele tem validação de mensagem, rode-a. Nunca enfraqueça, pule ou apague teste para passar.
-4. Escopo de escrita de uma task: seus arquivos de implementação, teste, configuração indispensável e o `tasks.md`. Problema vizinho é reportado, não corrigido.
-5. Pacote novo é sugestão até validar a procedência; segredo encontrado na base nunca entra no output.
+1. **Testes derivam da spec, nunca da implementação.** Cada teste afirma o resultado que a spec define.
+2. **O gate decide, não a auto-avaliação.** Task pronta é comando de gate com exit 0. Gate que não roda é bloqueio com motivo.
+3. **Um commit atômico por task**, quando autorizado, no formato que o repositório convenciona; se o repositório tem validação de mensagem, rode-a. Nunca enfraqueça, pule ou apague teste para passar.
+4. **Escopo de escrita de uma task:** seus arquivos de implementação, teste, configuração indispensável e o `tasks.md`. Problema vizinho é reportado, não corrigido.
+5. **Segurança.** Pacote novo é sugestão até validar a procedência. Segredo encontrado na base nunca entra no output.
 
 ## Scripts
 
-Em `scripts/` no diretório desta skill: `python3 <skill-dir>/scripts/<nome>.py` (docstring completa ao rodar sem argumentos). `HARD` exige correção e nova rodada; `WARN` é heurística, julgue. Linter verde é esqueleto conforme, não artefato bom. Sem ferramenta de execução, faça as mesmas checagens lendo e diga que foi manual.
+Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py`; rodar sem argumentos imprime a docstring completa.
+
+- `HARD` exige correção e nova rodada.
+- `WARN` é heurística: julgue.
+- Linter verde é esqueleto conforme, não artefato bom.
+- Sem ferramenta de execução, faça as mesmas checagens lendo o artefato e diga que a verificação foi manual.
 
 | Antes de apresentar | Comando |
 |---|---|
@@ -58,15 +88,61 @@ Em `scripts/` no diretório desta skill: `python3 <skill-dir>/scripts/<nome>.py`
 
 ## Idioma e redação
 
-- Artefato no idioma do input (ambíguo: português). Termo canônico com tradução de mesma força se traduz (Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então); sem tradução de mesma força fica em inglês (domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate); keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem; termo que o time usa em português fica em português.
-- Declarativo, sem hedging, sem meta-narração, sem placeholder; um conceito por parágrafo; contexto de decisão (racional, mitigação) preservado, porque é sinal para humanos e para o próximo agente.
+### Idioma
+
+- O artefato fica no idioma do input; se o idioma for ambíguo, português.
+- Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
+- Termo sem tradução de mesma força fica em inglês: domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate.
+- Keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem.
+- Termo que o time usa em português fica em português.
+
+### Redação
+
+- Declarativo, sem hedging, sem meta-narração, sem placeholder.
+- Um conceito por parágrafo.
+- Contexto de decisão (racional, mitigação) preservado: é sinal para humanos e para o próximo agente.
 
 ## Revisão por entrada
 
-Antes de apresentar, além do linter. Em todas: nenhuma seção existe só para cumprir a forma.
+Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
 
-- **Specify:** cada requisito é um padrão EARS com `SHALL`, valor concreto e ID único (se não dá para escrever o teste, reescreva); requisito do PRD cita o ID e não reescreve a regra; nenhuma regra de negócio decidida por premissa; toda inferência marcada; se o Design vai precisar decidir comportamento, a spec ficou incompleta.
-- **Design:** profundidade proporcional ao risco (seção longa sem risco é inflação; risco sem técnica ou aceite é buraco); critérios fixados e criticados antes das abordagens, quarta pergunta respondida; nenhum comportamento decidido aqui que devia estar na spec; interfaces com tipos e todo `IF/THEN` da spec no tratamento de erros; ADRs conformadas ou supersedidas.
-- **Tasks:** todo requisito em escopo tem task; toda task tem requisito; `Consome`/`Produz` consistentes entre tasks e com o design; `Tests` coerente com a camada e co-locado; `Pronto quando` com critério de comportamento e gate.
-- **Execute:** plano declarado, testes da spec falhando antes, implementação mínima, gate verde, tabela de evidência; nenhuma lacuna resolvida em silêncio; só os arquivos da task tocados.
-- **Verify:** cobertura re-derivada com olhos frescos e independência declarada; toda linha de evidência com `file:line` e assertion; lacuna de precisão reportada, nunca aprovada; dois eixos; gaps ordenados e convertidos em `TCn`.
+### Specify
+
+- Cada requisito é um padrão EARS com `SHALL`, valor concreto e ID único. Se não dá para escrever o teste, reescreva o requisito.
+- Requisito que vem do PRD cita o ID e não reescreve a regra.
+- Nenhuma regra de negócio foi decidida por premissa.
+- Toda inferência está marcada.
+- Se o Design vai precisar decidir comportamento, a spec ficou incompleta.
+
+### Design
+
+- Profundidade proporcional ao risco: seção longa sem risco é inflação; risco sem técnica ou aceite é buraco.
+- Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
+- Nenhum comportamento decidido aqui que devia estar na spec.
+- Interfaces com tipos, e todo `IF/THEN` da spec aparece no tratamento de erros.
+- ADRs conformadas ou supersedidas (adr.md, Conformar e superseder).
+
+### Tasks
+
+- Todo requisito em escopo tem task; toda task tem requisito.
+- `Consome` e `Produz` consistentes entre as tasks e com o design.
+- `Tests` coerente com a camada da task, com teste co-locado.
+- `Pronto quando` com critério de comportamento e comando de gate.
+
+### Execute
+
+- Plano declarado antes do código.
+- Testes da spec falhando antes da implementação.
+- Implementação mínima.
+- Gate verde.
+- Tabela de evidência preenchida.
+- Nenhuma lacuna resolvida em silêncio.
+- Só os arquivos da task tocados.
+
+### Verify
+
+- Cobertura re-derivada com olhos frescos, com o grau de independência declarado no relatório.
+- Toda linha de evidência com `file:line` e assertion.
+- Lacuna de precisão reportada, nunca aprovada.
+- Os dois eixos percorridos: conformidade à spec e aderência ao design.
+- Gaps ordenados por severidade e convertidos em tasks de correção `TCn`.

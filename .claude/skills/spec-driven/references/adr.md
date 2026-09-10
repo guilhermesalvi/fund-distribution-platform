@@ -1,12 +1,33 @@
 # ADR
 
-Uma decisão é **de projeto** quando fixa convenção, restrição ou padrão que features futuras devem seguir (estilo arquitetural, transporte de eventos, forma de persistência compartilhada, política de versionamento). Decisão local à feature fica na tabela de Decisões técnicas do design. Gatilhos explícitos: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
+**Objetivo:** registrar uma decisão de projeto com o contexto, as alternativas consideradas e as consequências, para que o porquê sobreviva ao código, ao diagrama e ao turnover.
 
-A ADR guarda o porquê que código e diagrama não guardam. Sem alternativas consideradas e consequências, a IA re-propõe caminhos já descartados e o time re-litiga o que já foi pago. Os participantes entram porque decisão de arquitetura raramente é de uma pessoa, e o nome é o que responde "por que fizemos assim?" depois do turnover.
+## Quando a decisão é de projeto
+
+Uma decisão é **de projeto** quando fixa convenção, restrição ou padrão que features futuras devem seguir. Exemplos:
+
+- estilo arquitetural;
+- transporte de eventos;
+- forma de persistência compartilhada;
+- política de versionamento.
+
+Decisão local à feature não vira ADR: fica na tabela de Decisões técnicas do design (design.md, Decisões técnicas).
+
+Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
+
+## O que a ADR guarda
+
+- **O porquê.** A ADR guarda o que código e diagrama não guardam: a razão da decisão.
+- **Alternativas consideradas e consequências.** Sem elas, a IA re-propõe caminhos já descartados e o time re-litiga o que já foi pago.
+- **Participantes.** Decisão de arquitetura raramente é de uma pessoa; o nome de quem decidiu e de quem foi consultado é o que responde "por que fizemos assim?" depois do turnover.
 
 ## Arquivo
 
-`docs/adr/NNNN-<slug>.md`, com `NNNN` = max+1 lendo a pasta. Projeto que já tem formato ou diretório de ADR mantém o seu; esta skill não cria formato paralelo.
+Grave em `docs/adr/NNNN-<slug>.md`. Para obter `NNNN`, leia a pasta e use max+1.
+
+Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo.
+
+### Template
 
 ```markdown
 # ADR 0007: Eventos de domínio saem por outbox transacional
@@ -33,6 +54,6 @@ Participantes: quem decidiu; quem foi consultado.
 
 ## Conformar e superseder
 
-- Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Conflito é conformar ou superseder, nunca ignorar.
-- Superseder: ADR nova com a linha `Substitui: NNNN` abaixo do título; a antiga ganha `Substituída por: NNNN` no mesmo lugar e nada mais muda. Nunca apague uma ADR.
-- Regra de projeto que a mudança cria ou altera (CLAUDE.md, rules, linter) cita a ADR ou o princípio que a justifica; regra sem porquê é seguida cegamente ou ignorada.
+- **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
+- **Como superseder.** Crie uma ADR nova com a linha `Substitui: NNNN` abaixo do título. Na ADR antiga, adicione `Substituída por: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
+- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em CLAUDE.md, rules ou linter) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.

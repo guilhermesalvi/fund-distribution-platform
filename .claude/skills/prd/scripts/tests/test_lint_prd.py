@@ -1,6 +1,10 @@
-"""Testes de lint_prd.py: H1 e secoes obrigatorias por igualdade, Requisitos
-Funcionais quando ha IDs, prefixo e definicoes, fence, IDs entre PRDs, PRD
-0000, links locais e as heuristicas WARN.
+"""Testes de lint_prd.py: H1, campo do header (lista fechada de rotulos) e
+secoes obrigatorias por igualdade, Requisitos Funcionais quando ha IDs,
+prefixo, MoSCoW e definicoes, fence, IDs entre PRDs, PRD 0000 e a referencia a
+ele, links locais, as regras de secao (conteudo, ordem, trade-off, guardrail,
+Ponto de Maior Fragilidade, cenario Dado/Quando/Entao, bullet regulatorio), os
+rotulos de diagrama, as heuristicas WARN e a regressao do PRD de
+references/example.md.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_prd.py"
 """
@@ -8,26 +12,32 @@ Funcionais quando ha IDs, prefixo e definicoes, fence, IDs entre PRDs, PRD
 import contextlib
 import io
 import os
+import re
 import sys
 import tempfile
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SKILL = os.path.dirname(SCRIPTS)
+EXAMPLE_MD = os.path.join(SKILL, "references", "example.md")
 sys.path.insert(0, SCRIPTS)
 import lint_prd  # noqa: E402
 
 
 def prd(prefix="ONB", frs=True, nfr=False, title="Feature X", body_extra="",
-        prefix_line=True):
+        prefix_line=True, link_0000="", header_field="Contexto Originário"):
+    header = f"| **{header_field}** | Ctx{prefix} |\n" if header_field else ""
     text = f"""# {title}
 
 | | |
 |---|---|
-| **Contexto Originário** | Ctx{prefix} |
-
+{header}
 """
     if prefix_line:
-        text += f"Prefixo dos requisitos: `{prefix}`.\n"
+        text += f"Prefixo dos requisitos: `{prefix}`."
+        if link_0000:
+            text += f" Visão geral: [PRD 0000]({link_0000})."
+        text += "\n"
     text += f"""
 ## Contexto e Problema
 
@@ -48,14 +58,18 @@ Capability.
     return text + body_extra
 
 
-def overview(prefixes=("ONB",), comment=True):
+OV = "0000-overview.md"  # nome do PRD 0000 nos testes que criam a visao geral
+
+
+def overview(prefixes=("ONB",), comment=True, header_field="Escopo"):
     rows = "\n".join(f"| Ctx{p} | resp | [x](#contextos) | `{p}` | up |" for p in prefixes)
     head = "<!-- prd: overview -->\n" if comment else ""
+    field = f"| **{header_field}** | tudo |\n" if header_field else ""
     return head + f"""# Visão Geral
 
 | | |
 |---|---|
-| **Escopo** | tudo |
+{field}
 
 ## Propósito
 
@@ -197,6 +211,106 @@ class FenceTests(LintCase):
                          [False, True, True, True, True, True, False])
 
 
+TRADEOFF = ("\n## Trade-offs Declarados\n\n"
+            "- **Decisao unica.** *Custo:* retrabalho. *Razão:* prazo.\n")
+METRICS = ("\n## Métricas de Sucesso\n\n"
+           "- Leading: toda combinacao invalida rejeitada.\n"
+           "- Guardrails: nada do que ja funciona degrada.\n")
+FRAGILITY = ("\n## Ponto de Maior Fragilidade\n\n"
+             "O corte de escopo cai se a corretora fechar o livro antes.\n")
+REFERENCES = "\n## Referências\n\n- CVM 160, lida em 2026-01-10.\n"
+
+
+class SectionContentTests(LintCase):
+    def test_empty_section_is_hard(self):
+        self.hard_for(prd(body_extra="\n## Não-objetivos\n\n"),
+                      "secao sem conteudo: Não-objetivos")
+
+    def test_none_line_only_section_is_hard(self):
+        self.hard_for(prd(body_extra="\n## Não-objetivos\n\n- N/A\n"),
+                      "secao sem conteudo: Não-objetivos")
+
+    def test_section_with_content_is_green(self):
+        self.write("0001-onb-x.md", prd(body_extra="\n## Não-objetivos\n\n- cadastro de fundo.\n"))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_subsection_counts_as_content(self):
+        body = "\n## Não-objetivos\n\n### Fora da v1\n\n- cadastro de fundo.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class SectionOrderTests(LintCase):
+    def test_section_out_of_order_is_hard(self):
+        text = prd().replace("## Contexto e Problema",
+                             METRICS.strip() + "\n\n## Contexto e Problema")
+        self.hard_for(text, "'Métricas de Sucesso' aparece antes de "
+                            "'Contexto e Problema'")
+
+    def test_table_order_is_green(self):
+        self.write("0001-onb-x.md",
+                   prd(nfr=True, body_extra=TRADEOFF + METRICS + FRAGILITY + REFERENCES))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("WARN", out)
+
+    def test_unknown_section_does_not_affect_order(self):
+        self.write("0001-onb-x.md", prd(body_extra="\n## Regras Locais\n\n- uma regra.\n" + METRICS))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class TradeOffTests(LintCase):
+    def test_tradeoff_without_reason_is_hard(self):
+        body = "\n## Trade-offs Declarados\n\n- **Decisao.** *Custo:* retrabalho.\n"
+        self.hard_for(prd(body_extra=body + METRICS), "trade-off sem Razao")
+
+    def test_tradeoff_without_cost_is_hard(self):
+        body = "\n## Trade-offs Declarados\n\n- **Decisao.** *Razão:* prazo.\n"
+        self.hard_for(prd(body_extra=body + METRICS), "trade-off sem Custo")
+
+    def test_bold_and_english_markers_are_accepted(self):
+        body = ("\n## Trade-offs Declarados\n\n"
+                "- **Decisao A.** **Custo:** retrabalho. **Razão:** prazo.\n"
+                "- **Decisao B.** *Cost:* rework. *Reason:* deadline.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body + METRICS))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_continuation_line_completes_the_bullet(self):
+        body = ("\n## Trade-offs Declarados\n\n"
+                "- **Decisao.** *Custo:* retrabalho.\n  *Razão:* prazo.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body + METRICS))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class MetricGuardrailTests(LintCase):
+    def test_metrics_without_guardrail_is_hard(self):
+        body = "\n## Métricas de Sucesso\n\n- Leading: toda regra invalida rejeitada.\n"
+        self.hard_for(prd(body_extra=body), "sem nenhuma linha de guardrail")
+
+    def test_metrics_with_guardrail_is_green(self):
+        self.write("0001-onb-x.md", prd(body_extra=METRICS))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class FragilityPositionTests(LintCase):
+    def test_section_after_fragility_is_hard(self):
+        body = FRAGILITY + "\n## Dependências e Riscos\n\n- integracao externa.\n"
+        self.hard_for(prd(body_extra=body),
+                      "Ponto de Maior Fragilidade fora de posicao: "
+                      "'Dependências e Riscos' vem depois")
+
+    def test_references_after_fragility_is_green(self):
+        self.write("0001-onb-x.md", prd(body_extra=FRAGILITY + REFERENCES))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
 class WarnTests(LintCase):
     def test_unknown_tag_is_warn(self):
         self.write("0001-onb-x.md", prd(body_extra="\n[PREMISA] algo.\n\n[FATO] outro.\n"))
@@ -226,6 +340,22 @@ class WarnTests(LintCase):
         self.assert_warn(out, "hedging lexical: 'talvez'")
         self.assert_warn(out, "meta-narracao")
 
+    def test_added_hedging_words_are_warn(self):
+        body = "\nO operador poderia esperar muito pela publicacao da oferta.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "hedging lexical: 'poderia'")
+        self.assert_warn(out, "hedging lexical: 'muito'")
+
+    def test_added_english_hedging_words_are_warn(self):
+        body = "\nThe operator could wait very long for the offer to be published.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "hedging lexical: 'could'")
+        self.assert_warn(out, "hedging lexical: 'very'")
+
     def test_mechanism_in_solution_is_warn(self):
         text = prd().replace("Capability.", "Publicar no Kafka a cada mudanca.")
         self.write("0001-onb-x.md", text)
@@ -235,8 +365,9 @@ class WarnTests(LintCase):
 
     def test_identical_paragraph_in_two_prds_is_warn(self):
         long = "\nO mercado exige liquidacao em D+2 para toda oferta publica de cotas de fundo fechado.\n"
-        self.write("0001-onb-x.md", prd(body_extra=long))
-        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y", body_extra=long))
+        self.write("0001-onb-x.md", prd(body_extra=long, link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y",
+                                        body_extra=long, link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
@@ -244,8 +375,9 @@ class WarnTests(LintCase):
 
     def test_short_identical_lines_are_not_paragraphs(self):
         short = "\nCada requisito e uma condicao verificavel.\n"
-        self.write("0001-onb-x.md", prd(body_extra=short))
-        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y", body_extra=short))
+        self.write("0001-onb-x.md", prd(body_extra=short, link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y",
+                                        body_extra=short, link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
@@ -258,8 +390,8 @@ class CrossPrdTests(LintCase):
                       "citacao de ONB-77 nao resolve para nenhuma definicao")
 
     def test_citation_resolves_across_prds(self):
-        self.write("0001-onb-x.md", prd(body_extra="\nVer OTH-01.\n"))
-        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y"))
+        self.write("0001-onb-x.md", prd(body_extra="\nVer OTH-01.\n", link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y", link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
@@ -275,8 +407,8 @@ class CrossPrdTests(LintCase):
         self.assert_warn(out, "prefixo 'ISO' que nenhum PRD da pasta declara")
 
     def test_single_file_target_uses_folder_index(self):
-        p = self.write("0001-onb-x.md", prd(body_extra="\nVer OTH-01.\n"))
-        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y"))
+        p = self.write("0001-onb-x.md", prd(body_extra="\nVer OTH-01.\n", link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", title="Feature Y", link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint(p)
         self.assert_no_hard(rc, out)
@@ -310,9 +442,10 @@ class DiscoveryTests(LintCase):
 
 class OverviewTests(LintCase):
     def test_overview_with_two_prefixes_is_green(self):
-        self.write("0001-onb-x.md", prd())
-        self.write("0002-oth-y.md", prd(prefix="OTH"))
-        self.write("0000-platform-overview.md", overview(("ONB", "OTH")))
+        zero = "0000-platform-overview.md"
+        self.write("0001-onb-x.md", prd(link_0000=zero))
+        self.write("0002-oth-y.md", prd(prefix="OTH", link_0000=zero))
+        self.write(zero, overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
         self.assertNotIn("WARN", out)
@@ -340,7 +473,7 @@ class OverviewTests(LintCase):
         self.assert_hard(out, "sem '<!-- prd: overview -->'")
 
     def test_overview_needs_no_required_sections(self):
-        self.write("0001-onb-x.md", prd())
+        self.write("0001-onb-x.md", prd(link_0000="0000-platform-overview.md"))
         self.write("0000-platform-overview.md", overview())
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
@@ -357,22 +490,27 @@ class LocalLinkTests(LintCase):
         self.assert_hard(out, "link '0000-overview.md' nao resolve")
 
     def test_resolving_links_pass(self):
-        self.write("0001-onb-x.md", prd(body_extra="\nVeja [PRD 0002](0002-oth-y.md#contexto) e [pasta](../prd).\n"))
-        self.write("0002-oth-y.md", prd(prefix="OTH"))
+        self.write("0001-onb-x.md",
+                   prd(body_extra="\nVeja [PRD 0002](0002-oth-y.md#contexto) e [pasta](../prd).\n",
+                       link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
 
     def test_link_is_relative_to_prd_folder(self):
-        self.write("onb/0001-x.md", prd(body_extra="\nVeja [0000](../0000-overview.md) e [nota](notes.md).\n"))
+        self.write("onb/0001-x.md", prd(body_extra="\nVeja [nota](notes.md).\n",
+                                        link_0000="../0000-overview.md"))
         self.write("onb/notes.md", "# N\n")
         self.write("0000-overview.md", overview())
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
 
     def test_root_relative_link_resolves_from_repo_root(self):
-        self.write("0001-onb-x.md", prd(body_extra="\nVeja [spec](/docs/prd/0002-oth-y.md) e [x](/docs/nope.md).\n"))
-        self.write("0002-oth-y.md", prd(prefix="OTH"))
+        self.write("0001-onb-x.md",
+                   prd(body_extra="\nVeja [spec](/docs/prd/0002-oth-y.md) e [x](/docs/nope.md).\n",
+                       link_0000=OV))
+        self.write("0002-oth-y.md", prd(prefix="OTH", link_0000=OV))
         self.write("0000-overview.md", overview(("ONB", "OTH")))
         rc, out = self.run_lint()
         self.assertEqual(rc, 1)
@@ -391,6 +529,247 @@ class LocalLinkTests(LintCase):
         body = ("\nFontes: [CVM](https://example.org/a.pdf), [sec](#contexto), `[x](nao/existe.md)`\n\n"
                 "```markdown\n[y](nao/existe/tambem.md)\n```\n")
         self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+class MoscowTests(LintCase):
+    def test_fr_without_moscow_is_hard(self):
+        self.hard_for(prd(body_extra="\n- **ONB-02** condicao sem prioridade.\n"),
+                      "requisito ONB-02 definido sem prioridade MoSCoW")
+
+    def test_every_priority_is_accepted(self):
+        body = ("\n- **ONB-02 (Should)** a.\n- **ONB-03 (Could)** b.\n"
+                "- **ONB-04 (Won't)** c.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_nfr_without_moscow_is_green(self):
+        self.write("0001-onb-x.md", prd(nfr=True))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("MoSCoW", out)
+
+
+class HeaderFieldTests(LintCase):
+    def test_missing_field_is_hard(self):
+        self.hard_for(prd(header_field=""),
+                      "header sem o campo 'Contexto Originario', 'Modulo' ou 'Area'")
+
+    def test_english_alias_is_accepted(self):
+        self.write("0001-onb-x.md", prd(header_field="Originating Context"))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_module_and_area_labels_are_accepted(self):
+        for label in ("Módulo", "Module", "Área", "Area"):
+            with self.subTest(label=label):
+                self.write("0001-onb-x.md", prd(header_field=label))
+                rc, out = self.run_lint()
+                self.assert_no_hard(rc, out)
+
+    def test_label_outside_the_closed_list_is_hard(self):
+        self.hard_for(prd(header_field="Contexto"),
+                      "header sem o campo 'Contexto Originario', 'Modulo' ou 'Area'")
+
+    def test_field_without_value_is_hard(self):
+        text = prd().replace("| **Contexto Originário** | CtxONB |",
+                             "| **Contexto Originário** |  |")
+        self.hard_for(text, "campo 'Contexto Originario' do header sem valor")
+
+    def test_field_below_the_prefix_line_is_hard(self):
+        text = prd(header_field="").replace(
+            "Prefixo dos requisitos: `ONB`.",
+            "Prefixo dos requisitos: `ONB`.\n\n| | |\n|---|---|\n"
+            "| **Contexto Originário** | CtxONB |")
+        self.hard_for(text, "header sem o campo 'Contexto Originario'")
+
+    def test_overview_uses_escopo(self):
+        self.write("0001-onb-x.md", prd(link_0000=OV))
+        self.write(OV, overview(header_field=""))
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, "header sem o campo 'Escopo'")
+
+
+class OverviewReferenceTests(LintCase):
+    def test_prefix_line_without_link_is_hard(self):
+        self.write("0001-onb-x.md", prd())
+        self.write(OV, overview())
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, "linha de prefixo sem link para o PRD 0000")
+
+    def test_prefix_line_with_link_is_green(self):
+        self.write("0001-onb-x.md", prd(link_0000=OV))
+        self.write(OV, overview())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_link_outside_the_prefix_line_does_not_count(self):
+        self.write("0001-onb-x.md", prd(body_extra=f"\nVeja [0000]({OV}).\n"))
+        self.write(OV, overview())
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, "linha de prefixo sem link para o PRD 0000")
+
+    def test_folder_without_overview_needs_no_link(self):
+        self.write("0001-onb-x.md", prd())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+
+CRITERIA = "\n## Critérios de Aceitação\n\n"
+REGULATORY = "\n## Considerações Regulatórias\n\nCVM 160 lida em 2026-01-10.\n\n"
+STATE_DIAGRAM = ("\n```mermaid\nstateDiagram-v2\n"
+                 "    [*] --> Draft: criar (ONB-01)\n"
+                 "    Draft --> Open: publicar\n"
+                 "```\n\n"
+                 "| Estado | Identificador | Significado |\n|---|---|---|\n"
+                 "| Rascunho | `Draft` | minuta em elaboracao |\n")
+FLOWCHART = ("\n```mermaid\nflowchart TD\n"
+             '    n0["Livro fechado (ONB-01)"] --> n1{"D > B ?"}\n'
+             '    n1 -- "nao" --> n2["Nao formada (ONB-01)"]\n'
+             '    n1 -- "sim (ONB-01)" --> n3["Formada (ONB-01)"]\n'
+             "```\n")
+SEQUENCE = ("\n```mermaid\nsequenceDiagram\n"
+            "    participant Operador\n"
+            "    participant Offering\n"
+            "    Operador->>Offering: publicar\n"
+            "    Offering-->>Operador: publicada (ONB-01)\n"
+            "```\n")
+
+
+class ScenarioIdTests(LintCase):
+    def test_scenario_without_id_is_warn(self):
+        body = CRITERIA + "- **Dado** um Draft, **quando** publica, **então** Aberta.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "cenario Dado/Quando/Entao sem ID de requisito")
+
+    def test_scenario_with_id_is_silent(self):
+        body = CRITERIA + "- **Dado** um Draft, **quando** publica, **então** Aberta (ONB-01).\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("cenario Dado/Quando/Entao", out)
+
+    def test_given_when_then_is_checked(self):
+        body = ("\n## Acceptance Criteria\n\n"
+                "- **Given** a draft, **when** published, **then** open.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_warn(out, "cenario Dado/Quando/Entao sem ID de requisito")
+
+    def test_bullet_that_is_not_a_scenario_is_ignored(self):
+        body = CRITERIA + "- A primeira coluna da tabela nomeia o caso.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assertNotIn("cenario Dado/Quando/Entao", out)
+
+
+class RegulatoryLineTests(LintCase):
+    def test_bullet_without_arrow_and_id_is_warn(self):
+        body = REGULATORY + "- Art. 73: restituicao integral abaixo do minimo.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "bullet regulatorio sem '-> ID'")
+
+    def test_bullet_citing_id_without_arrow_is_warn(self):
+        body = REGULATORY + "- Art. 73: restituicao integral abaixo do minimo. ONB-01.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_warn(out, "bullet regulatorio sem '-> ID'")
+
+    def test_both_arrows_and_bracketed_id_are_accepted(self):
+        body = (REGULATORY
+                + "- Art. 73: restituicao abaixo do minimo → ONB-01.\n"
+                + "- Art. 74, parágrafo único: efetivamente distribuidos -> [ONB-01].\n"
+                + "- LGPD, art. 15, I: o tratamento termina -> (ONB-01).\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("bullet regulatorio", out)
+
+    def test_bullet_not_starting_with_art_is_checked(self):
+        body = REGULATORY + "- CVM 160, art. 65: a reserva e irrevogavel.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_warn(out, "bullet regulatorio sem '-> ID'")
+
+    def test_source_line_without_bullet_is_ignored(self):
+        body = REGULATORY + "- Art. 73: restituicao abaixo do minimo → ONB-01.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assertNotIn("bullet regulatorio", out)
+
+
+class DiagramLabelTests(LintCase):
+    def test_state_transition_without_id_is_warn(self):
+        self.write("0001-onb-x.md", prd(body_extra=STATE_DIAGRAM))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "rotulo sem ID no diagrama: 'publicar'")
+        self.assertNotIn("'criar (ONB-01)'", out)
+
+    def test_flowchart_edge_without_id_is_warn(self):
+        self.write("0001-onb-x.md", prd(body_extra=FLOWCHART))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "rotulo sem ID no diagrama: 'nao'")
+        self.assertNotIn("'sim (ONB-01)'", out)
+
+    def test_sequence_message_without_id_is_warn(self):
+        self.write("0001-onb-x.md", prd(body_extra=SEQUENCE))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "rotulo sem ID no diagrama: 'publicar'")
+        self.assertNotIn("'publicada (ONB-01)'", out)
+
+    def test_prd_without_diagram_is_silent(self):
+        self.write("0001-onb-x.md", prd())
+        rc, out = self.run_lint()
+        self.assertNotIn("rotulo sem ID", out)
+
+
+class IdentifierColumnTests(LintCase):
+    def test_state_diagram_without_identifier_column_is_warn(self):
+        block = ("\n```mermaid\nstateDiagram-v2\n"
+                 "    [*] --> Draft: criar (ONB-01)\n```\n")
+        self.write("0001-onb-x.md", prd(body_extra=block))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "stateDiagram-v2 sem tabela com coluna Identificador")
+
+    def test_identifier_column_is_silent(self):
+        self.write("0001-onb-x.md", prd(body_extra=STATE_DIAGRAM))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("coluna Identificador", out)
+
+    def test_flowchart_needs_no_identifier_column(self):
+        self.write("0001-onb-x.md", prd(body_extra=FLOWCHART))
+        rc, out = self.run_lint()
+        self.assertNotIn("coluna Identificador", out)
+
+
+class ExampleRegressionTest(LintCase):
+    """O PRD de references/example.md, gravado como PRD real, linta sem HARD."""
+
+    def example(self):
+        with open(EXAMPLE_MD, encoding="utf-8") as f:
+            text = f.read()
+        # A cerca do bloco e mais longa que as cercas de dentro dele.
+        m = re.search(r"^(`{3,})markdown\s*\n(.*?)\n\1\s*$", text,
+                      re.DOTALL | re.MULTILINE)
+        self.assertIsNotNone(m, "bloco markdown nao encontrado em references/example.md")
+        return m.group(2)
+
+    def test_example_has_no_hard(self):
+        self.write("0001-onb-document-verification.md", self.example())
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
 

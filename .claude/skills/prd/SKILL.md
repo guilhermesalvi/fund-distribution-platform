@@ -8,7 +8,7 @@ description: 'Cria e refina PRDs (Product Requirements Documents) de features, p
 ## Princípios
 
 - **Método de escrita.** O PRD diz que problema existe, para quem, e que comportamento de negócio o resolve. Como o software é construído é downstream.
-- **Linter é feedback para o agente.** O ciclo é: grave o arquivo, rode os scripts, corrija, rode de novo e só então apresente. O PRD nunca carrega resultado de lint, nota de confiança ou marca de validação. Falha de ambiente (parser Mermaid indisponível, fonte que falta) é dita no chat.
+- **Linter é feedback para o agente.** O que ele acusa se corrige antes de apresentar, dentro do ciclo e do teto do passo Checar (Workflow). O PRD nunca carrega resultado de lint, nota de confiança ou marca de validação.
 - **Aprovação é o commit.** Árvore suja é trabalho em elaboração; arquivo commitado é a versão válida.
 - **Precedência.** Para layout, seções, idioma e forma, vale nesta ordem: primeiro o pedido da sessão, depois a convenção do repositório, por último os defaults desta skill.
 
@@ -30,9 +30,9 @@ Dois enquadramentos têm tratamento próprio:
 
 ## Workflow
 
-1. **Entender.** Avalie o escopo, a riqueza do contexto, o material de discovery e a necessidade de pesquisa conforme intake.md. Contexto vago pede no máximo três perguntas. Se o usuário recusa discovery, gere o PRD com `[LACUNA]` e siga.
+1. **Entender.** Avalie o escopo, a riqueza do contexto, o material de discovery e a necessidade de pesquisa conforme intake.md; é lá que estão o teto de perguntas e o que fazer quando o usuário recusa discovery.
 2. **Escrever.** Aplique o que está em writing.md: capability test, lente DDD, uma regra, um lugar, IDs, PRD 0000, diagramas, seções e redação. Grave o arquivo conforme a seção Gravar, abaixo.
-3. **Checar.** Rode os scripts da tabela em Scripts. Corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD. São no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado. WARN é você quem julga; se ignorar um de propósito, diga em uma linha no chat. Depois, faça a revisão de cinco itens de Revisão antes de apresentar.
+3. **Checar.** Rode os scripts da tabela em Scripts. Corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD. São no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado. Script que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada de correção: é bloqueio de ambiente, dito no chat, e o PRD é apresentado sem essa verificação. Exit 2 é erro de uso (caminho ou nome de arquivo fora do padrão) e se corrige como HARD. WARN é você quem julga; se ignorar um de propósito, diga em uma linha no chat. Depois, faça a revisão de cinco itens de Revisão antes de apresentar. Se a revisão alterou o PRD, rode os scripts uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat como os demais.
 
 ## Gravar
 
@@ -41,8 +41,8 @@ Dois enquadramentos têm tratamento próprio:
 - O path é `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, com slug em kebab-case em inglês e sem prefixo `prd-`.
 - `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número com `seq.py next`, nunca lendo o diretório.
 - `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000).
-- O contador colide quando dois PRs paralelos alocam o mesmo número: renumere o branch que entra depois. `seq.py check` acusa a duplicata.
-- Sem repositório, use o mesmo layout sob o diretório de saída que o ambiente indica.
+- O contador colide quando dois PRs paralelos alocam o mesmo número: renumere o branch cujo merge acontece depois. `seq.py check` acusa a duplicata.
+- Sem repositório, use o mesmo layout sob o diretório de trabalho atual e diga no chat o caminho gravado.
 
 ### Edição no lugar
 
@@ -54,7 +54,7 @@ Dois enquadramentos têm tratamento próprio:
 O header tem estes elementos, nesta ordem:
 
 1. A primeira linha é `# Título`.
-2. Abaixo, uma tabela de duas colunas com um único campo, `Contexto Originário`. O valor é o contexto primário; os contextos afetados vão a Dependências e Riscos. Se DDD não se aplica, use o rótulo equivalente do time (módulo ou área).
+2. Abaixo, uma tabela de duas colunas com um único campo, `Contexto Originário`. O valor é o contexto primário, seguido de `; afeta <contextos>` quando houver; o impacto em cada contexto afetado vai a Dependências e Riscos. Se DDD não se aplica, o rótulo é `Módulo` ou `Área`; o linter aceita só esses três.
 3. Depois, a linha de prefixo dos requisitos (writing.md, IDs).
 4. Na mesma linha do prefixo, a frase que aponta o PRD 0000, quando ele existe.
 
@@ -76,13 +76,11 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 ### Tags
 
-- Texto sem tag é fato. `[PREMISSA]` marca inferência a validar. `[LACUNA]` marca informação insuficiente.
-- Premissa que, se falsa, derruba o PRD é a primeira linha de Perguntas em Aberto, em negrito, com a cláusula "se falsa, …" e como validar.
-- Nunca preencha lacuna com especulação sem tag. Rascunho que diz o que falta é entregável; rascunho que esconde o que falta não é (writing.md, Tags).
+- As tags, suas definições e as regras de uso, inclusive o lugar fixo da premissa que derruba o PRD, estão em writing.md, Tags.
 
 ### Idioma
 
-- O idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do input; input ambíguo é português.
+- O idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do material recebido; sem material, o idioma do pedido. Uma vez fixado, mensagens posteriores em outro idioma não o mudam.
 - Termo canônico em inglês se traduz quando existe tradução de mesma força e reconhecimento:
 
 | Inglês | Português |
@@ -94,34 +92,30 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 - Sem tradução de mesma força, o termo fica em inglês: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off.
 - Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem.
-- Fora da tabela, o critério é a fonte: traduza quando a tradução do termo aparece na fonte primária do domínio (norma, prospecto, documentação oficial) no idioma do input; se a busca não a encontrar, mantenha o original em inglês.
+- Fora das duas listas, traduza o termo só quando a tradução já aparece no material recebido ou no PRD 0000; caso contrário, mantenha o original em inglês.
 - O linter aceita o par PT/EN de cada heading como alias.
-- O idioma da conversa não muda o do artefato.
 
 ### IDs
 
-- FR usa `<PREFIXO>-nn`, com MoSCoW; NFR usa `<PREFIXO>-NFR-nn`. A definição tem a forma `- **OFF-01 (Must)** condição.`; todo o resto do PRD cita o ID. ID nunca é reciclado (writing.md, IDs).
-- Uma regra, um lugar: cada regra de negócio existe em um único FR e todo o resto cita o ID (writing.md, Uma regra, um lugar).
-- O mesmo princípio de uma regra, um lugar vale para esta skill.
+- Formato, definição, remoção e enumerações dos IDs estão em writing.md, IDs; cada regra de negócio existe em um único FR e todo o resto cita o ID (writing.md, Uma regra, um lugar).
+- O mesmo princípio vale para esta skill: cada regra vive em uma referência e este arquivo a cita.
 
 ## Revisão antes de apresentar
 
-Depois do linter, dê a cada um dos cinco itens abaixo uma nota de 0 a 100: item abaixo de 90 é corrigido, item com 90 ou mais fica como está. Corrigido o item, repontue só ele: são no máximo duas passadas. Item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
+Depois do linter, percorra todas as seções do PRD para cada um dos cinco itens abaixo e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0): item abaixo de 90 é corrigido, item com 90 ou mais fica como está. Corrigido o item, repontue só ele: são no máximo duas passadas. Item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
 
-1. **Capability test.** A Solução Proposta e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test).
-2. **Uma regra, um lugar.** Cada regra existe em um único FR e o resto cita o ID. Paráfrase que diverge do FR é a informação, não o ruído (writing.md, Uma regra, um lugar).
+1. **Capability test.** A Solução Proposta, a frase de solução do Resumo Executivo e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test); em reverse PRD, todas as seções (modes.md, Modo reverse PRD).
+2. **Uma regra, um lugar.** Cada regra existe em um único FR e o resto cita o ID. Paráfrase que diverge do FR não se resolve aqui: vira `[LACUNA]` em Perguntas em Aberto (writing.md, Uma regra, um lugar).
 3. **Tags.** Toda inferência está marcada `[PREMISSA]` ou `[LACUNA]`; discovery sintetizado tem a origem marcada (intake.md, Material de discovery).
-4. **Forma.** Nenhuma seção existe só para cumprir forma (writing.md, Seções):
-   - não há "Nenhuma.", bullet inserido para completar contagem nem seção vazia;
-   - métrica só entra com guardrail;
-   - trade-off tem custo e razão;
-   - Ponto de Maior Fragilidade só entra quando há decisão de julgamento sobre fatos conhecidos — corte de escopo, threshold, priorização ou usuário-alvo — e então não é cosmético.
+4. **Forma.** Nenhuma seção existe só para cumprir forma (writing.md, Seções). Seção vazia, ordem, trade-off sem Custo e Razão, métrica sem guardrail e posição do Ponto de Maior Fragilidade já são HARD de `lint_prd.py`; aqui sobram os dois que só a leitura pega:
+   - bullet inserido para completar contagem;
+   - Ponto de Maior Fragilidade sem decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo), isto é, cosmético.
 5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação).
 
 ## Apresentar e iterar
 
 - Ao apresentar, aponte o que existe no PRD: o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas.
-- Mudança que toca duas ou mais seções ou altera a narrativa regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual.
+- Mudança pedida pelo usuário que toca duas ou mais seções, ou que altera Contexto e Problema ou Solução Proposta, regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual. Regeneração ou ajuste pedido pelo usuário reinicia o passo Checar com os tetos zerados.
 - Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts
@@ -129,16 +123,16 @@ Depois do linter, dê a cada um dos cinco itens abaixo uma nota de 0 a 100: item
 - Os scripts ficam em `scripts/`, no diretório desta skill, e são executados a partir dele com `python` (ou `python3`, onde `python` não existir). O parser Mermaid exige Node.
 - `/docs/prd` nos exemplos é caminho relativo à raiz do repositório; passe o caminho real.
 - A docstring completa de cada script sai ao rodá-lo sem argumentos.
-- `HARD` bloqueia apresentar. `WARN` é heurística com risco de falso-positivo.
+- `HARD` exige correção e nova rodada, dentro do teto do passo Checar (Workflow). HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica. `WARN` é heurística com risco de falso-positivo.
 - Linter verde é esqueleto conforme, não PRD bom.
 
 | Comando | Quando | O que faz |
 |---|---|---|
 | `python scripts/seq.py next /docs/prd --slug <domain-slug>-<feature-slug>` | Antes de criar o arquivo | Imprime `NNNN-<slug>` com o próximo número; recusa alocar quando há número duplicado |
 | `python scripts/seq.py check /docs/prd` | Antes de apresentar | Acusa número duplicado |
-| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar | Verifica seções obrigatórias, prefixo, IDs entre PRDs, links locais que resolvem e o PRD 0000 |
-| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou, fence sem fechamento ou parser indisponível (exit 3) é HARD, porque diagrama não validado é diagrama não entregue. `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda com autorização |
+| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar | HARD: seções obrigatórias e sua ordem, seção sem conteúdo, header com Contexto Originário, link ao PRD 0000 na linha de prefixo, FR sem MoSCoW, trade-off sem Custo e Razão, Métricas sem guardrail, posição do Ponto de Maior Fragilidade, prefixo, IDs entre PRDs, links locais. WARN: cenário Dado/Quando/Então sem ID, linha regulatória fora do formato, rótulo de diagrama sem ID, `stateDiagram-v2` sem coluna Identificador, hedging, mecanismo, parágrafo repetido |
+| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue; parser indisponível (exit 3) é bloqueio de ambiente e segue o passo Checar (Workflow). `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão |
 
 ## Exemplo
 
-PRD no formato-alvo em [references/example.md](references/example.md). Leia a seção correspondente quando a coluna Forma da tabela (writing.md, Seções) não bastar para instanciá-la; não é template a copiar.
+PRD no formato-alvo em [references/example.md](references/example.md). Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela (writing.md, Seções); não é template a copiar.

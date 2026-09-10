@@ -59,7 +59,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 - A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos, não prova. A fronteira se confirma quando regras e motivos de mudança também divergem.
 - A feature tem um contexto originário, nomeado no header (SKILL.md, Gravar).
 - Quando vários contextos são tocados, o originário é dono da decisão; os outros entram em Dependências e Riscos, com o impacto na autonomia deles declarado.
-- Escopo que cruza contextos sem origem clara é risco: não redija enquanto o dono da decisão não for nomeado; pergunte qual contexto é o originário.
+- Escopo que cruza contextos sem origem clara é risco: pergunte qual contexto é o originário antes de redigir; se o usuário não souber ou recusar responder, o campo Contexto Originário do header recebe `[LACUNA]` e o PRD sai assim (intake.md, Riqueza do contexto).
 - Mais de um contexto com PRD próprio exige o PRD 0000 (ver PRD 0000, abaixo).
 
 ### Domain Events
@@ -70,7 +70,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 
 ## Uma regra, um lugar
 
-- **O FR é a única fonte da regra.** Solução Proposta, Glossário, Considerações Regulatórias, Critérios de Aceitação, Dependências, Perguntas em Aberto e o PRD 0000 citam o ID (`OFF-28`) e não parafraseiam, porque paráfrase diverge com o tempo. Se paráfrase e FR divergem, decida qual está certo antes de apagar a paráfrase: a divergência é a informação, não o ruído.
+- **O FR é a única fonte da regra.** Solução Proposta, Glossário, Considerações Regulatórias, Critérios de Aceitação, Dependências, Perguntas em Aberto e o PRD 0000 citam o ID (`OFF-28`) e não parafraseiam, porque paráfrase diverge com o tempo. Se paráfrase e FR divergem, não apague nenhum dos dois nem escolha um lado: a divergência é decisão de negócio e entra como `[LACUNA]` em Perguntas em Aberto, citando o ID.
 - **Um FR, uma unidade comportamental verificável.** Obrigações independentes, que podem falhar separadamente, vão em FRs separados, porque citação e teste apontam para uma só. Condição conjunta e efeito indivisível ficam no mesmo FR, porque fragmentá-los inventa estados intermediários que o negócio não tem.
 - **Atributo condicional tem FR para fora da condição.** Atributo ou opção que só se aplica sob condição ganha um FR dizendo o que acontece quando é informado fora dela (rejeitado ou ignorado), porque essa é decisão de negócio, não de implementação.
 - **Seção que só reafirma FRs não entra.** Métrica que repete um FR, critério de aceitação sem valor novo e dependência que descreve dos dois lados o mesmo acoplamento são custo sem informação.
@@ -121,24 +121,24 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 
 | Seção | Entra quando | Forma |
 |---|---|---|
-| Resumo Executivo | O leitor precisa decidir sem ler o resto | 3–5 linhas: problema, solução, métrica primária |
-| Alinhamento Estratégico | Precisa justificar investimento | 3–5 linhas conectando a objetivo de negócio |
+| Resumo Executivo | O pedido ou o material recebido nomeia quem aprova o PRD sem ser o autor (patrocinador, comitê, líder de área) | 3–5 linhas: problema, solução, métrica primária |
+| Alinhamento Estratégico | O material recebido ou a conversa cita o objetivo de negócio, OKR ou meta a que a feature responde | 3–5 linhas conectando a objetivo de negócio |
 | Contexto e Problema | Sempre | O problema; fatos e premissas (ver Tags); sem regra de negócio |
 | Usuário-alvo / JTBD | Sempre | Um bullet por ator com o job |
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
-| Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid; regra citada por ID; fecha dizendo o que é downstream |
+| Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid quando passa o limiar de Diagramas, senão em prosa; regra citada por ID; fecha dizendo o que é downstream |
 | Glossário de Domínio | Há termo de domínio que o PRD usa sem definir e cujo significado muda a leitura de um requisito, ou que tem sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
 | Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (ver IDs e Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências ficam no 0000 |
 | Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual ADR |
-| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, no formato `Art. N: o que diz → ID que o modela`; artigo não conferido no texto é `[PREMISSA]` |
+| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, terminando com `→ ID que o modela` (a norma e o artigo abrem a linha); artigo não conferido no texto é `[PREMISSA]` |
 | Não-objetivos | O material recebido ou a conversa cita funcionalidade adjacente que o PRD não cobre | Um bullet por exclusão: o que não faremos |
-| Trade-offs Declarados | Há decisão com custo consciente | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
+| Trade-offs Declarados | Há decisão tomada na conversa ou no material recebido cuja alternativa rejeitada tem custo nomeável | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso | Há como medir o resultado | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado), guardrail (o que não pode degradar; sem ele a métrica vira alvo). Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
-| Critérios de Aceitação | Há valor que o FR não expressa | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
+| Critérios de Aceitação | Há FR cujo resultado depende de mais de um valor numérico ou de ramificação | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
 | Dependências e Riscos | Há dependência ou risco fora do controle do contexto | Tabela: item, tipo, impacto; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
 | Perguntas em Aberto | Há `[PREMISSA]` ou `[LACUNA]` que bloqueia decisão | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
-| Ponto de Maior Fragilidade | Há decisão de julgamento sobre fatos conhecidos: corte de escopo, threshold, priorização ou usuário-alvo | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
+| Ponto de Maior Fragilidade | Há decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo) que, se errada, invalida a Solução Proposta ou a métrica primária | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
 | Referências | Há fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
 
 ### Critérios de Aceitação
@@ -149,7 +149,7 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 
 ### Perguntas em Aberto
 
-- Premissa que derruba o PRD vem primeiro, em negrito, com "se falsa, …" e como validar (ver Tags). `[LACUNA]` que bloqueia decisão também entra.
+- Quando existe premissa que derruba o PRD, ela é a primeira linha, na forma fixada em Tags. `[LACUNA]` que bloqueia decisão também entra.
 - Decisão tomada não entra: com custo, vive em Trade-offs Declarados; sem custo, vive no FR que a aplica. Decisão arquitetural delegada é candidata a ADR (ver PRD 0000, Decisões delegadas a ADR).
 
 ### Ponto de Maior Fragilidade
@@ -164,7 +164,7 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 Tom direto, preciso, orientado a decisão. Sem linguagem genérica ("melhorar experiência") que não tenha âncora em métrica ou comportamento. O texto é lido por humanos e por LLMs downstream; por isso:
 
 - **Voz declarativa e ativa.** "O sistema bloqueia a ativação", não "seria bloqueado".
-- **Sem hedging.** Nada de "provavelmente", "talvez", "poderia", "na verdade", "muito".
+- **Sem hedging.** A lista de palavras é a de `lint_prd.py`, que as acusa como WARN; não há segunda lista.
 - **Sem meta-narração.** Nada de "este PRD descreve", "vamos discutir", "é importante notar": o título já diz o que o documento é.
 - **Sem qualificador redundante nem filler.** "De modo a" vira "para"; "devido ao fato de que" vira "porque"; "com zero X necessário" vira "sem X".
 - **Um conceito por parágrafo.** Dois parágrafos adjacentes sobre o mesmo ponto se fundem. Regra dita duas vezes ou FR com mais de uma condição é o que faz o PRD crescer sem informação (ver Uma regra, um lugar).

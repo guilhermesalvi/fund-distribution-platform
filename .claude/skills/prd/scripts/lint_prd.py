@@ -21,12 +21,17 @@ escreve, que corrige e roda de novo.
 
 HARD (exit 1):
   - titulo H1 ('# ...') ausente;
+  - header sem a tabela de duas colunas entre o titulo e a linha de prefixo
+    com um dos campos `**Contexto Originario**`, `**Modulo**` ou `**Area**`
+    (`**Escopo**` na visao geral); a lista e fechada;
   - secao obrigatoria ausente: Contexto e Problema, Usuario-alvo, Solucao
     Proposta e, quando o PRD define IDs, Requisitos Funcionais (heading
     casado por igualdade com os aliases PT/EN, nunca por substring);
   - PRD com IDs sem a linha `Prefixo dos requisitos: `X`.` entre o titulo e
     a primeira secao; definicao `- **X-nn (Must)**` / `- **X-NFR-nn**` com
     prefixo diferente do declarado; `FR-nn` / `NFR-nn` sem prefixo;
+  - FR definido sem prioridade MoSCoW (`- **X-nn (Must)**`); NFR nao leva
+    MoSCoW;
   - citacao de ID sem definicao em nenhum PRD da pasta; ID definido mais de
     uma vez;
   - link Markdown `[texto](destino)` para arquivo local que nao resolve
@@ -35,7 +40,17 @@ HARD (exit 1):
     bloco de codigo ficam fora);
   - PRD 0000: `<!-- prd: overview -->` na primeira linha identifica a visao
     geral; arquivo `0000-*` sem o comentario; visao geral definindo
-    requisito; dois ou mais prefixos na pasta sem visao geral.
+    requisito; dois ou mais prefixos na pasta sem visao geral; pasta com
+    visao geral e PRD cuja linha de prefixo nao a referencia por link local.
+
+  Fora da visao geral, sobre as secoes (a tabela e a ordem estao em
+  `references/writing.md`, secao Secoes):
+  - secao presente com corpo vazio ou reduzido a "Nenhuma." / "Nenhum." /
+    "N/A" / "Nao se aplica.";
+  - secao conhecida fora da ordem da tabela;
+  - bullet de Trade-offs Declarados sem `*Custo:*` ou sem `*Razao:*`;
+  - Metricas de Sucesso sem nenhuma linha de guardrail;
+  - Ponto de Maior Fragilidade seguido por outra secao que nao Referencias.
 
 WARN (nao afeta o exit; julgue):
   - hedging; meta-narracao; mecanismo nomeado em Solucao Proposta ou
@@ -43,7 +58,16 @@ WARN (nao afeta o exit; julgue):
   - tag entre colchetes fora de [PREMISSA] e [LACUNA] (texto sem tag e
     fato); placeholder (TBD, TODO, `[nome]`);
   - paragrafo de prosa identico em mais de um PRD (12+ palavras);
-  - citacao com prefixo que nenhum PRD da pasta declara.
+  - citacao com prefixo que nenhum PRD da pasta declara;
+  - cenario Dado/Quando/Entao (Given/When/Then) de Criterios de Aceitacao
+    sem citar nenhum ID;
+  - bullet de Consideracoes Regulatorias que nao aponta ID depois de `->`
+    (`->` ou `→`; ID entre colchetes ou parenteses tambem vale). A linha de
+    fonte e data no topo da secao, sem bullet, nao conta;
+  - rotulo de transicao, aresta ou mensagem de `stateDiagram-v2`,
+    `flowchart` ou `sequenceDiagram` sem ID: o diagrama e indice, nao
+    segunda fonte;
+  - `stateDiagram-v2` sem nenhuma tabela com coluna Identificador.
 
 Saida: `HARD  Lnn  mensagem` / `WARN  Lnn  mensagem` por PRD e um resumo.
 Exit 2 em erro de uso (opcao ou arquivo invalido).
@@ -57,6 +81,8 @@ import unicodedata
 # Secoes cujo heading precisa ser IGUAL a um alias (norm_heading). Substring
 # nao serve: "non-functional requirements" contem "functional requirements".
 SECTIONS = {
+    "resumo": ("resumo executivo", "sumario executivo", "executive summary"),
+    "alinhamento": ("alinhamento estrategico", "strategic alignment"),
     "contexto": (
         "contexto e problema", "contexto", "problema", "contexto e problem",
         "context and problem", "context & problem", "context", "problem",
@@ -68,9 +94,51 @@ SECTIONS = {
         "target user / jtbd", "target user", "target users", "persona",
         "personas", "users", "usuarios",
     ),
+    "oportunidade": (
+        "oportunidade / hipotese", "oportunidade/hipotese", "oportunidade",
+        "hipotese", "opportunity / hypothesis", "opportunity/hypothesis",
+        "opportunity", "hypothesis",
+    ),
     "solucao": ("solucao proposta", "proposed solution"),
+    "glossario": (
+        "glossario de dominio", "glossario", "domain glossary", "glossary",
+    ),
     "frs": ("requisitos funcionais", "functional requirements"),
+    "eventos": ("domain events", "eventos de dominio", "eventos"),
+    "nfrs": (
+        "requisitos nao funcionais", "requisitos nao-funcionais",
+        "non-functional requirements", "non functional requirements",
+        "nonfunctional requirements",
+    ),
+    "regulatorio": (
+        "consideracoes regulatorias", "regulatory considerations",
+    ),
+    "nao_objetivos": (
+        "nao-objetivos", "nao objetivos", "non-goals", "non goals",
+    ),
+    "tradeoffs": (
+        "trade-offs declarados", "tradeoffs declarados", "trade-offs",
+        "tradeoffs", "declared trade-offs", "declared tradeoffs",
+    ),
+    "metricas": ("metricas de sucesso", "metricas", "success metrics"),
+    "aceitacao": ("criterios de aceitacao", "acceptance criteria"),
+    "dependencias": (
+        "dependencias e riscos", "dependencies and risks",
+        "dependencies & risks",
+    ),
+    "perguntas": ("perguntas em aberto", "open questions"),
+    "fragilidade": (
+        "ponto de maior fragilidade", "weakest point", "biggest weakness",
+    ),
+    "referencias": ("referencias", "references"),
 }
+# Ordem da tabela de `references/writing.md`, secao Secoes.
+SECTION_ORDER = [
+    "resumo", "alinhamento", "contexto", "usuario", "oportunidade", "solucao",
+    "glossario", "frs", "eventos", "nfrs", "regulatorio", "nao_objetivos",
+    "tradeoffs", "metricas", "aceitacao", "dependencias", "perguntas",
+    "fragilidade", "referencias",
+]
 LABELS = {
     "contexto": "Contexto e Problema",
     "usuario": "Usuario-alvo / JTBD",
@@ -91,7 +159,8 @@ EXCLUSION_MARKERS = [
     "fora de escopo", "out of scope", "não nomear", "nao nomear",
     "sem nomear", "não-objetivo", "nao-objetivo",
 ]
-HEDGING = ["provavelmente", "talvez", "na verdade", "probably", "perhaps"]
+HEDGING = ["provavelmente", "talvez", "na verdade", "poderia", "muito",
+           "probably", "perhaps", "could", "very"]
 META_OPENERS = [
     "este prd", "este documento", "neste prd", "neste documento",
     "vamos discutir", "é importante notar", "e importante notar",
@@ -106,7 +175,7 @@ MIN_PARAGRAPH_WORDS = 12
 
 ID_DEF = re.compile(
     r"^\s*[-*]\s+\*\*([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})"
-    r"(?:\s*\((?:Must|Should|Could|Won'?t|Won’t)[^)]*\))?\*\*")
+    r"(\s*\((?:Must|Should|Could|Won'?t|Won’t)[^)]*\))?\*\*")
 ID_REF = re.compile(r"\b([A-Z][A-Z0-9]{1,9})-(NFR-)?(\d{2,})\b")
 PREFIX_LINE = re.compile(
     r"^\s*(?:Prefixo dos requisitos|Requirement prefix|Prefixo|Prefix)\s*:\s*"
@@ -120,6 +189,49 @@ SKIP_DIRS = {"node_modules", "assets", "archive"}
 MD_LINK = re.compile(r"\[[^\]]*\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+\"[^\"]*\")?\s*\)")
 URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*:")
 CODE_SPAN = re.compile(r"`[^`]*`")
+HEADING = re.compile(r"^(#{2,6})\s+(\S.*)$")
+BULLET = re.compile(r"^\s{0,3}[-*+]\s+")
+# Corpo de secao reduzido a uma dessas linhas conta como secao sem conteudo.
+NO_CONTENT_LINES = frozenset(("nenhuma", "nenhum", "n/a", "nao se aplica"))
+
+# Campo de contexto da tabela do header (SKILL.md, Gravar): lista fechada de
+# rotulos aceitos, cada um mapeado ao nome usado na mensagem. A visao geral usa
+# outro campo.
+HEADER_FIELD = {
+    "contexto originario": "Contexto Originario",
+    "originating context": "Contexto Originario",
+    "modulo": "Modulo",
+    "module": "Modulo",
+    "area": "Area",
+}
+HEADER_FIELD_OVERVIEW = {"escopo": "Escopo", "scope": "Escopo"}
+TABLE_ROW = re.compile(r"^\s{0,3}\|(.*)\|\s*$")
+SEPARATOR_CELL = re.compile(r"^:?-{2,}:?$")
+IDENTIFIER_COLUMN = ("identificador", "identifier")
+
+# Cenario de Criterios de Aceitacao: os tres marcadores na mesma entrada.
+GWT_MARKERS = (("dado", "quando", "entao"), ("given", "when", "then"))
+
+# Consideracoes Regulatorias: `o que a norma diz -> ID`.
+ARROW = re.compile(r"->|→")
+
+# Rotulos de diagrama Mermaid.
+MERMAID_OPEN = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*mermaid\s*$", re.IGNORECASE)
+STATE_TRANSITION = re.compile(r"-{2,}>\s*[^:]+:\s*(\S.*)$")
+FLOW_EDGE_PIPE = re.compile(r"-{2,}>\s*\|([^|]*)\|")
+FLOW_EDGE_MID = re.compile(r"(?:^|[^-<>])-{2,}\s*(\"[^\"]*\"|[^\"\-|>]+?)\s*-{2,}>")
+SEQ_MESSAGE = re.compile(
+    r"^\s*[A-Za-z0-9_]+\s*(?:-{1,2}>>?|-{1,2}\)|-{1,2}x)\s*[A-Za-z0-9_]+\s*:\s*(\S.*)$")
+
+
+def _mark(alternatives):
+    """`*Custo:*`, `**Custo:**` e `*Custo*:`, sobre o texto ja normalizado."""
+    return re.compile(r"\*{1,2}\s*(?:" + alternatives + r")\s*:\s*\*{1,2}"
+                      r"|\*{1,2}\s*(?:" + alternatives + r")\s*\*{1,2}\s*:")
+
+
+COST_MARK = _mark("custo|cost")
+REASON_MARK = _mark("razao|reason")
 
 
 def norm(s):
@@ -201,31 +313,67 @@ def repo_root_for(path):
         cur = parent
 
 
+def link_targets(raw):
+    """Destino de cada link Markdown da linha, fora de code span."""
+    for m in MD_LINK.finditer(CODE_SPAN.sub("", raw)):
+        target = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
+        if target:
+            yield target
+
+
+def resolve_link(doc, target):
+    """Path procurado por um link local: relativo a pasta do PRD, ou a raiz do
+    repositorio quando comeca por `/`. None quando o link nao e local (URL com
+    esquema, ancora pura)."""
+    if URL_SCHEME.match(target) or target.startswith("#"):
+        return None
+    rel = target.split("#", 1)[0]
+    if not rel:
+        return None
+    if rel.startswith("/"):
+        root = repo_root_for(doc.path)
+        if root is None:
+            return f"<raiz>{rel}"
+        return os.path.normpath(os.path.join(root, rel.lstrip("/")))
+    base = os.path.dirname(os.path.abspath(doc.path))
+    return os.path.normpath(os.path.join(base, rel))
+
+
 def local_link_findings(doc):
     """(linha_1based, destino, path_procurado) por link Markdown local que
     nao resolve."""
-    base = os.path.dirname(os.path.abspath(doc.path))
     out = []
     for i, raw in enumerate(doc.lines):
         if not doc.visible(i):
             continue
-        for m in MD_LINK.finditer(CODE_SPAN.sub("", raw)):
-            target = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
-            if not target or URL_SCHEME.match(target) or target.startswith("#"):
-                continue
-            rel = target.split("#", 1)[0]
-            if not rel:
-                continue
-            if rel.startswith("/"):
-                root = repo_root_for(doc.path)
-                expected = os.path.normpath(os.path.join(root, rel.lstrip("/"))) if root else f"<raiz>{rel}"
-                ok = root is not None and os.path.exists(expected)
-            else:
-                expected = os.path.normpath(os.path.join(base, rel))
-                ok = os.path.exists(expected)
-            if not ok:
+        for target in link_targets(raw):
+            expected = resolve_link(doc, target)
+            if expected is not None and not os.path.exists(expected):
                 out.append((i + 1, target, expected))
     return out
+
+
+class Section:
+    """Heading de nivel >= 2 e o corpo ate a proxima heading de nivel <= o seu.
+
+    `key` e a chave de SECTIONS quando o titulo casa um alias, senao None.
+    `line` e a linha 1-based do heading; `body` sao as linhas cruas do corpo.
+    """
+
+    def __init__(self, level, title, index, key, body):
+        self.level = level
+        self.title = title
+        self.index = index      # 0-based, linha do heading
+        self.key = key
+        self.body = body
+
+    @property
+    def line(self):
+        return self.index + 1
+
+    def body_lines(self):
+        """(linha_1based, texto) de cada linha do corpo."""
+        return [(self.index + 2 + k, raw) for k, raw in enumerate(self.body)]
 
 
 class Doc:
@@ -244,6 +392,7 @@ class Doc:
         self.prefix = None
         self.prefix_line = None
         self.defs = []        # (id, line_1based)
+        self.defs_no_moscow = []  # (id, line_1based) de FR sem MoSCoW
         self.refs = []        # (id, prefix, line_1based)
         self.paragraphs = []  # (normalized_text, line_1based)
         self.h1_idx = None
@@ -281,7 +430,10 @@ class Doc:
                 continue
             dm = ID_DEF.match(raw)
             if dm:
-                self.defs.append((f"{dm.group(1)}-{dm.group(2) or ''}{dm.group(3)}", i + 1))
+                rid = f"{dm.group(1)}-{dm.group(2) or ''}{dm.group(3)}"
+                self.defs.append((rid, i + 1))
+                if not dm.group(2) and not dm.group(4):
+                    self.defs_no_moscow.append((rid, i + 1))
             for rm in ID_REF.finditer(raw):
                 self.refs.append((f"{rm.group(1)}-{rm.group(2) or ''}{rm.group(3)}",
                                   rm.group(1), i + 1))
@@ -302,6 +454,283 @@ class Doc:
     def has_section(self, key):
         return any(heading_is(key, h) for h in self.headings())
 
+    def sections(self):
+        heads = []
+        for i in range(self.body_start(), len(self.lines)):
+            if not self.visible(i):
+                continue
+            m = HEADING.match(self.lines[i].strip())
+            if m:
+                heads.append((i, len(m.group(1)), m.group(2).strip()))
+        out = []
+        for n, (i, level, title) in enumerate(heads):
+            end = len(self.lines)
+            for j, lvl, _ in heads[n + 1:]:
+                if lvl <= level:
+                    end = j
+                    break
+            key = next((k for k in SECTION_ORDER if heading_is(k, title)), None)
+            out.append(Section(level, title, i, key, self.lines[i + 1:end]))
+        return out
+
+
+def is_no_content(body):
+    """Corpo vazio, ou uma unica linha de nao-conteudo ('Nenhuma.', 'N/A')."""
+    filled = [l for l in body if l.strip()]
+    if not filled:
+        return True
+    if len(filled) > 1:
+        return False
+    s = re.sub(r"[*_`]", "", strip_md_prefix(filled[0]))
+    return norm(s).strip().rstrip(".").strip() in NO_CONTENT_LINES
+
+
+def section_bullets(section):
+    """(linha_1based, texto) por bullet de primeiro nivel; linha seguinte nao
+    vazia que nao abre bullet continua o bullet anterior."""
+    out = []
+    open_bullet = False
+    for line, raw in section.body_lines():
+        if BULLET.match(raw):
+            out.append([line, raw.strip()])
+            open_bullet = True
+        elif not raw.strip():
+            open_bullet = False
+        elif open_bullet:
+            out[-1][1] += " " + raw.strip()
+    return out
+
+
+def table_cells(raw):
+    """Celulas de uma linha de tabela Markdown, ou None se nao for uma."""
+    m = TABLE_ROW.match(raw)
+    return [c.strip() for c in m.group(1).split("|")] if m else None
+
+
+def table_headers(doc):
+    """Celulas de cada linha de tabela seguida da linha separadora."""
+    out = []
+    for i, raw in enumerate(doc.lines[:-1]):
+        if not doc.visible(i):
+            continue
+        cells = table_cells(raw)
+        sep = table_cells(doc.lines[i + 1])
+        if cells and sep and all(SEPARATOR_CELL.match(c) for c in sep):
+            out.append(cells)
+    return out
+
+
+def cites_id(text):
+    """True se o texto cita ao menos um `<PREFIXO>-nn` com prefixo de contexto."""
+    return any(m.group(1) not in BARE_PREFIXES for m in ID_REF.finditer(text))
+
+
+def header_rows(doc):
+    """(linha_1based, celulas) por linha de tabela do header: entre o titulo e
+    a linha de prefixo, ou a primeira secao quando nao ha prefixo."""
+    if doc.h1_idx is None:
+        return []
+    end = doc.prefix_line - 1 if doc.prefix_line else next(
+        (i for i in range(doc.h1_idx + 1, len(doc.lines))
+         if doc.visible(i) and doc.lines[i].strip().startswith("## ")), len(doc.lines))
+    out = []
+    for i in range(doc.h1_idx + 1, end):
+        cells = table_cells(doc.lines[i]) if doc.visible(i) else None
+        if cells:
+            out.append((i + 1, cells))
+    return out
+
+
+def mermaid_blocks(doc):
+    """(linha_1based_da_abertura, tipo, [(linha_1based, texto)]) por bloco
+    ```mermaid; o tipo e a primeira linha nao vazia do bloco."""
+    out, i, lines = [], 0, doc.lines
+    while i < len(lines):
+        m = MERMAID_OPEN.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        fence, body, j = m.group(1), [], i + 1
+        while j < len(lines):
+            s = lines[j].strip()
+            if s and set(s) == {fence[0]} and len(s) >= len(fence):
+                break
+            body.append((j + 1, lines[j]))
+            j += 1
+        kind = next((raw.strip() for _, raw in body if raw.strip()), "")
+        out.append((i + 1, kind, body))
+        i = j + 1
+    return out
+
+
+def diagram_labels(kind, raw):
+    """Rotulos de transicao, aresta ou mensagem na linha, pelo tipo do bloco."""
+    k = norm(kind)
+    if k.startswith("statediagram"):
+        m = STATE_TRANSITION.search(raw)
+        return [m.group(1).strip()] if m else []
+    if k.startswith("flowchart") or k.startswith("graph"):
+        return [g.strip().strip('"') for g in
+                FLOW_EDGE_PIPE.findall(raw) + FLOW_EDGE_MID.findall(raw)]
+    if k.startswith("sequencediagram"):
+        m = SEQ_MESSAGE.match(raw)
+        return [m.group(1).strip()] if m else []
+    return []
+
+
+def check_fr_moscow(doc):
+    """FR definido sem MoSCoW; NFR nao leva prioridade."""
+    for rid, ln in doc.defs_no_moscow:
+        doc.add_hard(f"requisito {rid} definido sem prioridade MoSCoW; a forma e "
+                     f"'- **{rid} (Must)** condicao.' (Must, Should, Could ou "
+                     "Won't; NFR nao leva MoSCoW).", ln)
+
+
+def check_header_field(doc):
+    """Tabela do header com um dos campos de contexto do tipo de PRD."""
+    fields = HEADER_FIELD_OVERVIEW if doc.is_overview else HEADER_FIELD
+    for line, cells in header_rows(doc):
+        label = fields.get(norm_heading(cells[0])) if len(cells) >= 2 else None
+        if label:
+            if not cells[1]:
+                doc.add_hard(f"campo '{label}' do header sem valor.", line)
+            return
+    accepted = [f"'{n}'" for n in dict.fromkeys(fields.values())]
+    names = " ou ".join([", ".join(accepted[:-1]), accepted[-1]] if len(accepted) > 1
+                        else accepted)
+    doc.add_hard(f"header sem o campo {names}: entre o titulo e a linha de "
+                 "prefixo vai uma tabela de duas colunas com um desses campos.",
+                 doc.h1_idx + 1)
+
+
+def check_scenario_cites_id(doc):
+    """Cenario Dado/Quando/Entao de Criterios de Aceitacao cita o FR que exercita."""
+    for sec in doc.sections():
+        if sec.key != "aceitacao":
+            continue
+        for line, text in section_bullets(sec):
+            words = set(re.findall(r"[a-z]+", norm(text)))
+            if not any(all(w in words for w in group) for group in GWT_MARKERS):
+                continue
+            if not cites_id(text):
+                doc.add_warn("cenario Dado/Quando/Entao sem ID de requisito: "
+                             f"'{strip_md_prefix(text)[:50]}'. Cada cenario cita "
+                             "o FR que exercita.", line)
+
+
+def check_regulatory_lines(doc):
+    """Bullet de Consideracoes Regulatorias termina apontando o ID que modela a
+    norma: `o que a norma diz -> ID`. A linha de fonte e data, sem bullet, fica
+    de fora."""
+    for sec in doc.sections():
+        if sec.key != "regulatorio":
+            continue
+        for line, text in section_bullets(sec):
+            body = strip_md_prefix(text).strip()
+            if ARROW.search(body) and cites_id(ARROW.split(body)[-1]):
+                continue
+            doc.add_warn(f"bullet regulatorio sem '-> ID': '{body[:50]}'. O "
+                         "bullet termina no ID que modela a norma; norma sem ID "
+                         "nao entra.", line)
+
+
+def check_diagram_labels(doc):
+    """Rotulo de diagrama cita o ID: o diagrama e indice, nao segunda fonte."""
+    for _, kind, body in mermaid_blocks(doc):
+        for line, raw in body:
+            for label in diagram_labels(kind, raw):
+                if label and not cites_id(label):
+                    doc.add_warn(f"rotulo sem ID no diagrama: '{label[:50]}'. O "
+                                 "rotulo cita o requisito que governa a "
+                                 "transicao; o diagrama e indice, nao segunda "
+                                 "fonte.", line)
+
+
+def check_state_identifier_column(doc):
+    """Ao lado do stateDiagram-v2 vai a tabela com coluna Identificador."""
+    blocks = [(line, kind) for line, kind, _ in mermaid_blocks(doc)
+              if norm(kind).startswith("statediagram")]
+    if not blocks:
+        return
+    for cells in table_headers(doc):
+        if any(norm_heading(c) in IDENTIFIER_COLUMN for c in cells):
+            return
+    doc.add_warn("stateDiagram-v2 sem tabela com coluna Identificador; o codigo "
+                 "carrega o nome de cada estado, e nome inventado fora do PRD e "
+                 "decisao de linguagem tomada fora dele.", blocks[0][0])
+
+
+def check_overview_reference(doc, overview):
+    """A linha de prefixo referencia o PRD 0000 por link local."""
+    if not doc.prefix_line:
+        return
+    want = os.path.normcase(os.path.abspath(overview.path))
+    for target in link_targets(doc.lines[doc.prefix_line - 1]):
+        got = resolve_link(doc, target)
+        if got and os.path.normcase(os.path.abspath(got)) == want:
+            return
+    doc.add_hard(f"linha de prefixo sem link para o PRD 0000 ({overview.label}); "
+                 "a pasta tem visao geral, e cada PRD a referencia ali em vez de "
+                 "repetir proposito, mapa de contextos e catalogo de eventos.",
+                 doc.prefix_line)
+
+
+def check_empty_sections(doc):
+    for sec in doc.sections():
+        if is_no_content(sec.body):
+            doc.add_hard(f"secao sem conteudo: {sec.title}. Secao vazia ou "
+                         "reduzida a 'Nenhuma.' e defeito: preencha ou remova "
+                         "a secao.", sec.line)
+
+
+def check_section_order(doc):
+    """As secoes conhecidas seguem a ordem da tabela de writing.md."""
+    known = [(SECTION_ORDER.index(s.key), s.title, s.line)
+             for s in doc.sections() if s.level == 2 and s.key]
+    latest = None
+    for idx, title, line in known:
+        if latest and idx < latest[0]:
+            doc.add_hard(f"secao fora de ordem: '{latest[1]}' aparece antes de "
+                         f"'{title}', que deveria precede-la; a ordem e a da "
+                         "tabela de secoes em references/writing.md.", line)
+        else:
+            latest = (idx, title)
+
+
+def check_tradeoff_cost_and_reason(doc):
+    for sec in doc.sections():
+        if sec.key != "tradeoffs":
+            continue
+        for line, text in section_bullets(sec):
+            body = norm(text)
+            missing = [name for name, rx in (("Custo", COST_MARK),
+                                             ("Razao", REASON_MARK))
+                       if not rx.search(body)]
+            if missing:
+                doc.add_hard(f"trade-off sem {' e sem '.join(missing)}: "
+                             f"'{strip_md_prefix(text)[:50]}'. A forma e "
+                             "'**Decisao.** *Custo:* ... *Razao:* ...'.", line)
+
+
+def check_metric_guardrail(doc):
+    for sec in doc.sections():
+        if sec.key == "metricas" and not any("guardrail" in norm(l) for l in sec.body):
+            doc.add_hard(f"secao {sec.title} sem nenhuma linha de guardrail; "
+                         "sem guardrail a metrica vira alvo.", sec.line)
+
+
+def check_fragility_is_last(doc):
+    secs = [s for s in doc.sections() if s.level == 2]
+    for n, sec in enumerate(secs):
+        if sec.key != "fragilidade":
+            continue
+        after = [s for s in secs[n + 1:] if s.key != "referencias"]
+        if after:
+            doc.add_hard(f"Ponto de Maior Fragilidade fora de posicao: "
+                         f"'{after[0].title}' vem depois dele; e a ultima secao "
+                         "de conteudo, so Referencias pode segui-la.",
+                         after[0].line)
+
 
 def lint_doc(doc):
     lines = doc.lines
@@ -318,6 +747,11 @@ def lint_doc(doc):
     body_lines = [raw if doc.visible(start + k) else "" for k, raw in enumerate(lines[start:])]
     body_text = "\n".join(body_lines)
 
+    # --- header, diagramas -----------------------------------------------
+    check_header_field(doc)
+    check_diagram_labels(doc)
+    check_state_identifier_column(doc)
+
     # --- secoes obrigatorias ---------------------------------------------
     if not doc.is_overview:
         for key in REQUIRED:
@@ -327,6 +761,13 @@ def lint_doc(doc):
             hard(f"PRD define {len(doc.defs)} requisito(s) ('{doc.defs[0][0]}'...) sem "
                  "secao Requisitos Funcionais. O heading precisa ser exatamente "
                  "'Requisitos Funcionais' ou 'Functional Requirements'.", doc.defs[0][1])
+        check_empty_sections(doc)
+        check_section_order(doc)
+        check_tradeoff_cost_and_reason(doc)
+        check_metric_guardrail(doc)
+        check_fragility_is_last(doc)
+        check_scenario_cites_id(doc)
+        check_regulatory_lines(doc)
 
     # --- prefixo e definicoes --------------------------------------------
     if doc.is_overview:
@@ -343,6 +784,7 @@ def lint_doc(doc):
             if doc.prefix and p != doc.prefix:
                 hard(f"requisito {rid} definido com prefixo '{p}', mas o PRD "
                      f"declara '{doc.prefix}'.", ln)
+        check_fr_moscow(doc)
     seen_bare = set()
     for rid, p, ln in doc.refs:
         if p in BARE_PREFIXES and (rid, ln) not in seen_bare:
@@ -445,6 +887,10 @@ def cross_checks(docs, targets):
                     by_path[p].add_warn(f"paragrafo identico em mais de um PRD ({where}). "
                                         "Fato compartilhado vive no PRD 0000; os demais "
                                         "citam.", ln)
+
+    for d in docs:
+        if is_target[d.path] and not d.is_overview and overviews:
+            check_overview_reference(d, overviews[0])
 
     if len(prefixes) >= 2 and not overviews:
         for d in docs:

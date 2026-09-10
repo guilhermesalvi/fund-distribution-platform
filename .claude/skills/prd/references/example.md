@@ -1,6 +1,6 @@
 # Exemplo de PRD no formato-alvo
 
-PRD de um único contexto, sem PRD 0000. Leia a seção correspondente quando a coluna Forma da tabela em writing.md não bastar para instanciá-la; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[PREMISSA]` porque o artigo não foi conferido no texto.
+PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[PREMISSA]` porque o artigo não foi conferido no texto.
 
 ````markdown
 # Verificação Assíncrona de Documentos para Onboarding

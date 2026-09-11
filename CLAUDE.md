@@ -85,6 +85,8 @@ dotnet test FundDistributionPlatform.slnx
 
 Valide os dois antes de encerrar qualquer mudança em código.
 
+Mudança em `.claude/skills/**` passa pelo gate das skills antes do commit: `python3 .github/scripts/skills_gate.py` (etapa determinística, com limite por check) e, quando a mudança toca regra, a revisão cética com nota mínima descrita em `.claude/skills/GATE.md`. *Princípio:* processo repetível vira script; o que o script não mede tem limite escrito.
+
 ## Convenções de projeto
 
 - Propriedades comuns a todos os projetos (`TargetFramework`, `Nullable`, `ImplicitUsings`) ficam em `Directory.Build.props`; os csproj não as repetem.

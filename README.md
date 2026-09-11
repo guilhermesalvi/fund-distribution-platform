@@ -101,7 +101,13 @@ python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
 python3 .claude/skills/sdd/scripts/lint_mermaid.py --setup
 ```
 
-Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`):
+Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`): o gate determinístico das skills, que roda suítes, self-test dos parsers, linters sobre `docs/`, independência entre skills, codificação e registro no `.slnx` e neste README, cada check com limite explícito. Toda mudança em `.claude/skills/**` passa por ele antes do commit; [GATE.md](.claude/skills/GATE.md) lista os checks e descreve a segunda etapa, a revisão cética com nota mínima, que o script não roda.
+
+```bash
+python3 .github/scripts/skills_gate.py
+```
+
+Scripts individuais, para validar um artefato durante o trabalho:
 
 ```bash
 python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
@@ -123,4 +129,4 @@ Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check
 
 Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; nos dois `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (nenhum dos outros linters chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
 
-A CI executa exatamente esses passos e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.
+A CI executa o gate e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

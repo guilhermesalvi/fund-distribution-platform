@@ -4,7 +4,9 @@
     <File Path=".claude/rules/program-composition.md" />
     <File Path=".claude/rules/tracing.md" />
   </Folder>
-  <Folder Name="/.claude/skills/" />
+  <Folder Name="/.claude/skills/">
+    <File Path=".claude/skills/GATE.md" />
+  </Folder>
   <Folder Name="/.claude/skills/ontology-from-transcript/">
     <File Path=".claude/skills/ontology-from-transcript/SKILL.md" />
   </Folder>
@@ -72,10 +74,12 @@
   <Folder Name="/.github/" />
   <Folder Name="/.github/scripts/">
     <File Path=".github/scripts/check_commit.py" />
+    <File Path=".github/scripts/skills_gate.py" />
   </Folder>
   <Folder Name="/.github/scripts/tests/">
     <File Path=".github/scripts/tests/__init__.py" />
     <File Path=".github/scripts/tests/test_check_commit.py" />
+    <File Path=".github/scripts/tests/test_skills_gate.py" />
   </Folder>
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/skills.yml" />

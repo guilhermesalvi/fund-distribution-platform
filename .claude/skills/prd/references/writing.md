@@ -12,7 +12,7 @@ Texto sem tag é fato: foi confirmado pelo usuário ou vem de fonte autoritativa
 Regras de uso:
 
 - Nunca preencha uma lacuna com especulação sem tag. A lacuna é informação: exponha-a.
-- Premissa que, se falsa, derruba a abordagem do PRD, e não só um requisito, é a primeira linha de Perguntas em Aberto, em negrito, com a cláusula "se falsa, …" e como validar. Ela é declarada uma vez, ali, e citada onde importa.
+- Premissa que, se falsa, derruba a abordagem do PRD, e não só um requisito, é a primeira linha de Perguntas em Aberto, em negrito, com a cláusula "se falsa, …" ("if false, …" em PRD em inglês) e como validar. Ela é declarada uma vez, ali, e citada onde importa.
 
 ## Capability test
 
@@ -50,16 +50,16 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 
 | Subdomínio | O que muda no PRD |
 |---|---|
-| Core (diferencial competitivo) | Rigor máximo: critérios precisos, não-objetivos explícitos; questione se a solução preserva o diferencial |
-| Supporting | PRD padrão |
-| Generic | Questione comprar, contratar ou reusar; pode virar não-objetivo |
+| Core (o material recebido ou o PRD 0000 o nomeia como diferencial competitivo) | Rigor máximo: critérios precisos; questione se a solução preserva o diferencial; Não-objetivos entra pela regra da tabela de Seções |
+| Supporting (nem Core nem Generic) | PRD padrão |
+| Generic (existe produto ou pacote de mercado que cobre a capability) | Questione comprar, contratar ou reusar; pode virar não-objetivo |
 
 ### Bounded Context como âncora de escopo
 
 - A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos, não prova. A fronteira se confirma quando regras e motivos de mudança também divergem.
 - A feature tem um contexto originário, nomeado no header (SKILL.md, Gravar).
 - Quando vários contextos são tocados, o originário é dono da decisão; os outros entram em Dependências e Riscos, com o impacto na autonomia deles declarado.
-- Escopo que cruza contextos sem origem clara é risco: pergunte qual contexto é o originário antes de redigir; se o usuário não souber ou recusar responder, o campo Contexto Originário do header recebe `[LACUNA]` e o PRD sai assim (intake.md, Riqueza do contexto).
+- Escopo que cruza contextos sem origem clara é risco: pergunte qual contexto é o originário antes de redigir; se o usuário não souber ou recusar responder, o campo Contexto Originário do header recebe `[LACUNA]` e o PRD sai assim.
 - Mais de um contexto com PRD próprio exige o PRD 0000 (ver PRD 0000, abaixo).
 
 ### Domain Events
@@ -70,7 +70,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 
 ## Uma regra, um lugar
 
-- **O FR é a única fonte da regra.** Solução Proposta, Glossário, Considerações Regulatórias, Critérios de Aceitação, Dependências, Perguntas em Aberto e o PRD 0000 citam o ID (`OFF-28`) e não parafraseiam, porque paráfrase diverge com o tempo. Se paráfrase e FR divergem, não apague nenhum dos dois nem escolha um lado: a divergência é decisão de negócio e entra como `[LACUNA]` em Perguntas em Aberto, citando o ID.
+- **O FR é a única fonte da regra.** Solução Proposta, Glossário, Considerações Regulatórias, Critérios de Aceitação, Dependências, Perguntas em Aberto e o PRD 0000 citam o ID (`OFF-28`) e não repetem a condição, porque paráfrase diverge com o tempo; a exceção é o Glossário, que define o termo em uma linha e cita o ID (ver Seções). Se paráfrase e FR divergem, não apague nenhum dos dois nem escolha um lado: a divergência é decisão de negócio e entra como `[LACUNA]` em Perguntas em Aberto, citando o ID.
 - **Um FR, uma unidade comportamental verificável.** Obrigações independentes, que podem falhar separadamente, vão em FRs separados, porque citação e teste apontam para uma só. Condição conjunta e efeito indivisível ficam no mesmo FR, porque fragmentá-los inventa estados intermediários que o negócio não tem.
 - **Atributo condicional tem FR para fora da condição.** Atributo ou opção que só se aplica sob condição ganha um FR dizendo o que acontece quando é informado fora dela (rejeitado ou ignorado), porque essa é decisão de negócio, não de implementação.
 - **Seção que só reafirma FRs não entra.** Métrica que repete um FR, critério de aceitação sem valor novo e dependência que descreve dos dois lados o mesmo acoplamento são custo sem informação.
@@ -80,7 +80,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 
 - **Formato.** `<PREFIXO>-nn` para FR e `<PREFIXO>-NFR-nn` para NFR, com prefixo por contexto (`OFF-12`, `BOOK-18`, `OFF-NFR-03`). O prefixo existe porque `FR-14`, numerado localmente em cada PRD, significava coisas diferentes em documentos que se citam. O prefixo é declarado na linha logo após a tabela do header (SKILL.md, Gravar) e na tabela de contextos do PRD 0000.
 - **Definição.** `- **OFF-01 (Must)** condição.` A prioridade MoSCoW (Must, Should, Could, Won't) vai dentro dos parênteses; NFR não leva MoSCoW. Toda citação de ID resolve para uma definição em algum PRD da pasta.
-- **Remoção.** ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio. Antes de alterar ou remover um FR, procure quem cita o ID fora deste PRD (outros PRDs, specs, testes) e liste esses citadores ao apresentar: a citação continua apontando para o ID, mas o texto atrás dele mudou.
+- **Remoção.** ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio. Antes de alterar ou remover um FR, procure quem cita o ID fora deste PRD com `git grep -n <ID>` na raiz do repositório e liste esses citadores ao apresentar: a citação continua apontando para o ID, mas o texto atrás dele mudou.
 - **Enumerações.** Estado, motivo de resultado, categoria e toda enumeração que o código vai carregar têm coluna Identificador na tabela que os define (ao lado do diagrama, junto do FR ou no Glossário), porque o código carrega esse nome, e nome inventado fora do PRD é decisão de linguagem tomada fora dele.
 
 ## PRD 0000
@@ -115,29 +115,29 @@ Regras:
 
 ## Seções
 
-Quatro seções são obrigatórias, e o linter as trata como HARD: Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela em PRD 0000, acima.
+Cinco seções são obrigatórias, e o linter as trata como HARD: Resumo Executivo, Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela em PRD 0000, acima.
 
 Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, e nunca por forma: seção vazia, "Nenhuma." ou bullet inventado para completar contagem é defeito, não conformidade. A ordem das seções no PRD é a ordem da tabela. Três seções têm regras de forma que não cabem na célula; elas estão nas subseções depois da tabela.
 
 | Seção | Entra quando | Forma |
 |---|---|---|
-| Resumo Executivo | O pedido ou o material recebido nomeia quem aprova o PRD sem ser o autor (patrocinador, comitê, líder de área) | 3–5 linhas: problema, solução, métrica primária |
-| Alinhamento Estratégico | O material recebido ou a conversa cita o objetivo de negócio, OKR ou meta a que a feature responde | 3–5 linhas conectando a objetivo de negócio |
+| Resumo Executivo | Sempre | Um parágrafo de 3–5 frases: problema, solução, métrica primária |
+| Alinhamento Estratégico | O material recebido ou a conversa cita o objetivo de negócio, OKR ou meta a que a feature responde | Um parágrafo de 3–5 frases conectando a objetivo de negócio |
 | Contexto e Problema | Sempre | O problema; fatos e premissas (ver Tags); sem regra de negócio |
 | Usuário-alvo / JTBD | Sempre | Um bullet por ator com o job |
 | Oportunidade / Hipótese | Problema ainda em validação | Hipótese e como será validada |
 | Solução Proposta | Sempre | Capability, não mecanismo; máquina de estados ou pipeline em Mermaid quando passa o limiar de Diagramas, senão em prosa; regra citada por ID; fecha dizendo o que é downstream |
-| Glossário de Domínio | Há termo de domínio que o PRD usa sem definir e cujo significado muda a leitura de um requisito, ou que tem sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
+| Glossário de Domínio | Há termo de domínio usado em dois ou mais requisitos sem definição no PRD 0000 nem no material recebido, ou com sinônimos concorrentes | Termo e definição de uma linha; termo cuja definição é regra cita o ID; termo de outro contexto aponta o PRD dono |
 | Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (ver IDs e Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências ficam no 0000 |
 | Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual ADR |
-| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, terminando com `→ ID que o modela` (a norma e o artigo abrem a linha); artigo não conferido no texto é `[PREMISSA]` |
+| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, com `→ ID que o modela` após o que o artigo diz (a norma e o artigo abrem a linha; nota curta depois do ID é permitida); artigo não conferido no texto é `[PREMISSA]`; norma não identificada é bullet `[LACUNA]`, sem ID |
 | Não-objetivos | O material recebido ou a conversa cita funcionalidade adjacente que o PRD não cobre | Um bullet por exclusão: o que não faremos |
 | Trade-offs Declarados | Há decisão tomada na conversa ou no material recebido cuja alternativa rejeitada tem custo nomeável | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
-| Métricas de Sucesso | Há como medir o resultado | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado), guardrail (o que não pode degradar; sem ele a métrica vira alvo). Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
+| Métricas de Sucesso | O material recebido ou a conversa nomeia uma métrica ou um número-alvo | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado); e sempre um guardrail (o que não pode degradar; sem ele a métrica vira alvo; o linter o exige), marcado `[PREMISSA]` quando o material não o nomeia. Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
 | Critérios de Aceitação | Há FR cujo resultado depende de mais de um valor numérico ou de ramificação | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
 | Dependências e Riscos | Há dependência ou risco fora do controle do contexto | Tabela: item, tipo, impacto; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
-| Perguntas em Aberto | Há `[PREMISSA]` ou `[LACUNA]` que bloqueia decisão | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
+| Perguntas em Aberto | Há `[PREMISSA]` ou `[LACUNA]` citada por um FR Must ou pela Solução Proposta, divergência entre FR e paráfrase (Uma regra, um lugar) ou intenções concorrentes em reverse PRD | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
 | Ponto de Maior Fragilidade | Há decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo) que, se errada, invalida a Solução Proposta ou a métrica primária | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
 | Referências | Há fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
 

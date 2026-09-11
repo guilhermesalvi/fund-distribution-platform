@@ -1,10 +1,13 @@
-"""Testes de lint_prd.py: H1, campo do header (lista fechada de rotulos) e
+"""Testes de lint_prd.py: H1, campo do header (lista fechada de rotulos, com os
+contextos do `; afeta` na tabela de Dependencias e Riscos) e
 secoes obrigatorias por igualdade, Requisitos Funcionais quando ha IDs,
 prefixo, MoSCoW e definicoes, fence, IDs entre PRDs, PRD 0000 e a referencia a
-ele, links locais, as regras de secao (conteudo, ordem, trade-off, guardrail,
-Ponto de Maior Fragilidade, cenario Dado/Quando/Entao, bullet regulatorio), os
-rotulos de diagrama, as heuristicas WARN e a regressao do PRD de
-references/example.md.
+ele, links locais, as regras de secao (conteudo, ordem, contagem de linhas,
+trade-off, guardrail, Ponto de Maior Fragilidade, premissa 'se falsa' de
+Perguntas em Aberto, cenario Dado/Quando/Entao, bullet regulatorio), os
+rotulos de diagrama, as heuristicas WARN, a
+sincronizacao com a tabela de secoes de references/writing.md e a regressao do
+PRD de references/example.md.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_prd.py"
 """
@@ -20,13 +23,24 @@ import unittest
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.dirname(SCRIPTS)
 EXAMPLE_MD = os.path.join(SKILL, "references", "example.md")
+WRITING_MD = os.path.join(SKILL, "references", "writing.md")
 sys.path.insert(0, SCRIPTS)
 import lint_prd  # noqa: E402
 
 
+SUMMARY = """## Resumo Executivo
+
+Problema: o registro da oferta acontece fora da plataforma.
+Solução: a oferta ganha definição estável e estado explícito.
+Métrica primária: nenhuma oferta publicada com atributo inválido.
+"""
+
+
 def prd(prefix="ONB", frs=True, nfr=False, title="Feature X", body_extra="",
-        prefix_line=True, link_0000="", header_field="Contexto Originário"):
-    header = f"| **{header_field}** | Ctx{prefix} |\n" if header_field else ""
+        prefix_line=True, link_0000="", header_field="Contexto Originário",
+        header_value=None, summary=SUMMARY):
+    value = f"Ctx{prefix}" if header_value is None else header_value
+    header = f"| **{header_field}** | {value} |\n" if header_field else ""
     text = f"""# {title}
 
 | | |
@@ -38,6 +52,8 @@ def prd(prefix="ONB", frs=True, nfr=False, title="Feature X", body_extra="",
         if link_0000:
             text += f" Visão geral: [PRD 0000]({link_0000})."
         text += "\n"
+    if summary:
+        text += "\n" + summary
     text += f"""
 ## Contexto e Problema
 
@@ -141,6 +157,24 @@ class SkeletonTests(LintCase):
     def test_required_section_missing(self):
         self.hard_for(prd().replace("## Contexto e Problema\n", "## Cenario\n"),
                       "secao obrigatoria ausente: Contexto e Problema")
+
+    def test_missing_summary_section_is_hard(self):
+        self.hard_for(prd(summary=""),
+                      "secao obrigatoria ausente: Resumo Executivo")
+
+    def test_executive_summary_alias_satisfies_the_section(self):
+        text = prd(summary=SUMMARY.replace("## Resumo Executivo",
+                                           "## Executive Summary"))
+        self.write("0001-onb-x.md", text)
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_overview_needs_no_summary_section(self):
+        self.write("0001-onb-x.md", prd(link_0000=OV))
+        self.write(OV, overview())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("Resumo Executivo", out)
 
     def test_heading_with_parenthetical_alias(self):
         text = prd().replace("## Contexto e Problema", "## Contexto e Problema (Context)")
@@ -262,6 +296,45 @@ class SectionOrderTests(LintCase):
         self.assert_no_hard(rc, out)
 
 
+def alignment(lines):
+    body = "\n".join(f"linha {n} do alinhamento." for n in range(1, lines + 1))
+    return f"{SUMMARY}\n## Alinhamento Estratégico\n\n{body}\n"
+
+
+class SummaryLengthTests(LintCase):
+    def test_summary_below_three_lines_is_warn(self):
+        short = "## Resumo Executivo\n\nProblema, solução e métrica em uma linha.\n"
+        self.write("0001-onb-x.md", prd(summary=short))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "secao Resumo Executivo com 1 frase(s)")
+
+    def test_summary_above_five_lines_is_warn(self):
+        long = SUMMARY + "Linha extra a.\nLinha extra b.\nLinha extra c.\n"
+        self.write("0001-onb-x.md", prd(summary=long))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "secao Resumo Executivo com 6 frase(s)")
+
+    def test_summary_between_three_and_five_lines_is_silent(self):
+        self.write("0001-onb-x.md", prd())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("frase(s)", out)
+
+    def test_alignment_below_three_lines_is_warn(self):
+        self.write("0001-onb-x.md", prd(summary=alignment(2)))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "secao Alinhamento Estratégico com 2 frase(s)")
+
+    def test_alignment_within_the_range_is_silent(self):
+        self.write("0001-onb-x.md", prd(summary=alignment(5)))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("frase(s)", out)
+
+
 class TradeOffTests(LintCase):
     def test_tradeoff_without_reason_is_hard(self):
         body = "\n## Trade-offs Declarados\n\n- **Decisao.** *Custo:* retrabalho.\n"
@@ -285,6 +358,16 @@ class TradeOffTests(LintCase):
         self.write("0001-onb-x.md", prd(body_extra=body + METRICS))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
+        self.assertNotIn("trade-off com", out)
+
+    def test_bullet_above_two_lines_is_warn(self):
+        body = ("\n## Trade-offs Declarados\n\n"
+                "- **Decisao.** *Custo:* retrabalho.\n  *Razão:* prazo.\n"
+                "  A alternativa foi descartada.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body + METRICS))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "trade-off com 3 linhas")
 
 
 class MetricGuardrailTests(LintCase):
@@ -309,6 +392,49 @@ class FragilityPositionTests(LintCase):
         self.write("0001-onb-x.md", prd(body_extra=FRAGILITY + REFERENCES))
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
+
+
+PREMISE = ("- **[PREMISSA] O lead time vem da troca manual, nao da analise; "
+           "se falsa, a digitalizacao nao paga a iniciativa.** Dono: operacoes. "
+           "Resolve-se medindo 20 casos antes de aprovar.\n")
+PREMISE_EN = ("- **[PREMISSA] Lead time comes from the manual exchange, not from "
+              "the analysis; if false, digitalization does not pay for the "
+              "initiative.** Dono: operacoes. Resolve-se medindo 20 casos.\n")
+QUESTION = ("- Ha regulacao setorial alem de KYC para o segmento PJ (ONB-01)? "
+            "Dono: compliance. Resolve-se com parecer por escrito.\n")
+QUESTIONS = "\n## Perguntas em Aberto\n\n"
+
+
+class FalsePremiseTests(LintCase):
+    def test_false_premise_after_another_bullet_is_hard(self):
+        self.hard_for(prd(body_extra=QUESTIONS + QUESTION + PREMISE),
+                      "premissa 'se falsa' fora da primeira posicao")
+
+    def test_first_bullet_without_bold_is_hard(self):
+        self.hard_for(prd(body_extra=QUESTIONS + PREMISE.replace("**", "")),
+                      "premissa 'se falsa' sem negrito")
+
+    def test_bold_first_bullet_is_green(self):
+        self.write("0001-onb-x.md", prd(body_extra=QUESTIONS + PREMISE + QUESTION))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("premissa 'se falsa'", out)
+
+    def test_section_without_false_premise_is_silent(self):
+        self.write("0001-onb-x.md", prd(body_extra=QUESTIONS + QUESTION))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("premissa 'se falsa'", out)
+
+    def test_english_if_false_without_bold_is_hard(self):
+        self.hard_for(prd(body_extra=QUESTIONS + PREMISE_EN.replace("**", "")),
+                      "premissa 'se falsa' sem negrito")
+
+    def test_english_if_false_in_bold_is_green(self):
+        self.write("0001-onb-x.md", prd(body_extra=QUESTIONS + PREMISE_EN))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("premissa 'se falsa'", out)
 
 
 class WarnTests(LintCase):
@@ -593,6 +719,45 @@ class HeaderFieldTests(LintCase):
         self.assert_hard(out, "header sem o campo 'Escopo'")
 
 
+DEPENDENCIES = ("\n## Dependências e Riscos\n\n"
+                "| Item | Tipo | Impacto |\n|---|---|---|\n"
+                "| Account Activation lê a elegibilidade | Acoplamento entre contextos "
+                "| ONB-01 é o contrato |\n"
+                "| Compliance Review recebe o caso | Acoplamento entre contextos "
+                "| a fila parte deste estado |\n")
+
+
+class AffectsDependenciesTests(LintCase):
+    """`; afeta <lista>` no campo do header exige linha na tabela de
+    Dependencias e Riscos, uma por contexto afetado."""
+
+    def test_affected_context_without_table_is_hard(self):
+        self.hard_for(prd(header_value="CtxONB; afeta Account Activation"),
+                      "contexto afetado sem linha em Dependencias e Riscos: "
+                      "'Account Activation'")
+
+    def test_affected_context_missing_from_the_table_is_hard(self):
+        text = prd(header_value="CtxONB; afeta Account Activation, Billing e "
+                                "Compliance Review",
+                   body_extra=DEPENDENCIES)
+        self.hard_for(text, "contexto afetado sem linha em Dependencias e "
+                            "Riscos: 'Billing'")
+
+    def test_every_affected_context_in_the_table_is_green(self):
+        self.write("0001-onb-x.md",
+                   prd(header_value="CtxONB; afeta Account Activation e Compliance Review",
+                       body_extra=DEPENDENCIES))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("contexto afetado", out)
+
+    def test_header_without_afeta_is_silent(self):
+        self.write("0001-onb-x.md", prd())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("contexto afetado", out)
+
+
 class OverviewReferenceTests(LintCase):
     def test_prefix_line_without_link_is_hard(self):
         self.write("0001-onb-x.md", prd())
@@ -706,6 +871,22 @@ class RegulatoryLineTests(LintCase):
         rc, out = self.run_lint()
         self.assertNotIn("bullet regulatorio", out)
 
+    def test_gap_bullet_needs_no_id(self):
+        body = (REGULATORY
+                + "- [LACUNA] Regulacao setorial do segmento PJ nao levantada.\n"
+                + "- **[LACUNA]** Norma de retencao de documento nao identificada.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("bullet regulatorio", out)
+
+    def test_gap_tag_in_the_middle_does_not_exempt(self):
+        body = (REGULATORY
+                + "- Art. 73: restituicao abaixo do minimo, ainda `[LACUNA]`.\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_warn(out, "bullet regulatorio sem '-> ID'")
+
 
 class DiagramLabelTests(LintCase):
     def test_state_transition_without_id_is_warn(self):
@@ -754,6 +935,44 @@ class IdentifierColumnTests(LintCase):
         self.write("0001-onb-x.md", prd(body_extra=FLOWCHART))
         rc, out = self.run_lint()
         self.assertNotIn("coluna Identificador", out)
+
+
+class SectionTableSyncTest(unittest.TestCase):
+    """A tabela da secao Secoes de references/writing.md e a fonte dos nomes e
+    da ordem; SECTIONS e SECTION_ORDER a espelham."""
+
+    def table_sections(self):
+        """Primeira coluna da tabela de secoes, na ordem do documento."""
+        with open(WRITING_MD, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        start = next((i for i, l in enumerate(lines)
+                      if lint_prd.norm_heading(l) == "secoes"
+                      and l.startswith("## ")), None)
+        self.assertIsNotNone(start, "secao '## Seções' nao encontrada em writing.md")
+        rows = []
+        for raw in lines[start + 1:]:
+            if raw.startswith("## "):
+                break
+            cells = lint_prd.table_cells(raw)
+            if cells and not all(lint_prd.SEPARATOR_CELL.match(c) for c in cells):
+                rows.append(cells[0])
+        self.assertTrue(rows, "tabela de secoes vazia em writing.md")
+        self.assertEqual(lint_prd.norm_heading(rows[0]), "secao",
+                         "a primeira linha da tabela deveria ser o header")
+        return rows[1:]
+
+    def test_names_match_sections(self):
+        for name in self.table_sections():
+            with self.subTest(section=name):
+                keys = [k for k in lint_prd.SECTION_ORDER
+                        if lint_prd.heading_is(k, name)]
+                self.assertEqual(len(keys), 1,
+                                 f"'{name}' nao casa exatamente um alias de SECTIONS")
+
+    def test_order_matches_section_order(self):
+        keys = [next(k for k in lint_prd.SECTION_ORDER if lint_prd.heading_is(k, name))
+                for name in self.table_sections()]
+        self.assertEqual(keys, lint_prd.SECTION_ORDER)
 
 
 class ExampleRegressionTest(LintCase):

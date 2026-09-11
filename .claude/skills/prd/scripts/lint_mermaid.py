@@ -41,8 +41,8 @@ O parse Mermaid NAO substitui a validacao da estrutura Markdown do documento
 so responde "o diagrama renderiza?".
 
 Resultado por bloco: HARD com arquivo, indice do bloco (1-based), linha de
-abertura e a mensagem do parser. Parser indisponivel tambem e HARD, nunca WARN
-nem skip: diagrama nao validado e diagrama nao entregue.
+abertura e a mensagem do parser. Parser indisponivel nao e diagrama invalido:
+sai com exit 3, bloqueio de ambiente que o passo Checar da skill trata.
 
 --self-test prova (a) a extracao de fences em Python puro, sem parser, e (b) o
 parser com casos fixos, entre eles um sequenceDiagram com `participant OFF as
@@ -360,7 +360,7 @@ def main(argv):
     print("-" * 60)
     if any(msg.startswith(INCOMPLETE_PREFIX) for _, _, msg in findings):
         print(f"{len(findings)} HARD em {n} bloco(s) mermaid. {SETUP_HINT}. "
-              "Diagrama nao validado e diagrama nao entregue.")
+              "Bloqueio de ambiente: o passo Checar da skill decide.")
         return EXIT_PARSER_UNAVAILABLE
     if findings:
         print(f"{len(findings)} HARD em {n} bloco(s) mermaid. Diagrama nao validado "

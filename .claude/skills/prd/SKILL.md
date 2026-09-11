@@ -8,7 +8,7 @@ description: 'Cria e refina PRDs (Product Requirements Documents) de features, p
 ## Princípios
 
 - **Método de escrita.** O PRD diz que problema existe, para quem, e que comportamento de negócio o resolve. Como o software é construído é downstream.
-- **Linter é feedback para o agente.** O que ele acusa se corrige antes de apresentar, dentro do ciclo e do teto do passo Checar (Workflow). O PRD nunca carrega resultado de lint, nota de confiança ou marca de validação.
+- **Linter é feedback para o agente.** HARD se corrige antes de apresentar e o que sobrar após o teto é listado no chat, tudo conforme o passo Checar (Workflow). O PRD nunca carrega resultado de lint, nota de confiança ou marca de validação.
 - **Aprovação é o commit.** Árvore suja é trabalho em elaboração; arquivo commitado é a versão válida.
 - **Precedência.** Para layout, seções, idioma e forma, vale nesta ordem: primeiro o pedido da sessão, depois a convenção do repositório, por último os defaults desta skill.
 
@@ -32,7 +32,13 @@ Dois enquadramentos têm tratamento próprio:
 
 1. **Entender.** Avalie o escopo, a riqueza do contexto, o material de discovery e a necessidade de pesquisa conforme intake.md; é lá que estão o teto de perguntas e o que fazer quando o usuário recusa discovery.
 2. **Escrever.** Aplique o que está em writing.md: capability test, lente DDD, uma regra, um lugar, IDs, PRD 0000, diagramas, seções e redação. Grave o arquivo conforme a seção Gravar, abaixo.
-3. **Checar.** Rode os scripts da tabela em Scripts. Corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD. São no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado. Script que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada de correção: é bloqueio de ambiente, dito no chat, e o PRD é apresentado sem essa verificação. Exit 2 é erro de uso (caminho ou nome de arquivo fora do padrão) e se corrige como HARD. WARN é você quem julga; se ignorar um de propósito, diga em uma linha no chat. Depois, faça a revisão de cinco itens de Revisão antes de apresentar. Se a revisão alterou o PRD, rode os scripts uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat como os demais.
+3. **Checar.** Rode os scripts da tabela em Scripts e siga este ciclo:
+   - corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD;
+   - são no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado;
+   - HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais PRDs commitados da pasta, ou escrita no CLAUDE.md do repositório;
+   - script que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada de correção: é bloqueio de ambiente, dito no chat, e o PRD é apresentado sem essa verificação; exit 2 é erro de uso (caminho ou nome de arquivo fora do padrão) e se corrige como HARD; exit 1 de `seq.py` (slug inválido ou número duplicado) também é HARD;
+   - cada WARN termina de uma de duas formas: corrigido, ou mantido com uma linha de razão no chat;
+   - depois, faça a revisão de cinco itens de Revisão antes de apresentar; se ela alterou o PRD, rode os scripts uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat como os demais.
 
 ## Gravar
 
@@ -80,7 +86,7 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 ### Idioma
 
-- O idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do material recebido; sem material, o idioma do pedido. Uma vez fixado, mensagens posteriores em outro idioma não o mudam.
+- O idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem material, o idioma do pedido. Uma vez fixado, pedido explícito de idioma na sessão é precedência e o muda; mensagem em outro idioma sem esse pedido não muda.
 - Termo canônico em inglês se traduz quando existe tradução de mesma força e reconhecimento:
 
 | Inglês | Português |
@@ -102,15 +108,20 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 ## Revisão antes de apresentar
 
-Depois do linter, percorra todas as seções do PRD para cada um dos cinco itens abaixo e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0): item abaixo de 90 é corrigido, item com 90 ou mais fica como está. Corrigido o item, repontue só ele: são no máximo duas passadas. Item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
+Depois do linter, para cada um dos cinco itens abaixo:
+
+- percorra todas as seções do PRD e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0); uma ocorrência já derruba o item, e a nota existe para registrar quantas;
+- item abaixo de 90 é corrigido; item com 90 ou mais fica como está;
+- corrigido o item, repontue só ele: são no máximo duas passadas;
+- item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
 
 1. **Capability test.** A Solução Proposta, a frase de solução do Resumo Executivo e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test); em reverse PRD, todas as seções (modes.md, Modo reverse PRD).
 2. **Uma regra, um lugar.** Cada regra existe em um único FR e o resto cita o ID. Paráfrase que diverge do FR não se resolve aqui: vira `[LACUNA]` em Perguntas em Aberto (writing.md, Uma regra, um lugar).
 3. **Tags.** Toda inferência está marcada `[PREMISSA]` ou `[LACUNA]`; discovery sintetizado tem a origem marcada (intake.md, Material de discovery).
-4. **Forma.** Nenhuma seção existe só para cumprir forma (writing.md, Seções). Seção vazia, ordem, trade-off sem Custo e Razão, métrica sem guardrail e posição do Ponto de Maior Fragilidade já são HARD de `lint_prd.py`; aqui sobram os dois que só a leitura pega:
+4. **Forma.** Nenhuma seção existe só para cumprir forma (writing.md, Seções). O que é forma verificável já é HARD ou WARN de `lint_prd.py` (docstring); aqui sobram os dois que só a leitura pega:
    - bullet inserido para completar contagem;
    - Ponto de Maior Fragilidade sem decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo), isto é, cosmético.
-5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação).
+5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação). Ocorrência: heading fora do par PT/EN do idioma fixado, parágrafo com dois assuntos, ou dois parágrafos adjacentes sobre o mesmo ponto.
 
 ## Apresentar e iterar
 
@@ -123,15 +134,15 @@ Depois do linter, percorra todas as seções do PRD para cada um dos cinco itens
 - Os scripts ficam em `scripts/`, no diretório desta skill, e são executados a partir dele com `python` (ou `python3`, onde `python` não existir). O parser Mermaid exige Node.
 - `/docs/prd` nos exemplos é caminho relativo à raiz do repositório; passe o caminho real.
 - A docstring completa de cada script sai ao rodá-lo sem argumentos.
-- `HARD` exige correção e nova rodada, dentro do teto do passo Checar (Workflow). HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica. `WARN` é heurística com risco de falso-positivo.
+- O ciclo de correção, o teto e as exceções estão no passo Checar (Workflow). `WARN` é heurística com risco de falso-positivo.
 - Linter verde é esqueleto conforme, não PRD bom.
 
 | Comando | Quando | O que faz |
 |---|---|---|
 | `python scripts/seq.py next /docs/prd --slug <domain-slug>-<feature-slug>` | Antes de criar o arquivo | Imprime `NNNN-<slug>` com o próximo número; recusa alocar quando há número duplicado |
 | `python scripts/seq.py check /docs/prd` | Antes de apresentar | Acusa número duplicado |
-| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar | HARD: seções obrigatórias e sua ordem, seção sem conteúdo, header com Contexto Originário, link ao PRD 0000 na linha de prefixo, FR sem MoSCoW, trade-off sem Custo e Razão, Métricas sem guardrail, posição do Ponto de Maior Fragilidade, prefixo, IDs entre PRDs, links locais. WARN: cenário Dado/Quando/Então sem ID, linha regulatória fora do formato, rótulo de diagrama sem ID, `stateDiagram-v2` sem coluna Identificador, hedging, mecanismo, parágrafo repetido |
-| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue; parser indisponível (exit 3) é bloqueio de ambiente e segue o passo Checar (Workflow). `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão |
+| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar | Forma das seções e do header, IDs, links, PRD 0000 e heurísticas de redação; a lista completa de HARD e WARN é a docstring do script (rode-o sem argumentos) e não é repetida aqui |
+| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue; parser indisponível (exit 3) é bloqueio de ambiente e segue o passo Checar (Workflow). `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão; ao receber exit 3, peça essa autorização uma vez |
 
 ## Exemplo
 

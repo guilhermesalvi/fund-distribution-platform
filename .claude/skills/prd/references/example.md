@@ -7,7 +7,7 @@ PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primei
 
 | | |
 |---|---|
-| **Contexto Originário** | Customer Onboarding (primário); afeta Account Activation e Compliance Review |
+| **Contexto Originário** | Customer Onboarding; afeta Account Activation e Compliance Review |
 
 Prefixo dos requisitos: `ONB`. Contexto único, portanto não há PRD 0000.
 
@@ -17,7 +17,7 @@ O onboarding de clientes PJ depende de troca de e-mails entre operações e comp
 
 ## Alinhamento Estratégico
 
-Time-to-revenue é o objetivo do trimestre; concorrentes ativam em D+1 e o gargalo de verificação é a maior parcela do nosso lead time. Digitalizar o fluxo é pré-condição para o self-service de v2.
+Time-to-revenue é o objetivo do trimestre. Concorrentes ativam em D+1 e o gargalo de verificação é a maior parcela do nosso lead time. Digitalizar o fluxo é pré-condição para o self-service de v2.
 
 ## Contexto e Problema
 
@@ -146,6 +146,7 @@ Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úte
 |---|---|---|
 | Definição do checklist por tipo de cliente | Dependência de negócio | Bloqueante: sem checklist não há caso |
 | Account Activation lê a elegibilidade | Acoplamento entre contextos | ONB-11 é o contrato; mudança de estado sem aviso quebra a ativação |
+| Compliance Review recebe o caso em pendência | Acoplamento entre contextos | A revisão parte do estado que este contexto publica; sem ele, a fila de compliance não abre |
 | Migração de clientes em onboarding | Risco | Casos em curso precisam de estado inicial equivalente |
 
 ## Perguntas em Aberto

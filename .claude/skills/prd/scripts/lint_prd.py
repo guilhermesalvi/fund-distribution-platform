@@ -24,9 +24,10 @@ HARD (exit 1):
   - header sem a tabela de duas colunas entre o titulo e a linha de prefixo
     com um dos campos `**Contexto Originario**`, `**Modulo**` ou `**Area**`
     (`**Escopo**` na visao geral); a lista e fechada;
-  - secao obrigatoria ausente: Contexto e Problema, Usuario-alvo, Solucao
-    Proposta e, quando o PRD define IDs, Requisitos Funcionais (heading
-    casado por igualdade com os aliases PT/EN, nunca por substring);
+  - secao obrigatoria ausente: Resumo Executivo, Contexto e Problema,
+    Usuario-alvo, Solucao Proposta e, quando o PRD define IDs, Requisitos
+    Funcionais (heading casado por igualdade com os aliases PT/EN, nunca por
+    substring);
   - PRD com IDs sem a linha `Prefixo dos requisitos: `X`.` entre o titulo e
     a primeira secao; definicao `- **X-nn (Must)**` / `- **X-NFR-nn**` com
     prefixo diferente do declarado; `FR-nn` / `NFR-nn` sem prefixo;
@@ -50,7 +51,12 @@ HARD (exit 1):
   - secao conhecida fora da ordem da tabela;
   - bullet de Trade-offs Declarados sem `*Custo:*` ou sem `*Razao:*`;
   - Metricas de Sucesso sem nenhuma linha de guardrail;
-  - Ponto de Maior Fragilidade seguido por outra secao que nao Referencias.
+  - Ponto de Maior Fragilidade seguido por outra secao que nao Referencias;
+  - bullet de Perguntas em Aberto com "se falsa" ("if false") fora da
+    primeira posicao, ou primeiro bullet com "se falsa" sem abrir em negrito
+    (`- **`);
+  - contexto citado em `; afeta <lista>` no campo do header sem linha na
+    primeira coluna da tabela de Dependencias e Riscos.
 
 WARN (nao afeta o exit; julgue):
   - hedging; meta-narracao; mecanismo nomeado em Solucao Proposta ou
@@ -59,11 +65,17 @@ WARN (nao afeta o exit; julgue):
     fato); placeholder (TBD, TODO, `[nome]`);
   - paragrafo de prosa identico em mais de um PRD (12+ palavras);
   - citacao com prefixo que nenhum PRD da pasta declara;
+  - Resumo Executivo ou Alinhamento Estrategico com menos de 3 ou mais de 5
+    frases;
+  - bullet de Trade-offs Declarados com mais de 2 linhas (a continuacao
+    indentada conta);
   - cenario Dado/Quando/Entao (Given/When/Then) de Criterios de Aceitacao
     sem citar nenhum ID;
   - bullet de Consideracoes Regulatorias que nao aponta ID depois de `->`
     (`->` ou `→`; ID entre colchetes ou parenteses tambem vale). A linha de
-    fonte e data no topo da secao, sem bullet, nao conta;
+    fonte e data no topo da secao, sem bullet, nao conta, e o bullet que abre
+    com `[LACUNA]` fica de fora: norma nao identificada nao tem artigo a
+    mapear;
   - rotulo de transicao, aresta ou mensagem de `stateDiagram-v2`,
     `flowchart` ou `sequenceDiagram` sem ID: o diagrama e indice, nao
     segunda fonte;
@@ -140,12 +152,19 @@ SECTION_ORDER = [
     "fragilidade", "referencias",
 ]
 LABELS = {
+    "resumo": "Resumo Executivo",
     "contexto": "Contexto e Problema",
     "usuario": "Usuario-alvo / JTBD",
     "solucao": "Solucao Proposta",
     "frs": "Requisitos Funcionais",
 }
-REQUIRED = ["contexto", "usuario", "solucao"]
+REQUIRED = ["resumo", "contexto", "usuario", "solucao"]
+# Contagens da tabela de secoes de `references/writing.md`.
+SUMMARY_SECTIONS = ("resumo", "alinhamento")
+SUMMARY_MIN_SENTENCES = 3
+SUMMARY_MAX_SENTENCES = 5
+SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
+TRADEOFF_MAX_LINES = 2
 
 ALLOWED_TAGS = {"PREMISSA", "LACUNA"}
 
@@ -208,12 +227,21 @@ HEADER_FIELD_OVERVIEW = {"escopo": "Escopo", "scope": "Escopo"}
 TABLE_ROW = re.compile(r"^\s{0,3}\|(.*)\|\s*$")
 SEPARATOR_CELL = re.compile(r"^:?-{2,}:?$")
 IDENTIFIER_COLUMN = ("identificador", "identifier")
+# Contexto afetado declarado no campo do header: `<contexto>; afeta A, B e C`.
+AFFECTS = re.compile(r";\s*afeta\s+(\S.*)$", re.IGNORECASE)
+AFFECTS_SEPARATOR = re.compile(r",|\s+e\s+")
+
+# Perguntas em Aberto: a premissa que, se falsa, derruba a abordagem do PRD.
+FALSE_PREMISE = re.compile(r"\bse\s+falsa\b|\bif\s+false\b")
+BOLD_OPEN = re.compile(r"^\*\*\S")
 
 # Cenario de Criterios de Aceitacao: os tres marcadores na mesma entrada.
 GWT_MARKERS = (("dado", "quando", "entao"), ("given", "when", "then"))
 
-# Consideracoes Regulatorias: `o que a norma diz -> ID`.
+# Consideracoes Regulatorias: `o que a norma diz -> ID`. Norma nao
+# identificada abre o bullet com `[LACUNA]` e nao aponta ID.
 ARROW = re.compile(r"->|→")
+GAP_BULLET = re.compile(r"^[*`\s]*\[LACUNA\]")
 
 # Rotulos de diagrama Mermaid.
 MERMAID_OPEN = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*mermaid\s*$", re.IGNORECASE)
@@ -486,19 +514,21 @@ def is_no_content(body):
 
 
 def section_bullets(section):
-    """(linha_1based, texto) por bullet de primeiro nivel; linha seguinte nao
-    vazia que nao abre bullet continua o bullet anterior."""
+    """(linha_1based, texto, linhas) por bullet de primeiro nivel; linha
+    seguinte nao vazia que nao abre bullet continua o bullet anterior e conta
+    como mais uma linha dele."""
     out = []
     open_bullet = False
     for line, raw in section.body_lines():
         if BULLET.match(raw):
-            out.append([line, raw.strip()])
+            out.append([line, raw.strip(), 1])
             open_bullet = True
         elif not raw.strip():
             open_bullet = False
         elif open_bullet:
             out[-1][1] += " " + raw.strip()
-    return out
+            out[-1][2] += 1
+    return [tuple(b) for b in out]
 
 
 def table_cells(raw):
@@ -538,6 +568,34 @@ def header_rows(doc):
         cells = table_cells(doc.lines[i]) if doc.visible(i) else None
         if cells:
             out.append((i + 1, cells))
+    return out
+
+
+def affected_contexts(doc):
+    """(linha_1based, contextos) do `; afeta A, B e C` do campo de contexto do
+    header; sem o campo ou sem o `afeta`, a lista e vazia."""
+    fields = HEADER_FIELD_OVERVIEW if doc.is_overview else HEADER_FIELD
+    for line, cells in header_rows(doc):
+        if len(cells) < 2 or norm_heading(cells[0]) not in fields:
+            continue
+        m = AFFECTS.search(cells[1])
+        if not m:
+            return line, []
+        names = [n.strip().strip(".") for n in AFFECTS_SEPARATOR.split(m.group(1))]
+        return line, [n for n in names if n]
+    return None, []
+
+
+def section_table_keys(doc, key):
+    """Primeira celula de cada linha de tabela da secao, sem a separadora."""
+    out = []
+    for sec in doc.sections():
+        if sec.key != key:
+            continue
+        for _, raw in sec.body_lines():
+            cells = table_cells(raw)
+            if cells and not all(SEPARATOR_CELL.match(c) for c in cells):
+                out.append(cells[0])
     return out
 
 
@@ -603,12 +661,27 @@ def check_header_field(doc):
                  doc.h1_idx + 1)
 
 
+def check_affects_dependencies(doc):
+    """Cada contexto do `; afeta` do header abre uma linha de Dependencias e
+    Riscos: acoplamento declarado no header sem linha na tabela e acoplamento
+    sem tipo nem impacto."""
+    line, affected = affected_contexts(doc)
+    if not affected:
+        return
+    keys = [norm(c) for c in section_table_keys(doc, "dependencias")]
+    for name in affected:
+        if not any(norm(name) in k for k in keys):
+            doc.add_hard(f"contexto afetado sem linha em Dependencias e Riscos: "
+                         f"'{name}'. O header declara que o PRD o afeta; a "
+                         "tabela diz qual e o acoplamento e o impacto.", line)
+
+
 def check_scenario_cites_id(doc):
     """Cenario Dado/Quando/Entao de Criterios de Aceitacao cita o FR que exercita."""
     for sec in doc.sections():
         if sec.key != "aceitacao":
             continue
-        for line, text in section_bullets(sec):
+        for line, text, _ in section_bullets(sec):
             words = set(re.findall(r"[a-z]+", norm(text)))
             if not any(all(w in words for w in group) for group in GWT_MARKERS):
                 continue
@@ -621,12 +694,15 @@ def check_scenario_cites_id(doc):
 def check_regulatory_lines(doc):
     """Bullet de Consideracoes Regulatorias termina apontando o ID que modela a
     norma: `o que a norma diz -> ID`. A linha de fonte e data, sem bullet, fica
-    de fora."""
+    de fora, e o bullet que abre com `[LACUNA]` tambem: norma nao identificada
+    nao tem artigo a mapear."""
     for sec in doc.sections():
         if sec.key != "regulatorio":
             continue
-        for line, text in section_bullets(sec):
+        for line, text, _ in section_bullets(sec):
             body = strip_md_prefix(text).strip()
+            if GAP_BULLET.match(body):
+                continue
             if ARROW.search(body) and cites_id(ARROW.split(body)[-1]):
                 continue
             doc.add_warn(f"bullet regulatorio sem '-> ID': '{body[:50]}'. O "
@@ -701,7 +777,7 @@ def check_tradeoff_cost_and_reason(doc):
     for sec in doc.sections():
         if sec.key != "tradeoffs":
             continue
-        for line, text in section_bullets(sec):
+        for line, text, count in section_bullets(sec):
             body = norm(text)
             missing = [name for name, rx in (("Custo", COST_MARK),
                                              ("Razao", REASON_MARK))
@@ -710,6 +786,25 @@ def check_tradeoff_cost_and_reason(doc):
                 doc.add_hard(f"trade-off sem {' e sem '.join(missing)}: "
                              f"'{strip_md_prefix(text)[:50]}'. A forma e "
                              "'**Decisao.** *Custo:* ... *Razao:* ...'.", line)
+            if count > TRADEOFF_MAX_LINES:
+                doc.add_warn(f"trade-off com {count} linhas: "
+                             f"'{strip_md_prefix(text)[:50]}'. O bullet vai ate "
+                             f"{TRADEOFF_MAX_LINES} linhas; o que nao couber e "
+                             "regra e vive no FR.", line)
+
+
+def check_summary_length(doc):
+    """Resumo Executivo e Alinhamento Estrategico cabem em 3 a 5 frases: menos
+    e resumo que nao resume, mais e a secao virando o PRD de novo."""
+    for sec in doc.sections():
+        if sec.key not in SUMMARY_SECTIONS:
+            continue
+        count = sum(len(SENTENCE_END.findall(l)) for l in sec.body if l.strip())
+        if SUMMARY_MIN_SENTENCES <= count <= SUMMARY_MAX_SENTENCES:
+            continue
+        doc.add_warn(f"secao {sec.title} com {count} frase(s); a forma e um paragrafo de "
+                     f"{SUMMARY_MIN_SENTENCES}-{SUMMARY_MAX_SENTENCES} frases "
+                     "(references/writing.md, tabela de secoes).", sec.line)
 
 
 def check_metric_guardrail(doc):
@@ -730,6 +825,34 @@ def check_fragility_is_last(doc):
                          f"'{after[0].title}' vem depois dele; e a ultima secao "
                          "de conteudo, so Referencias pode segui-la.",
                          after[0].line)
+
+
+def bullet_content(text):
+    """Texto do bullet sem o marcador de lista, com o negrito preservado."""
+    return BULLET.sub("", text, count=1).strip()
+
+
+def check_false_premise_bullet(doc):
+    """A premissa que, se falsa, derruba o PRD abre Perguntas em Aberto e vem
+    em negrito. Secao sem 'se falsa' e silenciosa: a checagem so cobra posicao
+    e forma de quem ja declarou a premissa."""
+    for sec in doc.sections():
+        if sec.key != "perguntas":
+            continue
+        for n, (line, text, _) in enumerate(section_bullets(sec)):
+            if not FALSE_PREMISE.search(norm(text)):
+                continue
+            body = bullet_content(text)
+            if n:
+                doc.add_hard(f"premissa 'se falsa' fora da primeira posicao: "
+                             f"'{strip_md_prefix(text)[:50]}'. A premissa que "
+                             "derruba a abordagem do PRD e o primeiro bullet de "
+                             f"{sec.title}.", line)
+            elif not BOLD_OPEN.match(body):
+                doc.add_hard(f"premissa 'se falsa' sem negrito: "
+                             f"'{strip_md_prefix(text)[:50]}'. A forma e "
+                             "'- **[PREMISSA] ...; se falsa, ...** Dono: ... "
+                             "Resolve-se ...'.", line)
 
 
 def lint_doc(doc):
@@ -763,11 +886,14 @@ def lint_doc(doc):
                  "'Requisitos Funcionais' ou 'Functional Requirements'.", doc.defs[0][1])
         check_empty_sections(doc)
         check_section_order(doc)
+        check_summary_length(doc)
         check_tradeoff_cost_and_reason(doc)
         check_metric_guardrail(doc)
         check_fragility_is_last(doc)
+        check_false_premise_bullet(doc)
         check_scenario_cites_id(doc)
         check_regulatory_lines(doc)
+        check_affects_dependencies(doc)
 
     # --- prefixo e definicoes --------------------------------------------
     if doc.is_overview:

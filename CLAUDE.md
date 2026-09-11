@@ -62,6 +62,7 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/Offering`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
+- `docs/prd` — PRDs, um por contexto mais o `0000` de visão geral, escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
 
 ### Arquivos no `.slnx`
 
@@ -85,7 +86,7 @@ dotnet test FundDistributionPlatform.slnx
 
 Valide os dois antes de encerrar qualquer mudança em código.
 
-Mudança em `.claude/skills/**` passa pelo gate das skills antes do commit: `python3 .github/scripts/skills_gate.py` (etapa determinística, com limite por check) e, quando a mudança toca regra, a revisão cética com nota mínima descrita em `.claude/skills/GATE.md`. *Princípio:* processo repetível vira script; o que o script não mede tem limite escrito.
+Mudança em `.claude/skills/**` ou nos artefatos que as skills produzem (`docs/prd`, `docs/specs`, `docs/adr`) passa pelo gate das skills antes do commit: `python3 .github/scripts/skills_gate.py` (etapa determinística, com limite por check). Mudança que toca regra de skill passa também pela revisão cética com nota mínima descrita em `.claude/skills/GATE.md`. *Princípio:* processo repetível vira script; o que o script não mede tem limite escrito.
 
 ## Convenções de projeto
 

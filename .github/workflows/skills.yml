@@ -1,6 +1,6 @@
 # Validates the agent skills (.claude/skills) and the artifacts they produce
-# (docs/prd, docs/specs): Python test suites, Mermaid parser self-test, PRD,
-# spec, design and tasks linters, the independence between skills, and the
+# (docs/prd, docs/specs, docs/adr): Python test suites, Mermaid parser self-test,
+# PRD, spec, design, tasks and ADR linters, the independence between skills, and the
 # commit-message policy of pull requests. Everything runs from the repository
 # root.
 name: skills
@@ -74,6 +74,11 @@ jobs:
           done
           [ -d docs/adr ] && { python3 .claude/skills/sdd/scripts/seq.py check docs/adr || status=1; }
           exit $status
+
+      - name: Lint ADRs (docs/adr)
+        run: |
+          [ -d docs/adr ] || { echo "no docs/adr"; exit 0; }
+          python3 .claude/skills/sdd/scripts/lint_adr.py docs/adr
 
       - name: Lint design and tasks against their living spec (docs/specs/*/*/*)
         run: |

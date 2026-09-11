@@ -4,7 +4,7 @@
 
 ## Pré-requisito e destino
 
-- **Pré-requisito:** design commitado, ou spec commitada quando o Design foi dispensado.
+- **Pré-requisito:** o da tabela de SKILL.md, Abrir uma mudança.
 - **Destino:** grave o artefato em `<capability>/NNNN-<change-slug>/tasks.md` (specify.md, Layout).
 - **Sem design:** a estrutura da mudança (arquivos, componentes, o que reusa) vai num parágrafo no topo do `tasks.md`.
 
@@ -15,7 +15,7 @@ Antes de escrever qualquer task, descubra como este repositório testa; não pre
 ### Descoberta
 
 1. **Guias:** leia `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` e todo arquivo em `docs/` com `test` no nome, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
-2. **Amostra:** leia 5–10 arquivos de teste existentes e registre camada, nível (unit, integration, e2e), estilo, localização e framework. A amostra é piso, nunca teto: nenhuma task fica menos rigorosa que o existente na mesma camada; o teto vem da spec.
+2. **Amostra:** leia 5–10 arquivos de teste existentes e registre camada, nível (unit, integration, e2e), estilo, localização e framework. A amostra é piso, nunca teto: nenhuma task tem menos tipos de teste (unit, integration, e2e) que a amostra na mesma camada; o teto vem da spec.
 3. **Comandos:** extraia os comandos de manifests, config e CI (`*.csproj`/`*.slnx` + `dotnet test`, `package.json`, `Makefile`, `pyproject.toml`, workflows), incluindo lint, format e typecheck, porque o gate Build roda tudo isso.
 
 ### Sem teste ou sem guia
@@ -39,7 +39,7 @@ O resultado da descoberta entra no `tasks.md` de duas formas:
 |---|---|---|
 | Quick | Task com unit test | … |
 | Full | Task com integration/e2e | … |
-| Build | Última task da fase; task sem teste | build + lint + todos os testes |
+| Build | Task sem teste, e a última task de cada fase (o linter exige) | build + lint + todos os testes |
 
 ## Task atômica
 
@@ -64,7 +64,7 @@ Toda task tem os campos abaixo:
 | **Interfaces** | *Consome:* o que a task usa de tasks anteriores, com assinatura. *Produz:* o que tasks posteriores vão usar: nomes, parâmetros, retornos. O executor só vê a própria task |
 | **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando de gate |
 | **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho |
-| **Gate** | `quick`, `full` ou `build`. Todo valor usado tem linha em Comandos de Gate; `integration`/`e2e` exige `full`; `none` exige `build` |
+| **Gate** | `quick`, `full` ou `build`. Todo valor usado tem linha em Comandos de Gate; `integration`/`e2e` exige `full`, ou `build` quando a task é a última da fase; `none` exige `build` |
 
 ### Sem placeholder
 
@@ -82,7 +82,7 @@ Nenhum destes entra numa task:
 
 - **Plano de execução** lista as fases e a ordem das tasks.
 - **Tasks** tem o corpo de cada task.
-- **Rastreabilidade** mapeia cada requisito para as tasks que o atendem.
+- **Rastreabilidade** mapeia cada requisito para as tasks que o atendem; obrigatória, e o linter confere a coerência com os campos `Requisito`.
 - **Desvios** só é criada no Execute, quando há desvio.
 - **Tasks de correção** recebe as tasks que o Verify gera: IDs `TCn` sob `## Tasks de correção`, fora do Plano de execução.
 - **Comentário de máquina:** mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
@@ -101,7 +101,7 @@ Como este repositório testa: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `te
 |---|---|---|
 | Quick | Task com unit test | `dotnet test tests/UnitTests` |
 | Full | Task com integration/e2e | `dotnet test FundDistributionPlatform.slnx` |
-| Build | Última da fase; task sem teste | `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx` |
+| Build | Task sem teste; última de cada fase | `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx` |
 
 ## Plano de execução
 

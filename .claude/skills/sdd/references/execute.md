@@ -4,14 +4,12 @@
 
 ## Antes da primeira task
 
-1. **Pré-requisito.** O `tasks.md` está commitado ou, quando a entrada Tasks foi dispensada, o plano inline foi apresentado e aprovado. O pedido "implementa" autoriza editar os arquivos da mudança; commit é uma autorização própria, dada uma vez por mudança e válida para todos os commits dela (SKILL.md, Aprovação e autorizações).
+1. **Pré-requisito.** O da tabela de SKILL.md, Abrir uma mudança. O pedido "implementa" autoriza editar os arquivos da mudança; commit é uma autorização própria, dada uma vez por mudança e válida para todos os commits dela (SKILL.md, Aprovação e autorizações).
 2. **Contexto.** Leia a task, o trecho do design que ela referencia e os requisitos da spec que ela atende. Não carregue outras mudanças no contexto.
-3. **`[LACUNA]` no caminho.** Uma lacuna encontrada em artefato que a task usa se resolve de uma destas três formas, e de nenhuma outra:
+3. **`[LACUNA]` no caminho.** Vale a regra de SKILL.md, Tags e dúvidas; numa task, as três saídas tomam esta forma:
    - decida e registre a decisão, quando ela cabe na autonomia concedida;
    - marque `[PREMISSA]` na spec, com default e racional; a spec alterada entra no commit da task, e o Verify lê a spec commitada;
    - pergunte ao usuário ("O design tem uma lacuna: […]. Opções: […]. Recomendo […].") e execute só o que não depende da resposta.
-
-   Nunca resolva a lacuna em silêncio, e nunca trate o silêncio do usuário como resposta.
 
 ### Plano inline
 
@@ -35,6 +33,7 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
 3. **Escrever os testes derivados da spec.**
    - Cada requisito da task tem ao menos uma assertion cujo valor esperado é o resultado que a spec define (status, mensagem, estado, evento).
    - Se a spec não define um resultado preciso, isso é lacuna de precisão: volte à spec e corrija lá; não escreva assertion vaga.
+   - Os cenários herdados listados na Rastreabilidade da spec (specify.md, Seções) são a suíte mínima: cada um vira ao menos um teste.
    - Teste de comportamento novo falha antes de o código existir. Teste de caracterização (comportamento que a mudança preserva) passa antes e depois.
    - Se um teste parece errado quando confrontado com a spec, pare e confirme o que está certo antes de seguir: os testes são a spec executável.
 4. **Implementar** o mínimo que satisfaz a task.
@@ -48,7 +47,7 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
    - nenhum `SPEC_DEVIATION` ficou sem registro em `## Desvios`;
    - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo, uma única vez: se ficar vermelho, desfaça a simplificação, porque o teto de correções do passo 5 já foi usado;
    - a tabela de evidência: para cada critério, o `file:line` e a assertion que o provam; e, no sentido inverso, todo teste novo mapeia para um critério, requisito ou edge case. A tabela vai no chat ao fechar a task e não é persistida em arquivo.
-7. **Fechar.** Marque a task como concluída: todos os itens `- [ ]` de `Pronto quando` passam a `- [x]` no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task e o `tasks.md`, com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
+7. **Fechar.** Marque a task como concluída: todos os itens `- [ ]` de `Pronto quando` passam a `- [x]` no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task, o `tasks.md` e a spec quando a task a alterou (passo 3), com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
 
 ## Refine o contexto, não o erro
 
@@ -56,7 +55,7 @@ O princípio geral está em SKILL.md, Tags e dúvidas. Durante uma task, ele se 
 
 - **Spec ou design errados** (regra impossível, contrato inconsistente, restrição da base não prevista) param a task. Reporte no chat: "Encontrei uma restrição não prevista: […]. Isso invalida [spec/design] em […]. Recomendo corrigir lá e re-derivar [tasks afetadas]."
 - **Regra de negócio errada** volta ao PRD primeiro; a spec só é corrigida depois dele.
-- **Desvio local** que não invalida o artefato recebe um marcador no código e uma linha em `## Desvios` do `tasks.md`; a seção é criada no primeiro desvio. O marcador:
+- **Desvio local** que não invalida o artefato recebe um marcador no código e uma linha em `## Desvios` do `tasks.md` (ou do plano inline, no chat, quando não há `tasks.md`); a seção é criada no primeiro desvio. O marcador:
 
 ```text
 // SPEC_DEVIATION: [o que divergiu]

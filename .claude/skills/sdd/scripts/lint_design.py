@@ -26,12 +26,18 @@ HARD (exit 1):
 - secoes conhecidas fora da ordem dessa lista;
 - secao presente sem conteudo: corpo vazio ou reduzido a uma linha entre
   'Nenhuma.', 'Nenhum.', 'N/A' e 'Nao se aplica.';
+- sem a secao `## Abordagens`, ultima linha nao vazia de
+  `## Critérios de avaliação` que nao e `Sem alternativa real: <motivo>`
+  (`No real alternative:` em ingles); com a secao, essa linha presente;
 - requisito `IF ... THEN` da spec (no escopo) cujo ID nao e citado na secao
   `## Tratamento de erros`: cenario de erro sem mecanismo escolhido;
 - ID em `scope:` que nao existe na spec.
 
 WARN (nao afeta exit):
-- placeholder (TBD, TODO, `[nome]`) fora de bloco de codigo.
+- em `## Componentes`, linha `- **Propósito:**` com mais de uma frase ou com
+  a conjuncao 'e' fora de crases: um componente, um proposito;
+- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`) fora de bloco de
+  codigo.
 
 Exit 2 em erro de uso: opcao desconhecida, arquivo ausente ou fora de UTF-8.
 Linter verde e esqueleto conforme, nao design bom.
@@ -43,9 +49,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, fenced_line_mask, find_section_exact, iter_headings,
-    norm_heading, parse_machine_comment, read_lines, resolve_local_path, scan_placeholders,
-    strip_accents, usage,
+    REQ_ID, REQ_LINE, Report, fenced_line_mask, find_section_exact, find_sections_exact,
+    iter_headings, norm_heading, parse_machine_comment, read_lines, resolve_local_path,
+    scan_placeholders, strip_accents, usage,
 )
 
 # Ordem das secoes do design, como em references/design.md, secao "Secoes".
@@ -64,10 +70,23 @@ SECTIONS_ORDER = [
     ("Arquivos a criar ou modificar", "Files to Create or Modify"),
 ]
 SECTION_ERRORS = ("Tratamento de erros", "Error handling")
+SECTION_COMPONENTS = ("Componentes", "Components")
+SECTION_CRITERIA = ("Critérios de avaliação", "Evaluation Criteria")
+SECTION_APPROACHES = ("Abordagens", "Approaches")
+# Fecho de Criterios de avaliacao quando nao ha abordagem alternativa.
+NO_ALTERNATIVE = re.compile(r"^\s*[-*>]?\s*\**\s*(?:Sem alternativa real|No real alternative)\s*\**\s*:",
+                            re.IGNORECASE)
 # Corpo de secao reduzido a uma dessas linhas conta como secao sem conteudo.
 NO_CONTENT_LINES = frozenset(("nenhuma", "nenhum", "n/a", "nao se aplica", "not applicable"))
 # EARS de comportamento indesejado: `IF <gatilho> THEN the system SHALL <resposta>`.
 UNWANTED = re.compile(r"^\s*IF\b.*\bTHEN\b")
+# Proposito de um componente: `- **Propósito:** <texto>`.
+PURPOSE_LINE = re.compile(r"^\s*[-*]\s+\*\*\s*Prop[oó]sito\s*:?\s*\*\*\s*:?\s*(.+)$")
+# Conjuncao que soma responsabilidades, e fim de frase (ponto seguido de espaco ou de fim de linha).
+CONJUNCTION = re.compile(r"\s+e\s+")
+SENTENCE_END = re.compile(r"\.(?=\s|$)")
+# Trecho entre crases: caminho e identificador nao contam como frase nem como conjuncao.
+CODE_SPAN = re.compile(r"`[^`]*`")
 
 
 def section_index(title):
@@ -108,6 +127,45 @@ def check_sections(rep, lines, mask):
                      "deveria precede-la; a ordem e a da lista de references/design.md, Secoes", i + 1)
         else:
             latest = (idx, text)
+
+
+def check_no_alternative(rep, lines, mask):
+    """Sem alternativa real, a secao Abordagens nao existe e Criterios de
+    avaliacao fecha dizendo por que (design.md, Criterios antes das
+    abordagens); com Abordagens, a mesma linha nega a tabela que vem abaixo."""
+    crit = find_section_exact(lines, SECTION_CRITERIA, mask=mask)
+    if crit is None:
+        return
+    hits = [i for i in range(*crit) if not mask[i] and NO_ALTERNATIVE.match(lines[i])]
+    if find_section_exact(lines, SECTION_APPROACHES, mask=mask) is not None:
+        for i in hits:
+            rep.hard(f"'{lines[i].strip()[:40]}' em {SECTION_CRITERIA[0]} com a secao "
+                     f"## {SECTION_APPROACHES[0]} presente - a secao existe justamente quando "
+                     "ha alternativa real", i + 1)
+        return
+    last = next((i for i in range(crit[1] - 1, crit[0] - 1, -1)
+                 if not mask[i] and lines[i].strip()), None)
+    if last is None or last not in hits:
+        rep.hard(f"sem a secao ## {SECTION_APPROACHES[0]}, a ultima linha de "
+                 f"{SECTION_CRITERIA[0]} e 'Sem alternativa real: <motivo em uma frase>' - "
+                 "a ausencia de alternativa e uma conclusao, nao um silencio",
+                 (last if last is not None else crit[0] - 1) + 1)
+
+
+def check_component_purpose(rep, lines, mask):
+    """Um componente, um proposito: proposito em duas frases, ou que soma
+    responsabilidades com 'e', costuma esconder dois componentes."""
+    for start, end, _ in find_sections_exact(lines, SECTION_COMPONENTS, mask=mask):
+        for i in range(start, end):
+            if mask[i]:
+                continue
+            m = PURPOSE_LINE.match(lines[i])
+            if not m:
+                continue
+            text = CODE_SPAN.sub(" ", m.group(1))
+            if CONJUNCTION.search(text) or len(SENTENCE_END.findall(text)) > 1:
+                rep.warn("proposito com mais de uma frase ou com 'e': "
+                         "um componente, um proposito", i + 1)
 
 
 def spec_requirements(path):
@@ -196,6 +254,8 @@ def main(argv):
                  "(relativo a pasta do design ou `/docs/...` da raiz)", 1)
 
     check_sections(rep, lines, mask)
+    check_no_alternative(rep, lines, mask)
+    check_component_purpose(rep, lines, mask)
 
     if spec is None:
         rep.hard("--spec obrigatorio: cobertura IF ... THEN -> Tratamento de erros nao verificada")

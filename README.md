@@ -113,6 +113,7 @@ python3 .claude/skills/sdd/scripts/seq.py check docs/specs/<contexto>/<capabilit
 python3 .claude/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/sdd/scripts/lint_design.py docs/specs/<contexto>/<capability>/<NNNN-slug>/design.md --spec docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
+python3 .claude/skills/sdd/scripts/lint_adr.py docs/adr
 ```
 
 Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md), e confere que nenhuma skill cita a outra pelo nome.

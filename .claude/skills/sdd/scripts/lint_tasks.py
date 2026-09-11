@@ -14,7 +14,8 @@ so esses entram em "requisito sem task".
 
 HARD (exit 1):
 - comentario de maquina ausente ou sem `sdd: tasks`; `spec:` ausente;
-- secoes `## Comandos de Gate` e `## Plano de execucao` ausentes;
+- secoes `## Comandos de Gate`, `## Plano de execucao` e `## Rastreabilidade`
+  ausentes;
 - paragrafo "Como este repositorio testa" ausente antes de `## Comandos de
   Gate`, ou sem a contagem-base de testes do gate Build (um inteiro seguido de
   `teste`/`testes`), que e o numero que o Verify compara;
@@ -27,9 +28,11 @@ HARD (exit 1):
   nenhum criterio de comportamento (item `- [ ]` e item `- [x]` valem igual);
 - task sem Requisito (sem nenhum ID); ID de requisito que nao existe na spec;
   requisito da spec (no escopo) sem task;
-- `## Rastreabilidade`, quando presente, incoerente com os campos `Requisito`:
-  requisito citado por uma task sem linha que ligue os dois, ou task listada
-  numa linha cujo requisito ela nao cita;
+- `## Rastreabilidade` incoerente com os campos `Requisito`: requisito citado
+  por uma task sem linha que ligue os dois, ou task listada numa linha cujo
+  requisito ela nao cita;
+- ultima task de cada fase do Plano de execucao com `Gate` diferente de build:
+  a fase so fecha com build, lint e todos os testes verdes;
 - dependencia: task inexistente; ciclo (reportado com os IDs); dependencia
   para fase posterior ou para task posterior na mesma fase (pela ordem do
   Plano de execucao); `T` dependendo de `TC` (task de correcao nasce no
@@ -41,8 +44,13 @@ HARD (exit 1):
   Gate diferente de build.
 
 WARN (nao afeta exit):
-- Onde sem path de arquivo reconhecivel; Tests none; placeholder (TBD, TODO,
-  "similar a T3").
+- `O quê` com ' e ' fora de crases: dois entregaveis sao duas tasks; 'e seus
+  testes' e 'e seu registro' do mesmo entregavel nao contam;
+- Onde sem path de arquivo reconhecivel;
+- Tests none, exceto quando todo path de `Onde` termina em extensao de config
+  ou schema (.json, .yml, .yaml, .props, .csproj, .slnx, .sql, .toml, .env,
+  .config) ou esta em `/migrations/`: a camada nao exige teste;
+- placeholder (TBD, TODO, "similar a T3", `[nome]`).
 
 Exit 2 em erro de uso: opcao desconhecida, arquivo ausente ou fora de UTF-8.
 """
@@ -74,6 +82,15 @@ SCALAR_FIELDS = ("what", "where", "depends", "requirement", "tests", "gate")
 TESTS_OK = {"unit", "integration", "e2e", "none"}
 GATE_OK = {"quick", "full", "build"}
 PATH_RE = re.compile(r"`?[\w./\\\-]+/[\w.\-]+\.[A-Za-z0-9]+`?")
+# Camada de config e schema: o default forte manda so o gate Build nela
+# (references/tasks.md, Sem teste ou sem guia).
+CONFIG_EXT = (".json", ".yml", ".yaml", ".props", ".csproj", ".slnx", ".sql",
+              ".toml", ".env", ".config")
+MIGRATION_DIR = "/migrations/"
+# Conjuncao que soma entregaveis no campo `O quê`; 'e seus testes' e 'e seu
+# registro' sao o mesmo entregavel (references/tasks.md, Task atomica).
+WHAT_CONJUNCTION = re.compile(
+    r"\s+e\s+(?!(?:seus?|suas?)\s+(?:testes?|registros?)\b)", re.IGNORECASE)
 FIELD_LINE = re.compile(r"^\s*[-*]\s+\*\*([^*]+?)\s*:?\*\*\s*:?\s*(.*)$")
 # Item de `Pronto quando`: `- [ ]`, `- [x]` (task ja concluida) ou hifen puro.
 DONE_ITEM = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s*)?(\S.*?)\s*$")
@@ -286,9 +303,12 @@ def traceability_rows(lines, mask):
 
 def check_traceability(rep, lines, mask, tasks, req_refs):
     """A Rastreabilidade e a mesma informacao dos campos `Requisito` vista por
-    requisito: tabela e tasks discordarem esconde escopo de um dos dois lados."""
+    requisito: sem ela nao se le a cobertura por requisito, e tabela e tasks
+    discordarem esconde escopo de um dos dois lados."""
     rows = traceability_rows(lines, mask)
     if rows is None:
+        rep.hard("secao ausente: ## Rastreabilidade - cada requisito da spec mapeia para as "
+                 "tasks que o atendem")
         return
     traced = {}
     for rid, tids, i in rows:
@@ -433,6 +453,25 @@ def check_dependencies(rep, tasks, phase_of, plan_ids):
         rep.hard(f"ciclo de dependencia: {' -> '.join(cyc)}", tasks[cyc[0]]["fields"]["depends"][0] + 1)
 
 
+def check_phase_gate(rep, tasks, plan_ids, phase_of):
+    """A ultima task de cada fase fecha com `Gate: build`: a fase entrega um
+    estado integravel, e so o gate Build roda build, lint e todos os testes
+    (references/tasks.md, Comandos de Gate)."""
+    last = {}
+    for tid in plan_ids:
+        if tid in tasks and tid in phase_of:
+            last[phase_of[tid]] = tid
+    for phase in sorted(last):
+        tid = last[phase]
+        f = tasks[tid]["fields"]
+        gate = f["gate"][1].strip("` ").lower() if "gate" in f and f["gate"][1] else ""
+        if gate == "build":
+            continue
+        ln = (f["gate"][0] + 1) if "gate" in f else tasks[tid]["line"] + 1
+        rep.hard(f"{tid}: ultima task da fase {phase} com Gate: {gate or '(vazio)'} - a ultima "
+                 "task de cada fase leva Gate: build", ln)
+
+
 def check_plan(rep, tasks, plan_ids, plan_sec):
     if plan_sec is None:
         rep.hard("secao ausente: ## Plano de execução")
@@ -445,6 +484,20 @@ def check_plan(rep, tasks, plan_ids, plan_sec):
             rep.hard(f"{tid}: nao aparece no Plano de execucao", tasks[tid]["line"] + 1)
 
 
+def is_config_layer(where):
+    """Todo path de `Onde` e config, schema ou migration: a camada nao exige
+    teste, so o gate Build."""
+    paths = PATH_RE.findall(where)
+    if not paths:
+        return False
+    for p in paths:
+        p = p.strip("`").replace("\\", "/").lower()
+        if MIGRATION_DIR in p or p.endswith(CONFIG_EXT):
+            continue
+        return False
+    return True
+
+
 def check_task(rep, tid, t, gates_used, req_refs):
     f = t["fields"]
     ln = t["line"] + 1
@@ -455,6 +508,9 @@ def check_task(rep, tid, t, gates_used, req_refs):
             rep.hard(f"{tid}: campo obrigatorio ausente: {FIELDS[key][0]}", ln)
         elif key in SCALAR_FIELDS and not f[key][1]:
             rep.hard(f"{tid}: campo vazio: {FIELDS[key][0]}", f[key][0] + 1)
+    if "what" in f and f["what"][1] and WHAT_CONJUNCTION.search(CODE_SPAN.sub(" ", f["what"][1])):
+        rep.warn(f"{tid}: O que com 'e': dois entregaveis sao duas tasks "
+                 "(teste e registro do mesmo entregavel nao contam)", f["what"][0] + 1)
     if "where" in f and f["where"][1] and not PATH_RE.findall(f["where"][1]):
         rep.warn(f"{tid}: Onde sem path de arquivo reconhecivel", f["where"][0] + 1)
     if "requirement" in f and f["requirement"][1]:
@@ -470,7 +526,7 @@ def check_task(rep, tid, t, gates_used, req_refs):
             rep.hard(f"{tid}: Tests invalido: {e} (veio '{f['tests'][1][:40]}')", f["tests"][0] + 1)
         if errs:
             test_types = []
-        elif test_types == ["none"]:
+        elif test_types == ["none"] and not is_config_layer(f["where"][1] if "where" in f else ""):
             rep.warn(f"{tid}: Tests: none - confirme que a camada nao exige teste", f["tests"][0] + 1)
 
     gate = None
@@ -529,6 +585,7 @@ def main(argv):
         check_done_when(rep, tid, tasks[tid], commands)
     check_dependencies(rep, tasks, phase_of, plan_ids)
     check_plan(rep, tasks, plan_ids, plan_sec)
+    check_phase_gate(rep, tasks, plan_ids, phase_of)
     check_gate_table(rep, lines, mask, gates_used)
     check_testing_intro(rep, lines, mask)
     check_traceability(rep, lines, mask, tasks, req_refs)

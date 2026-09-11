@@ -1,7 +1,9 @@
 """Testes do lint_design.py: comentario de maquina (`sdd: design` e `spec:`
 que resolve), secoes conhecidas na ordem de references/design.md e sem secao
-vazia, cobertura dos requisitos `IF ... THEN` da spec em Tratamento de erros
-(com e sem `scope:`), placeholder e erros de uso.
+vazia, fecho 'Sem alternativa real:' em Criterios de avaliacao contra a
+presenca de Abordagens, cobertura dos requisitos `IF ... THEN` da spec em
+Tratamento de erros (com e sem `scope:`), proposito de componente em uma so
+frase, placeholder e erros de uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_design.py"
 """
@@ -40,7 +42,7 @@ CONTEXT = ("Spec: RSV-07 a RSV-11. ADR 0001 (outbox) restringe a publicacao de e
            "Base lida: `src/ReservationBook/Reservations/*`.")
 COMPONENTS = """\
 ### ReservationService
-- **Proposito:** aceitar e alterar reservas contra a oferta publicada.
+- **Proposito:** aceitar reservas contra a oferta publicada.
 - **Localizacao:** `src/ReservationBook/Reservations/ReservationService.cs`"""
 ERRORS = """\
 | Cenario (ID) | Tratamento | Impacto |
@@ -105,6 +107,10 @@ class LintDesignBase(unittest.TestCase):
         self.assertTrue(any(fragment in l for l in self.findings(out, "WARN")),
                         f"esperava WARN com '{fragment}'; saida:\n{out}")
 
+    def assertNoWarn(self, out, fragment):
+        self.assertFalse(any(fragment in l for l in self.findings(out, "WARN")),
+                         f"nao esperava WARN com '{fragment}'; saida:\n{out}")
+
 
 class ValidDocumentTest(LintDesignBase):
     def test_valid_design_passes(self):
@@ -116,7 +122,7 @@ class ValidDocumentTest(LintDesignBase):
         sections = [("Contexto de design", CONTEXT),
                     ("Critérios de avaliação", "| # | Criterio | Origem |\n|---|---|---|\n| C1 | x | BOOK-NFR-02 |"),
                     ("Riscos e técnicas", "| Risco | Tecnica |\n|---|---|\n| Duplicata | Idempotency key |"),
-                    ("Abordagens", "Sem alternativa real."),
+                    ("Abordagens", "| Abordagem | C1 | C2 |\n|---|---|---|\n| Outbox (recomendada) | atende | 3s |\n| Fila dedicada | atende | 1s |"),
                     ("Visão da arquitetura", "Um servico, um modulo."),
                     ("Unidade de deploy", "Fica em `src/ReservationBook`."),
                     ("Componentes", COMPONENTS),
@@ -194,6 +200,63 @@ class SectionsTest(LintDesignBase):
         self.assertNoHard(out)
 
 
+CRITERIA = ("| # | Criterio | Origem |\n|---|---|---|\n"
+            "| C1 | O livro lido pelo Allocation e identico ao congelado | BOOK-NFR-02 |")
+NO_ALT = "Sem alternativa real: a ADR 0001 ja fixa o transporte e a spec fixa o comportamento."
+APPROACHES = ("| Abordagem | C1 |\n|---|---|\n| Outbox (recomendada) | atende |\n"
+              "| Fila dedicada | atende |")
+
+
+class NoRealAlternativeTest(LintDesignBase):
+    """Sem a secao Abordagens, Criterios de avaliacao fecha com 'Sem
+    alternativa real: <motivo>'; com ela, a linha nega a tabela abaixo."""
+
+    def sections(self, criteria, approaches=None, criteria_title="Critérios de avaliação"):
+        out = [("Contexto de design", CONTEXT), (criteria_title, criteria)]
+        if approaches is not None:
+            out.append(("Abordagens", approaches))
+        out.append(("Tratamento de erros", ERRORS))
+        return out
+
+    def test_criteria_closing_with_the_line_passes(self):
+        code, out = self.run_lint(doc(self.sections(CRITERIA + "\n\n" + NO_ALT)))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_criteria_without_the_line_is_hard(self):
+        code, out = self.run_lint(doc(self.sections(CRITERIA)))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "sem a secao ## Abordagens, a ultima linha de Critérios de avaliação")
+
+    def test_line_out_of_the_last_position_is_hard(self):
+        code, out = self.run_lint(doc(self.sections(NO_ALT + "\n\n" + CRITERIA)))
+        self.assertHard(out, "sem a secao ## Abordagens, a ultima linha de Critérios de avaliação")
+
+    def test_line_with_approaches_section_is_hard(self):
+        code, out = self.run_lint(doc(self.sections(CRITERIA + "\n\n" + NO_ALT, APPROACHES)))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "com a secao ## Abordagens presente")
+
+    def test_approaches_without_the_line_passes(self):
+        code, out = self.run_lint(doc(self.sections(CRITERIA, APPROACHES)))
+        self.assertNoHard(out)
+
+    def test_english_line_is_accepted(self):
+        sections = self.sections(CRITERIA + "\n\nNo real alternative: ADR 0001 fixes the transport.",
+                                 criteria_title="Evaluation Criteria")
+        code, out = self.run_lint(doc(sections))
+        self.assertNoHard(out)
+
+    def test_line_inside_fence_does_not_count(self):
+        fenced = CRITERIA + "\n\n```markdown\n" + NO_ALT + "\n```"
+        code, out = self.run_lint(doc(self.sections(fenced)))
+        self.assertHard(out, "sem a secao ## Abordagens, a ultima linha de Critérios de avaliação")
+
+    def test_design_without_the_section_is_silent(self):
+        code, out = self.run_lint(doc())
+        self.assertNoHard(out)
+
+
 class ErrorHandlingCoverageTest(LintDesignBase):
     def test_unwanted_requirement_without_scenario_is_hard(self):
         errors = ERRORS.replace("(RSV-11)", "(RSV-07)")
@@ -266,6 +329,61 @@ class ScopeTest(LintDesignBase):
         self.assertHard(out, "scope: RSV-42 nao existe na spec")
 
 
+PURPOSE_WARN = "proposito com mais de uma frase ou com 'e'"
+
+
+class ComponentPurposeTest(LintDesignBase):
+    """Um componente, um proposito: WARN quando o proposito soma
+    responsabilidades com 'e' ou se estende por mais de uma frase."""
+
+    def lint_purpose(self, purpose):
+        components = (f"### ReservationService\n- **Propósito:** {purpose}\n"
+                      "- **Localizacao:** `src/ReservationBook/Reservations/ReservationService.cs`")
+        sections = [("Contexto de design", CONTEXT), ("Componentes", components),
+                    ("Tratamento de erros", ERRORS)]
+        return self.run_lint(doc(sections))
+
+    def test_single_purpose_is_silent(self):
+        code, out = self.lint_purpose("manter o livro de reservas de uma oferta publicada.")
+        self.assertNoWarn(out, PURPOSE_WARN)
+        self.assertEqual(code, 0)
+
+    def test_purpose_with_conjunction_is_warn(self):
+        code, out = self.lint_purpose("aceitar e alterar reservas da oferta publicada.")
+        self.assertWarn(out, PURPOSE_WARN)
+        self.assertEqual(code, 0)
+
+    def test_purpose_with_two_sentences_is_warn(self):
+        code, out = self.lint_purpose("manter o livro de reservas. Publicar o resultado.")
+        self.assertWarn(out, PURPOSE_WARN)
+
+    def test_conjunction_and_dots_inside_backticks_do_not_count(self):
+        code, out = self.lint_purpose(
+            "manter o `livro e o lastro` de `src/ReservationBook/Reservations/Book.cs`.")
+        self.assertNoWarn(out, PURPOSE_WARN)
+
+    def test_purpose_without_accent_is_read(self):
+        components = "### ReservationService\n- **Proposito:** aceitar e alterar reservas."
+        sections = [("Contexto de design", CONTEXT), ("Componentes", components),
+                    ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertWarn(out, PURPOSE_WARN)
+
+    def test_purpose_outside_the_components_section_is_ignored(self):
+        sections = [("Contexto de design", "- **Propósito:** aceitar e alterar reservas."),
+                    ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertNoWarn(out, PURPOSE_WARN)
+
+    def test_purpose_inside_fence_is_ignored(self):
+        components = ("### ReservationService\n- **Propósito:** manter o livro.\n\n"
+                      "```markdown\n- **Propósito:** aceitar e alterar reservas.\n```")
+        sections = [("Contexto de design", CONTEXT), ("Componentes", components),
+                    ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertNoWarn(out, PURPOSE_WARN)
+
+
 class PlaceholderTest(LintDesignBase):
     def test_placeholder_is_warn_not_hard(self):
         sections = [("Contexto de design", CONTEXT + " TBD: base ignorada."),
@@ -293,19 +411,45 @@ class TemplateRegressionTest(LintDesignBase):
         self.assertIsNotNone(m, "bloco de template nao encontrado em references/design.md")
         return m.group(1)
 
-    def test_template_is_clean(self):
+    def lint_template(self):
+        """A spec do teste define todo ID que o template cita, inclusive os do
+        `scope:`, e so o requisito tratado em Tratamento de erros e
+        `IF ... THEN`."""
         tpl = self.template()
         handled = sorted(set(re.findall(r"\bRSV-\d{2}\b", self.section(tpl, "Tratamento de erros"))))
         self.assertEqual(len(handled), 1, f"template trata {handled}; o teste assume um so")
-        ids = sorted(set(re.findall(r"\bRSV-\d{2}\b", tpl)))
+        scope = self.scope(tpl)
+        self.assertIn(handled[0], scope, "o requisito tratado esta fora do scope do template")
+        ids = sorted(set(scope) | set(re.findall(r"\bRSV-\d{2}\b", tpl)))
         reqs = "".join(
             f"- **{r}** — IF x THEN the system SHALL y\n" if r in handled
             else f"- **{r}** — WHEN x THEN the system SHALL y\n" for r in ids)
         spec = self.write(os.path.join(self.cap, "spec-template.md"),
                           SPEC[:SPEC.index("- **RSV-07**")] + reqs)
-        code, out = self.run_lint(tpl + "\n", spec=spec)
+        return self.run_lint(tpl + "\n", spec=spec)
+
+    def test_template_is_clean(self):
+        code, out = self.lint_template()
         self.assertNoHard(out)
         self.assertEqual(code, 0)
+
+    def test_every_scope_id_is_a_requirement_of_the_spec(self):
+        """`scope:` do template so existe contra uma spec que define os IDs;
+        ID de escopo sem requisito e HARD."""
+        scope = self.scope(self.template())
+        self.assertTrue(scope, "template sem scope: no comentario de maquina")
+        code, out = self.lint_template()
+        self.assertNotIn("nao existe na spec", out)
+
+    @staticmethod
+    def scope(text):
+        """IDs do `scope:` do comentario de maquina do template."""
+        comment = next(l for l in text.splitlines() if l.strip().startswith("<!--"))
+        return sorted(set(re.findall(r"\bRSV-\d{2}\b", comment)))
+
+    def test_template_purpose_is_silent(self):
+        code, out = self.lint_template()
+        self.assertNoWarn(out, PURPOSE_WARN)
 
     @staticmethod
     def section(text, title):
@@ -313,6 +457,30 @@ class TemplateRegressionTest(LintDesignBase):
         start = next(i for i, l in enumerate(lines) if l.strip() == f"## {title}")
         end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
         return "\n".join(lines[start:end])
+
+
+class SectionsInSyncWithReferenceTest(unittest.TestCase):
+    """A lista de secoes do script e a de references/design.md, secao Secoes:
+    mesmos nomes, mesma ordem. Doc e script divergentes fazem o linter recusar
+    a secao que a referencia manda escrever."""
+
+    @staticmethod
+    def documented():
+        with open(DESIGN_MD, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        start = next(i for i, l in enumerate(lines) if l.strip() == "## Seções")
+        end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("## "))
+        out = []
+        for l in lines[start:end]:
+            m = re.match(r"^\d+\.\s+(.+)$", l.strip())
+            if m:
+                out.append(re.split(r"\s+—\s+", m.group(1))[0].strip().rstrip("."))
+        return out
+
+    def test_names_and_order_match(self):
+        names = self.documented()
+        self.assertTrue(names, "lista numerada de secoes nao encontrada em references/design.md")
+        self.assertEqual(names, [aliases[0] for aliases in lint_design.SECTIONS_ORDER])
 
 
 class UsageTest(LintDesignBase):

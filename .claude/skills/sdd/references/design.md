@@ -2,7 +2,7 @@
 
 **Objetivo:** definir *como* construir — estrutura, componentes, interfaces e o que reusar — com profundidade proporcional ao **risco** da mudança, não ao seu tamanho. O design não decide comportamento: se uma decisão de comportamento for necessária, volte à spec e resolva lá.
 
-Pré-requisito: a spec está commitada. Grave o design em `<capability>/NNNN-<change-slug>/design.md`; o layout de pastas e o comentário de máquina estão descritos em specify.md (specify.md, Layout).
+Pré-requisito: o da tabela de SKILL.md, Abrir uma mudança. Grave o design em `<capability>/NNNN-<change-slug>/design.md`; o layout de pastas e o comentário de máquina estão descritos em specify.md (specify.md, Layout).
 
 ## Carregar contexto
 
@@ -47,8 +47,8 @@ Não imponha estilo arquitetural: o design fala a língua da base (ports e adapt
 Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois da proposta vira racionalização. A ordem é fixa: critérios, crítica dos critérios e só então abordagens.
 
 1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
-2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem. Quando todos os critérios vêm de NFR do PRD, a crítica não encontrou lacuna e não há alternativa real, apresente critérios e abordagem juntos, numa única espera.
-3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes. Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
+2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Sem delegação escrita para o solution space (SKILL.md, Tags e dúvidas), apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem. Quando todos os critérios vêm de NFR do PRD e a crítica não encontrou lacuna, apresente critérios, crítica e a abordagem recomendada juntos, numa única espera; a existência de alternativa real é avaliada depois da resposta.
+3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes, salvo delegação escrita para o solution space (SKILL.md, Tags e dúvidas). Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
 
 ### As quatro perguntas de uma decisão arquitetural
 
@@ -88,13 +88,13 @@ Desvio da ordem de preferência registra o porquê na tabela de Decisões técni
 
 ### Biblioteca compartilhada e fronteiras de módulo
 
-- Biblioteca compartilhada só entra com três condições: um dono; estabilidade, avaliada pelo custo de release contra o custo de divergência; e ausência de pacote público equivalente.
+- Biblioteca compartilhada só entra com três condições: um dono; estabilidade, isto é, a interface pública não mudou nas últimas três mudanças que a tocaram; e ausência de pacote público equivalente.
 - Regra de negócio não vive em biblioteca de plataforma. `Utils` ou `Shared` como destino é o cheiro dessa regra não aplicada.
 - Sem ciclo entre módulos com fronteira própria; um módulo é consumido só pela sua interface pública.
 
 ## Decisões técnicas
 
-Registre só as decisões em que outra escolha era defensável, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
+Registre só as decisões em que outra escolha também atendia aos critérios de avaliação, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
 
 - **Contrato público:** API, evento, formato persistido ou exposto a terceiros. Muda com versionamento e aviso.
 - **Decisão interna:** muda sem aviso.
@@ -121,7 +121,7 @@ Cada seção existe quando há o que dizer; nenhuma seção vazia. Na ordem do d
 ## Template
 
 ```markdown
-<!-- sdd: design | spec: ../spec.md -->
+<!-- sdd: design | spec: ../spec.md | scope: RSV-07, RSV-08, RSV-09, RSV-10, RSV-11, RSV-12 -->
 # Reserva Parcial — Design
 
 ## Contexto de design
@@ -135,6 +135,8 @@ Spec: RSV-07 a RSV-12. ADR 0001 (outbox) restringe a publicação de eventos. Ba
 | C1 | O livro lido pelo Allocation é idêntico ao congelado | BOOK-NFR-02 |
 | C2 | Resultado visível em até 5s após `BookProcessed` | usuário, nesta sessão |
 
+Sem alternativa real: a ADR 0001 já fixa o transporte e a spec fixa o comportamento.
+
 ## Riscos e técnicas
 
 | Risco | Fonte | Técnica | Onde |
@@ -143,7 +145,7 @@ Spec: RSV-07 a RSV-12. ADR 0001 (outbox) restringe a publicação de eventos. Ba
 
 ## Visão da arquitetura
 
-[Parágrafo; diagrama quando a estrutura é um grafo.]
+[Parágrafo; diagrama Mermaid quando três ou mais componentes trocam mensagens.]
 
 ## Unidade de deploy
 
@@ -152,7 +154,7 @@ Fica em `src/ReservationBook`.
 ## Componentes
 
 ### ReservationService
-- **Propósito:** aceitar e alterar reservas contra a oferta publicada.
+- **Propósito:** manter o livro de reservas de uma oferta publicada.
 - **Localização:** `src/ReservationBook/Reservations/ReservationService.cs`
 - **Interfaces:** `Place(PlaceReservation cmd, CancellationToken ct): Task<Result<Reservation, ReservationError>>`
 - **Dependências:** `IOfferReader`, `IReservationStore`

@@ -4,7 +4,7 @@
 
 ## Olhos frescos
 
-Re-derive a cobertura sem consultar a tabela de evidência que você produziu no Execute, e declare no relatório qual foi o grau de independência da verificação:
+Re-derive a cobertura a partir dos testes do diff, sem partir da tabela de evidência do Execute (na passada do próprio autor, a tabela só é aberta no fim, para comparar), e declare no relatório qual foi o grau de independência da verificação:
 
 - **Sub-agente fresco:** verificação independente, feita por quem não escreveu o código. É o modo obrigatório quando a ferramenta de sub-agente existe no ambiente.
 - **Passada do próprio autor:** independência parcial, só quando não há ferramenta de sub-agente; diga isso explicitamente.
@@ -13,7 +13,7 @@ O grau de independência não muda o resto: cada requisito tem evidência ou con
 
 ## Escopo
 
-O objeto da verificação é o diff da mudança: `git diff <base>`, onde `<base>` é o `git merge-base` entre o branch da mudança e o branch principal, mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline). Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
+O objeto da verificação é o diff da mudança: `git diff <base>`, onde `<base>` é o `git merge-base` entre o branch da mudança e o branch principal ou, sem branch próprio, o commit anterior ao primeiro commit desta mudança: o que criou a pasta `NNNN-<change-slug>` ou, sem pasta, o que gravou a alteração da spec (o usuário indica quando houver dúvida), mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline). Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
 
 ## Eixo 1: conformidade à spec
 
@@ -80,13 +80,13 @@ Verificação bloqueada por ambiente diz o que faltou e não fecha a mudança.
 
 ## Gaps e tasks de correção
 
-Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar.
+Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task `TCn` tem os mesmos campos de uma task (tasks.md, Campos) e entra na Rastreabilidade; rode `lint_tasks.py` de novo; com commit autorizado, o `tasks.md` alterado entra no commit da primeira `TC` (SKILL.md, Aprovação e autorizações). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar; a re-derivação por desvio de comportamento (Desvios, abaixo) conta nessas duas rodadas.
 
 ## Desvios
 
-- **Desvio que muda comportamento** não sobrevive à verificação. O caminho é voltar ao artefato de origem (PRD, spec ou design), corrigir e commitar esse artefato, re-derivar a implementação e verificar de novo.
-- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Desvios` do `tasks.md` com justificativa e é julgado no eixo 2.
+- **Desvio que muda comportamento** não sobrevive à verificação. O caminho é voltar ao artefato de origem (PRD, spec ou design), corrigi-lo, obter o commit dele (SKILL.md, Aprovação e autorizações), re-derivar a implementação e verificar de novo.
+- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Desvios` do `tasks.md` (ou do plano inline) com justificativa e é julgado no eixo 2.
 
 ## Mutação
 
-Teste de mutação é opcional e cabe em caminho crítico (dinheiro, liquidação, auth, integridade). Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap. Esta skill não descreve procedimento próprio de mutação.
+Teste de mutação roda quando a mudança toca dinheiro, liquidação, auth ou integridade de transição (riscos de design.md, Do risco à técnica); fora disso, não roda. Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap; ferramenta ausente é bloqueio com motivo, como o gate. Esta skill não descreve procedimento próprio de mutação.

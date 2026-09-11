@@ -23,7 +23,7 @@ O linter é feedback para o agente, não carimbo no artefato: o que ele acusa se
 
 Duas perguntas decidem quais artefatos a mudança pede, além da spec:
 
-1. Há decisão arquitetural, padrão novo, interação entre três ou mais componentes a planejar ou risco nomeado (integração externa, estado e concorrência, dinheiro, dado regulado, contrato público, novo deployável)? Se sim, a mudança pede `design.md`.
+1. Há decisão de deploy, de estilo arquitetural ou de biblioteca compartilhada (design.md, Unidade de deploy e reuso); padrão visto em menos de três arquivos da mesma camada (design.md, Base de código); interação entre três ou mais componentes a planejar; ou risco de integração, dinheiro, regulação, contrato público, migração ou preocupação encontrada na base (as fontes de design.md, Do risco à técnica, fora as dimensões implícitas, que já viraram requisito)? Se sim, a mudança pede `design.md`.
 2. Há mais de cinco passos, ou algum passo depende de outro que não é o imediatamente anterior? Se sim, a mudança pede `tasks.md`.
 
 **Catraca.** A resposta só sobe. Complexidade descoberta no meio da mudança promove o nível de artefato: pare, diga o que descobriu e crie o artefato que faltou. Nada rebaixa o nível já decidido.
@@ -34,7 +34,7 @@ Specify e Execute nunca são pulados: sempre se sabe *o quê* antes de fazer. Qu
 
 | Entrada | Pré-requisito | Referência |
 |---|---|---|
-| Specify | PRD, pedido rico (usuário, problema, comportamento observável) ou código a documentar | [specify.md](references/specify.md) |
+| Specify | PRD, pedido com usuário-alvo e problema (specify.md, Origem) ou código a documentar | [specify.md](references/specify.md) |
 | Design | spec commitada | [design.md](references/design.md) |
 | Tasks | design commitado, ou spec quando o Design foi dispensado | [tasks.md](references/tasks.md) |
 | Execute | tasks commitadas, ou plano inline aprovado | [execute.md](references/execute.md) |
@@ -55,7 +55,7 @@ Leia a referência inteira antes de agir em qualquer entrada. O layout de arquiv
 - **Tags.** `[PREMISSA]` marca inferência com default e racional; `[LACUNA]` marca informação insuficiente para decidir. Texto sem tag é fato, com origem no PRD, no usuário, no código ou na documentação. Aprovação não converte premissa em fato.
 - **Fatos você procura; decisões você pergunta.** A cadeia de pesquisa para um fato, nesta ordem: base de código, docs do projeto, documentação oficial, web; se nada responder, sinalize a incerteza. Nunca fabrique API, padrão ou comportamento; "não encontrei" é resposta válida.
 - **Toda dúvida cai em uma de três categorias:**
-  1. Decisão dentro da autonomia concedida, isto é, delegada por escrito no pedido da sessão ou no CLAUDE.md do repositório: decida, registre e siga. Sem delegação escrita, escolha de solution space é a categoria 2 e escolha de negócio é a categoria 3; a exceção é o ponto em que uma entrada exige resposta do usuário por escrito, como critérios e abordagem no Design (design.md, Critérios antes das abordagens); ali a resposta é aguardada.
+  1. Decisão dentro da autonomia concedida, isto é, delegada por escrito no pedido da sessão ou no CLAUDE.md do repositório: decida, registre e siga. Sem delegação escrita, escolha de negócio é a categoria 3 e escolha de solution space é a categoria 2, com duas exceções em que se pergunta: no Clarify, quando a resposta muda arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (specify.md, Clarify); no Design, critérios e abordagem (design.md, Critérios antes das abordagens). Com delegação escrita para o solution space, essas duas exceções caem e só a apresentação de cada artefato espera.
   2. `[PREMISSA]` com default e racional: avance; a premissa fica revisável.
   3. Decisão material do usuário (escopo, regra de negócio, trade-off, efeito externo): pergunte e bloqueie só o que depende dela. Sem resposta, o item fica bloqueado; nada é adotado por default.
 - **Refine o contexto, não o erro.** Artefato downstream errado (teste que não deveria passar, código que contradiz o design, task impossível) não se remenda: corrija o artefato upstream que carregava a causa e re-derive o downstream. Regra de negócio errada volta ao PRD.
@@ -76,11 +76,11 @@ Cinco regras, detalhadas em execute.md; este resumo não as reescreve:
 
 ## Scripts
 
-Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py`; rodar sem argumentos imprime a docstring completa.
+Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py` (ou `python`, onde `python3` não existir); rodar sem argumentos imprime a docstring completa.
 
-- `HARD` exige correção e nova rodada. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. Linter que não roda por falha de ambiente não é rodada: diga isso no chat e apresente sem essa verificação.
+- `HARD` exige correção e nova rodada. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. Linter que não roda por falha de ambiente (Python ausente) não é rodada: diga isso no chat e apresente sem essa verificação. Exit 2 é erro de uso (arquivo, `--spec` ou codificação) e se corrige como HARD.
 - `WARN` é heurística: cada um termina de uma de duas formas, corrigido ou mantido com uma linha de razão no chat.
-- HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica.
+- HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório.
 - Linter verde é esqueleto conforme, não artefato bom.
 
 | Antes de | Comando |
@@ -90,12 +90,13 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 | apresentar a spec | `lint_spec.py <spec.md>` |
 | apresentar o design | `lint_design.py <design.md> --spec <spec.md>` |
 | apresentar as tasks | `lint_tasks.py <tasks.md> --spec <spec.md>` |
+| apresentar a ADR | `lint_adr.py <adr.md \| dir>` |
 
 ## Idioma e redação
 
 ### Idioma
 
-- O artefato fica no idioma do input; se o idioma for ambíguo, português.
+- O artefato fica no idioma do PRD; sem PRD, no do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, no do pedido; se o pedido mistura idiomas, português.
 - Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
 - Termo sem tradução de mesma força fica em inglês: domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate.
 - Keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem.
@@ -103,7 +104,7 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 
 ### Redação
 
-- Declarativo, sem hedging, sem meta-narração, sem placeholder. `lint_spec.py` acusa os três na spec, `lint_tasks.py` e `lint_design.py` acusam placeholder nas tasks e no design; na ADR, que não tem linter, a checagem é sua.
+- Declarativo, sem hedging, sem meta-narração, sem placeholder. `lint_spec.py` acusa os três na spec, `lint_tasks.py` e `lint_design.py` acusam placeholder nas tasks e no design, e `lint_adr.py` acusa os três na ADR.
 - Um conceito por parágrafo.
 - Contexto de decisão (racional, mitigação) preservado: é sinal para humanos e para o próximo agente.
 
@@ -111,14 +112,22 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 
 Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
 
-A lista da entrada é fechada. Em Specify, Design e Tasks, percorra o artefato inteiro para cada item e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0): item abaixo de 90 é reescrito, item com 90 ou mais fica como está. Reescreveu, dê nota de novo — são no máximo duas passadas por artefato. Item que continuar abaixo de 90 na segunda passada não segura o artefato: apresente e diga no chat qual item é, com a nota e o que falta. A revisão vem depois do ciclo do linter; se ela alterou o artefato, rode o linter uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat. Em Execute e Verify os itens são binários, atendido ou não: item não atendido se corrige dentro dos tetos do próprio ciclo (execute.md, Ciclo por task; verify.md, Gaps e tasks de correção).
+A lista da entrada é fechada. Em Specify, Design e Tasks:
+
+- percorra o artefato inteiro para cada item e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0); uma ocorrência já derruba o item, e a nota existe para registrar quantas;
+- item abaixo de 90 é reescrito; item com 90 ou mais fica como está;
+- reescreveu, dê nota de novo: são no máximo duas passadas por artefato;
+- item que continuar abaixo de 90 na segunda passada não segura o artefato: apresente e diga no chat qual item é, com a nota e o que falta;
+- a revisão vem depois do ciclo do linter; se ela alterou o artefato, rode o linter uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat.
+
+Em Execute e Verify os itens são binários, atendido ou não: item não atendido se corrige dentro dos tetos do próprio ciclo (execute.md, Ciclo por task; verify.md, Gaps e tasks de correção).
 
 ### Specify
 
 - `SHALL` e ID único já são HARD de `lint_spec.py`, e padrão EARS é WARN dele; aqui: o padrão está correto, o valor de cada requisito é concreto e dá para escrever o teste que o afirma. Se não dá, reescreva o requisito.
-- Cada cenário dos Critérios de Aceitação do PRD aparece na Rastreabilidade com os IDs EARS que o cobrem; o linter não confere cenários.
+- Cada cenário dos Critérios de Aceitação do PRD aparece na Rastreabilidade com os IDs EARS que o cobrem: a presença é HARD de `lint_spec.py` quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
 - Requisito que vem do PRD cita o ID e não reescreve a regra.
-- Nenhuma regra de negócio foi decidida por premissa.
+- Nenhuma regra de negócio foi decidida por premissa nova na spec; premissa herdada do PRD, com origem anotada, não conta.
 - Toda inferência está marcada.
 - Se o Design vai precisar decidir comportamento, a spec ficou incompleta.
 

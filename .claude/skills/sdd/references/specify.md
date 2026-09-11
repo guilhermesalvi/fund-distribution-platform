@@ -20,7 +20,7 @@
 
 ### Versionamento
 
-Git é o controle de versão: o diff é o delta e o log é o histórico. Árvore suja é trabalho em elaboração; arquivo commitado é a versão válida. Nenhum artefato carrega campo de status, autor, data ou aprovação.
+Git é o controle de versão: o diff é o delta e o log é o histórico; a aprovação é o commit (SKILL.md, Aprovação e autorizações). Nenhum artefato carrega campo de status, autor, data ou aprovação.
 
 ### Comentário de máquina
 
@@ -34,7 +34,7 @@ Campos condicionais:
 
 - `design:` entra no comentário das tasks só quando o `design.md` existe.
 - `scope: RSV-07, RSV-10` entra no comentário do design e das tasks quando a mudança toca só parte dos requisitos da spec; no design, limita a cobertura de `IF ... THEN` exigida em Tratamento de erros aos IDs listados.
-- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que o linter recalcula). Se o PRD mudar depois, o linter avisa; nesse caso, re-derive os requisitos que citam os IDs tocados e atualize o hash.
+- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que o linter recalcula); PRD modificado e não commitado pede o commit dele antes de gravar a spec. Se o PRD mudar depois, o linter avisa; esse WARN é sempre corrigido, nunca mantido com razão: re-derive os requisitos que citam os IDs tocados e atualize o hash.
 
 ### Linha de prefixo
 
@@ -46,7 +46,7 @@ O sinal no pedido determina a origem da spec, o que conta como fato e o cuidado 
 
 | Sinal no pedido | Origem | O que é fato | Cuidado |
 |---|---|---|---|
-| Há PRD em `/docs/prd` | PRD | O texto sem tag do PRD. O que está marcado `[PREMISSA]` no PRD continua `[PREMISSA]` na spec | Siga as seis regras da subseção A partir do PRD |
+| Há PRD em `/docs/prd` | PRD | O texto sem tag do PRD. O que está marcado `[PREMISSA]` no PRD continua `[PREMISSA]` na spec, com a origem PRD anotada, e não conta como premissa de solution space | Siga as seis regras da subseção A partir do PRD |
 | Não há PRD, mas usuário-alvo e problema estão no pedido | Ideia | O que o usuário afirmou | Registre usuário, problema e resultado no Contexto; comportamento observável ausente vira `[LACUNA]` no Contexto. Se faltar usuário ou problema, pare |
 | Pedido solution-first, sem usuário nem problema ("CRUD para X", "tela de Y") | — | — | Responda "Isso precisa de PRD antes" e pare |
 | Código existente sem spec ("documente a spec do módulo X") | Código | O que o código *faz*: comportamento, testes, docs | Intenção inferida é `[PREMISSA]`; comportamento sem justificativa de negócio é `[LACUNA]`; divergências vão na seção Divergências; a leitura da base segue design.md, Base de código |
@@ -56,11 +56,11 @@ O sinal no pedido determina a origem da spec, o que conta como fato e o cuidado 
 Quando a origem é o PRD, valem seis regras:
 
 1. **Cite o ID, não reescreva a regra.** O requisito EARS cita o ID do PRD ao fim da linha (`[BOOK-04]`) e descreve o comportamento observável que realiza a regra (valor, status, evento, prazo), sem reescrevê-la. Regra escrita em dois lugares diverge. Estado, evento e enumeração usam o identificador que o PRD fixa.
-2. **Regra de negócio se corrige no PRD.** Lacuna ou inconsistência de regra de negócio se corrige no PRD e nunca vira premissa na spec. `[PREMISSA]` na spec é só de solution space: formato de erro, prazo técnico, ordem de processamento.
+2. **Regra de negócio se corrige no PRD.** Lacuna ou inconsistência de regra de negócio se corrige no PRD e nunca vira premissa na spec. Premissa nova na spec é só de solution space: formato de erro, prazo técnico, ordem de processamento; premissa herdada do PRD mantém a tag com a origem anotada (Origem).
 3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não compartilha com nenhum deles as duas primeiras letras: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. O linter acusa colisão lendo `/docs/prd`.
 4. **PRD 0000.** Quando existe, o PRD 0000 fornece o mapa de contextos, o catálogo de eventos e as decisões delegadas a ADR. Evento que a capability produz ou consome vira requisito citando o ID que o governa; decisão delegada a ADR entra em Perguntas em Aberto com dono "Design/ADR".
-5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios) e aparece na Rastreabilidade como tal.
-6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz. A Rastreabilidade os lista pelo nome do caso (primeira coluna da tabela do PRD) ou pelo FR que exercitam, com os IDs EARS que os cobrem. Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
+5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios) e aparece na Rastreabilidade numa linha cuja segunda coluna começa com `Critério de design:` (forma que o linter reconhece).
+6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Ciclo por task). A Rastreabilidade os lista pelo nome do caso quando o PRD os traz em tabela (primeira coluna; o linter exige os que citam FR em escopo) e pelo FR que exercitam quando o PRD os traz em bullets, com os IDs EARS que os cobrem. FR ou cenário de outra capability entra numa linha cuja segunda coluna começa com `Fora desta capability:` e o nome da capability dona (forma que o linter reconhece). Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
 
 ### Leitura prévia
 
@@ -70,7 +70,7 @@ Em qualquer origem, leia antes de escrever: a `spec.md` viva da capability, se e
 
 - **Varra a base antes de perguntar:** o módulo que a capability toca, os padrões que ele usa e ao menos uma feature irmã já implementada. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
 - **Você é par técnico, não entrevistador.** Desafie vagueza ("rápido" é quanto? "usuários" são quem?) e torne o abstrato concreto ("me conduz por um uso disso").
-- **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação. O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
+- **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (é a exceção de SKILL.md, Tags e dúvidas; com delegação escrita para o solution space, não se pergunta). O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
 - **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada. Teto: cinco perguntas por spec; da sexta em diante, a decisão vai direto para Perguntas em Aberto, com dono e o que bloqueia.
 - **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Perguntas em Aberto, bloqueia só o que depende dela e nunca vira default.
 - **A fronteira da mudança é fixa:** clarify esclarece *como* algo se comporta, nunca *se* uma capability nova entra.
@@ -126,10 +126,10 @@ Cada seção existe quando há o que dizer; o linter exige só Contexto e Requis
 | Escopo e Fora de Escopo | O que entra; tabela item / razão para o que fica fora |
 | Premissas | Tabela premissa / default / racional, cada linha marcada `[PREMISSA]` |
 | Perguntas em Aberto | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
-| Requisitos | Lista EARS com IDs; subtítulos `###` por tema quando ajudam a leitura |
+| Requisitos | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
 | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
 | Glossário | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
-| Rastreabilidade | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções, e os cenários são conferidos na revisão de Specify |
+| Rastreabilidade | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
 | Divergências | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
 
 ## Template
@@ -142,7 +142,9 @@ Prefixo dos requisitos: `RSV`.
 
 ## Contexto
 
-Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md). A capability consome `OfferPublished` e `OfferClosed` e fornece o livro fechado ao Allocation por consulta (BOOK-16). Base lida: `src/ReservationBook` tem só a composição do serviço.
+Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
+A capability consome `OfferPublished` e `OfferClosed` e fornece o livro fechado ao Allocation por consulta (BOOK-16).
+Base lida: `src/ReservationBook` tem só a composição do serviço.
 
 ## Escopo e Fora de Escopo
 
@@ -163,8 +165,6 @@ Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 - **A prática da corretora permite ajustar a reserva até o fechamento?** Dono: autor do PRD. Bloqueia os requisitos de alteração de reserva, que só entram com a resposta.
 
 ## Requisitos
-
-### Registro
 
 - **RSV-01** — WHEN o operador registra uma reserva sem violação de RSV-02 e RSV-03 THEN the system SHALL registrá-la em `Active` com instante e ordem de registro [BOOK-01]
 - **RSV-02** — IF a oferta não está `Open` THEN the system SHALL registrar a violação `OFFER_NOT_ACCEPTING_RESERVATIONS` com regra BOOK-01 [BOOK-01]

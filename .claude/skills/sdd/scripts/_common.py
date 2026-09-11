@@ -33,6 +33,13 @@ PLACEHOLDER_HARD = [
     r"similar (?:à|a|to) T\d+",
 ]
 HEDGING = ["provavelmente", "talvez", "na verdade", "probably", "perhaps", "maybe"]
+# Placeholder de template: colchetes com texto livre comecando por letra, ate
+# 80 caracteres - `[nome]`, `[Uma frase: o que faremos.]`. Link Markdown fica
+# fora pelo `(` seguinte; tag ([PREMISSA], [BOOK-04]) fica fora por TAG_LIKE.
+TEMPLATE_PLACEHOLDER = re.compile(r"\[([A-Za-zÀ-Úà-ú][^\[\]]{2,79})\](?!\()")
+TAG_LIKE = re.compile(r"^[A-ZÀ-Ú0-9\s\-]+$")
+# Trecho entre crases: `[Fact]` e codigo citado, nao texto por escrever.
+CODE_SPAN = re.compile(r"`[^`]*`")
 META_OPENERS = [
     "esta spec", "este documento", "neste documento", "este design",
     "vamos discutir", "é importante notar", "e importante notar", "vale notar",
@@ -240,6 +247,16 @@ def table_rows(lines, start, end):
     return rows
 
 
+def is_template_placeholder(line):
+    """Linha com colchetes de template - `[nome]`, `[Situação e restrições
+    ...]`. Fora: item de checklist, link Markdown, URL, code span (`[Fact]`),
+    tag ([PREMISSA], [LACUNA]) e linha com ID de requisito ([BOOK-04])."""
+    if "http" in line or REQ_ID.search(line) or re.match(r"^\s*- \[[ xX]\]", line):
+        return False
+    return any(not TAG_LIKE.match(m.group(1))
+               for m in TEMPLATE_PLACEHOLDER.finditer(CODE_SPAN.sub(" ", line)))
+
+
 def scan_placeholders(rep, lines, skip_first=0, mask=None):
     """Placeholder e WARN: a decisao de que aquilo e conteudo faltando e do
     agente. `mask` (fenced_line_mask) e opcional: linhas marcadas sao
@@ -250,10 +267,8 @@ def scan_placeholders(rep, lines, skip_first=0, mask=None):
         if any(re.search(p, l) for p in PLACEHOLDER_HARD_CS) or any(
                 re.search(p, l, re.IGNORECASE) for p in PLACEHOLDER_HARD):
             rep.warn(f"placeholder: '{l.strip()[:70]}'", i + 1)
-        elif re.search(r"\[[a-zà-ú][^\]]{2,40}\]", l) and "http" not in l and not REQ_ID.search(l):
-            # [nome], [razão], [what we'll do] ... colchetes com texto minusculo
-            if not re.search(r"^\s*- \[[ x]\]", l):
-                rep.warn(f"possivel placeholder de template: '{l.strip()[:70]}'", i + 1)
+        elif is_template_placeholder(l):
+            rep.warn(f"possivel placeholder de template: '{l.strip()[:70]}'", i + 1)
 
 
 def scan_prose(rep, lines, mask=None):

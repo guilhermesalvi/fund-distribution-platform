@@ -1,6 +1,7 @@
 """Testes de lint_spec.py: comentario de maquina, linha de prefixo, secoes
-obrigatorias (igualdade, duplicata, fence), requisitos e IDs (SHALL, prefixo,
-duplicata, aposentados, citacao orfa), PRD (prd, prd-rev, prefixos,
+obrigatorias (igualdade, duplicata, fence) e sua sincronia com
+references/specify.md, requisitos e IDs (SHALL, prefixo, duplicata,
+aposentados, citacao orfa, subtitulos por tema), PRD (prd, prd-rev, prefixos,
 citacoes), Rastreabilidade, tags, links locais e erros de uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_spec.py"
@@ -256,6 +257,37 @@ class ContextSize(Base):
         self.assertWarn(out, "secao Contexto com 6 linha(s) nao vazia(s)")
 
 
+class RequirementThemes(Base):
+    """Subtitulos `###` por tema em Requisitos: a partir de 8 requisitos a
+    lista precisa deles, abaixo disso sao cerimonia."""
+
+    @staticmethod
+    def reqs(lo, hi):
+        return "".join(f"- **RSV-{n:02d}** — WHEN x{n} THEN the system SHALL y\n"
+                       for n in range(lo, hi + 1))
+
+    def test_eight_requirements_without_subheading_is_warn(self):
+        code, out = self.lint(prd="", reqs=self.reqs(1, 8))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "secao Requisitos com 8 requisitos sem subtitulo ### por tema")
+
+    def test_eight_requirements_with_subheadings_are_silent(self):
+        reqs = "### Registro\n\n" + self.reqs(1, 4) + "\n### Consulta\n\n" + self.reqs(5, 8)
+        code, out = self.lint(prd="", reqs=reqs)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("subtitulo ###", out)
+
+    def test_fewer_than_eight_with_subheading_is_warn(self):
+        code, out = self.lint(prd="", reqs="### Registro\n\n" + self.reqs(1, 2))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "secao Requisitos com 2 requisito(s) e subtitulo ### por tema")
+
+    def test_fewer_than_eight_without_subheading_is_silent(self):
+        code, out = self.lint(prd="")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("subtitulo ###", out)
+
+
 class RequirementLines(Base):
     def test_requirement_without_shall_is_hard(self):
         code, out = self.lint(prd="", reqs=REQS + "- **RSV-03** — o sistema aceita\n")
@@ -456,6 +488,85 @@ class Traceability(Base):
         self.assertEqual(code, 0, out)
         self.assertWarn(out, "Rastreabilidade: BOOK-NFR-01 mapeado sem requisito que o cite")
 
+    def test_design_criterion_row_is_exempt_from_the_warn(self):
+        """NFR sem teste direto vira criterio de design: a linha existe sem
+        requisito que a cite, e a segunda coluna diz isso."""
+        for second in ("Critério de design: ADR de transporte (PRD 0000)",
+                       "Design criterion: transport ADR"):
+            code, out = self.lint(trace=self.HEAD + "| BOOK-01 | RSV-01 |\n| BOOK-02 | RSV-02 |\n"
+                                                  + f"| BOOK-NFR-01 | {second} |\n")
+            self.assertEqual(code, 0, out)
+            self.assertNoHard(out)
+            self.assertNotIn("BOOK-NFR-01 mapeado sem requisito", out)
+
+    def test_other_prose_in_the_second_column_is_not_exempt(self):
+        code, out = self.lint(trace=self.HEAD + "| BOOK-01 | RSV-01 |\n| BOOK-02 | RSV-02 |\n"
+                                              + "| BOOK-NFR-01 | Coberto pelo design |\n")
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "Rastreabilidade: BOOK-NFR-01 mapeado sem requisito que o cite")
+
+
+class InheritedScenarios(Base):
+    """Cenario da tabela de Criterios de Aceitacao do PRD aparece na primeira
+    coluna de alguma tabela da Rastreabilidade."""
+
+    HEAD = Traceability.HEAD
+    CASES = ("\n## Critérios de Aceitação\n\n| Caso | Livro | Resultado |\n|---|---|---|\n"
+             "| Reserva aceita | A 50 | posicao 50 (BOOK-01) |\n"
+             "| Alteração de vínculo | A 50, A 400 | as duas vinculadas (BOOK-02) |\n"
+             "| Rateio calculado | A 50 | rateio 10 (ALLOC-03) |\n"
+             "| Caso sem requisito | A 50 | aceita |\n")
+
+    def setUp(self):
+        super().setUp()
+        self.write(self.prd, PRD + self.CASES)
+
+    def mapped(self, *names):
+        rows = "".join(f"| {n} | RSV-01 |\n" for n in names)
+        return (self.HEAD + "| BOOK-01 | RSV-01 |\n| BOOK-02 | RSV-02 |\n"
+                + "\n| Cenário do PRD | IDs EARS |\n|---|---|\n" + rows)
+
+    def test_every_scenario_mapped_passes(self):
+        code, out = self.lint(trace=self.mapped("Reserva aceita", "Alteração de vínculo"))
+        self.assertEqual(code, 0, out)
+
+    def test_scenario_without_row_is_hard(self):
+        code, out = self.lint(trace=self.mapped("Reserva aceita"))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "cenario 'Alteração de vínculo' dos Criterios de Aceitacao do PRD "
+                             "sem linha na Rastreabilidade")
+
+    def test_header_row_of_the_prd_table_is_not_a_scenario(self):
+        code, out = self.lint(trace=self.mapped("Reserva aceita", "Alteração de vínculo"))
+        self.assertNotIn("'Caso'", out)
+
+    def test_prd_without_acceptance_table_is_silent(self):
+        self.write(self.prd, PRD + "\n## Critérios de Aceitação\n\n- **Dado** uma reserva, **então** aceita.\n")
+        code, out = self.lint()
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("Criterios de Aceitacao", out)
+
+    def test_spec_without_prd_field_is_silent(self):
+        code, out = self.lint(prd="", trace="")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("Criterios de Aceitacao", out)
+
+    def test_scenario_of_another_capability_is_silent(self):
+        code, out = self.lint(trace=self.mapped("Reserva aceita", "Alteração de vínculo"))
+        self.assertNotIn("'Rateio calculado'", out)
+
+    def test_scenario_without_requirement_id_is_warn(self):
+        code, out = self.lint(trace=self.mapped("Reserva aceita", "Alteração de vínculo"))
+        self.assertEqual(code, 0, out)
+        self.assertIn("cenario 'Caso sem requisito' do PRD nao cita requisito", out)
+
+    def test_out_of_capability_row_is_mapped_and_exempt(self):
+        rows = self.mapped("Reserva aceita", "Alteração de vínculo")
+        rows += "| Caso sem requisito | Fora desta capability: `allocation/book-processing` |\n"
+        code, out = self.lint(trace=rows)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("Caso sem requisito", out)
+
 
 class Tags(Base):
     def test_premissa_and_lacuna_are_accepted(self):
@@ -503,6 +614,34 @@ class Placeholders(Base):
         self.assertEqual(code, 0, out)
         self.assertWarn(out, "placeholder")
 
+    def test_bracket_starting_with_uppercase_is_warn(self):
+        """Placeholder de template comeca por maiuscula tanto quanto por
+        minuscula: `[Uma frase: o que faremos.]` e o texto que ficou por
+        escrever."""
+        for text in ("[Uma frase: o que faremos.]",
+                     "[Situação e restrições que forçaram a decisão; o que estava em jogo.]",
+                     "Participantes: [quem decidiu]; [quem foi consultado]."):
+            code, out = self.lint(prd="", extra=f"\n{text}\n")
+            self.assertEqual(code, 0, out)
+            self.assertWarn(out, "possivel placeholder de template")
+
+    def test_tag_id_and_markdown_link_are_not_placeholders(self):
+        extra = ("\n[PREMISSA] Forma da rejeicao.\n\n[LACUNA] limite por investidor.\n"
+                 "\nOrigem: [PRD 0002](../../../prd/0002-reservation-book.md).\n"
+                 "\n- [ ] Item de checklist com texto suficiente.\n")
+        code, out = self.lint(prd="", extra=extra)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("possivel placeholder", out)
+
+    def test_eighty_characters_is_the_ceiling(self):
+        """O teto de 80 caracteres separa o texto por escrever da prosa que
+        so por acaso esta entre colchetes."""
+        code, out = self.lint(prd="", extra="\n[P" + "a" * 79 + "]\n")
+        self.assertWarn(out, "possivel placeholder de template")
+        code, out = self.lint(prd="", extra="\n[P" + "a" * 80 + "]\n")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("possivel placeholder", out)
+
 
 class TemplateRegressionTest(Base):
     """O template de references/specify.md, gravado como spec viva da
@@ -533,6 +672,33 @@ class TemplateRegressionTest(Base):
         code, out = run(self.spec)
         self.assertNoHard(out)
         self.assertEqual(code, 0, out)
+
+
+class SectionsInSyncWithReferenceTest(unittest.TestCase):
+    """A lista de secoes do script e a tabela de references/specify.md, secao
+    Secoes: mesmos nomes. Doc e script divergentes fazem o linter ignorar a
+    secao que a referencia manda escrever."""
+
+    @staticmethod
+    def documented():
+        with open(SPECIFY_MD, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        start = next(i for i, l in enumerate(lines) if l.strip() == "## Seções")
+        end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("## "))
+        out = []
+        for l in lines[start:end]:
+            if not l.strip().startswith("|"):
+                continue
+            cell = l.strip().strip("|").split("|")[0].strip().strip("*").strip()
+            if cell and cell != "Seção" and not re.fullmatch(r":?-{2,}:?", cell):
+                out.append(cell)
+        return out
+
+    def test_names_match(self):
+        names = self.documented()
+        self.assertTrue(names, "tabela de secoes nao encontrada em references/specify.md")
+        self.assertEqual(sorted(names),
+                         sorted(aliases[0] for aliases in lint_spec.SECTIONS_KNOWN))
 
 
 class Usage(Base):

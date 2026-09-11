@@ -32,7 +32,7 @@ Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada nã
 ```markdown
 # ADR 0007: Eventos de domínio saem por outbox transacional
 
-Participantes: quem decidiu; quem foi consultado.
+Participantes: [quem decidiu]; [quem foi consultado].
 
 ## Contexto
 [Situação e restrições que forçaram a decisão; o que estava em jogo.]
@@ -51,6 +51,10 @@ Participantes: quem decidiu; quem foi consultado.
 ## Regras derivadas
 [Regra em CLAUDE.md, rules ou linter que existe por causa desta ADR, com o path. Presente quando há regra.]
 ```
+
+## Antes de apresentar
+
+Rode `lint_adr.py <adr.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente.
 
 ## Conformar e superseder
 

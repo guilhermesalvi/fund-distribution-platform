@@ -31,7 +31,11 @@ HARD (exit 1):
 - com `prd:` no comentario de maquina, secao `## Rastreabilidade` ausente; ID
   de PRD citado ao fim de um requisito (FR em escopo) que nao aparece na
   primeira coluna de nenhuma tabela dessa secao; ID EARS listado nas tabelas
-  dessa secao que nao e requisito definido na spec;
+  dessa secao que nao e requisito definido na spec; nome de caso da primeira
+  coluna de uma tabela dos Criterios de Aceitacao do PRD (cenario herdado)
+  que cita FR em escopo e nao aparece na primeira coluna de nenhuma tabela
+  dessa secao (cenario sem ID nenhum e WARN; linha `Fora desta capability:`
+  na segunda coluna conta como mapeada);
 - tag fora da convencao (`[FATO]`, `[PREMISSA-CRÍTICA]`, grafia errada): sem
   tag e fato; as tags sao `[PREMISSA]` e `[LACUNA]`;
 - link Markdown `[texto](destino)` para arquivo local que nao resolve: destino
@@ -45,11 +49,16 @@ WARN (nao afeta exit):
 - `prd-rev` divergente de `git hash-object <prd>` (o PRD mudou desde a spec:
   re-derive); `prd-rev` ausente ou git indisponivel para conferir;
 - numero pulado na sequencia de IDs sem estar na lista de aposentados;
-- secao `## Contexto` com menos de 3 ou mais de 5 linhas nao vazias;
+- secao `## Contexto` com menos de 3 ou mais de 5 linhas nao vazias; secao
+  `## Requisitos` com 8 ou mais requisitos sem nenhum subtitulo `###` por tema,
+  ou com menos de 8 e algum subtitulo;
 - citacao com prefixo desconhecido em prosa; spec com `prd:` sem nenhuma
   citacao de ID do PRD; linha de Rastreabilidade so com IDs de PRD que nenhum
-  requisito cita;
-- placeholder (TBD, TODO, `[nome]`), hedging, meta-narracao.
+  requisito cita, exceto quando a segunda coluna comeca com `Critério de
+  design:` (ou `Design criterion:`), a forma do NFR que vira criterio de
+  design em vez de requisito EARS;
+- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`), hedging,
+  meta-narracao.
 
 Exit 2 em erro de uso: opcao desconhecida, spec ausente ou fora de UTF-8.
 Linter verde e esqueleto conforme, nao spec boa.
@@ -63,8 +72,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
     REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
     find_sections_exact, git_blob_rev, iter_headings, norm_heading, parse_machine_comment,
-    read_lines, repo_root_for, resolve_local_path, scan_placeholders, scan_prose, table_rows,
-    usage,
+    read_lines, repo_root_for, resolve_local_path, scan_placeholders, scan_prose, strip_accents,
+    table_rows, usage,
 )
 
 EARS_LEAD = re.compile(r"^\s*(WHEN|WHILE|WHERE|IF)\b", re.IGNORECASE)
@@ -90,6 +99,8 @@ SECTIONS_REQUIRED = [
 # Contexto e enquadramento, nao capitulo: abaixo do minimo nao situa quem le,
 # acima do maximo vira prosa que ninguem mantem.
 CONTEXT_MIN, CONTEXT_MAX = 3, 5
+# Subtitulos `###` por tema em Requisitos (references/specify.md, Secoes).
+THEME_MIN = 8
 SECTIONS_KNOWN = SECTIONS_REQUIRED + [
     ("Escopo e Fora de Escopo", "Escopo", "Scope / Out of Scope", "Scope"),
     ("Premissas", "Assumptions"),
@@ -200,6 +211,20 @@ def check_context_size(rep, lines, mask):
         rep.warn(f"secao Contexto com {n} linha(s) nao vazia(s); o esperado e de "
                  f"{CONTEXT_MIN} a {CONTEXT_MAX} - origem, fronteira e base lida, sem virar capitulo",
                  hidx + 1)
+
+
+def check_requirement_themes(rep, lines, mask, reqs, sec):
+    """Subtitulos `###` por tema em Requisitos a partir de THEME_MIN requisitos
+    (references/specify.md, Secoes): lista longa sem tema nao se navega, lista
+    curta com tema e cerimonia."""
+    themes = [i for i, _ in iter_headings(lines, 3, mask) if sec[0] <= i < sec[1]]
+    n = len(reqs)
+    if n >= THEME_MIN and not themes:
+        rep.warn(f"secao Requisitos com {n} requisitos sem subtitulo ### por tema; "
+                 f"a partir de {THEME_MIN} a lista se navega por tema", sec[0])
+    elif n < THEME_MIN and themes:
+        rep.warn(f"secao Requisitos com {n} requisito(s) e subtitulo ### por tema; "
+                 f"o tema entra a partir de {THEME_MIN} requisitos", themes[0] + 1)
 
 
 def check_ids(rep, lines, mask, reqs, prefix, retired):
@@ -407,7 +432,12 @@ def lint_prd(rep, lines, mask, fields, spec_path, prefix):
 # --- rastreabilidade --------------------------------------------------------
 
 SECTION_TRACE = ("Rastreabilidade", "Traceability")
+SECTION_ACCEPTANCE = ("Critérios de Aceitação", "Acceptance Criteria")
 SEPARATOR_CELL = re.compile(r":?-{2,}:?")
+# Segunda coluna de `Critério de design:`: NFR que e atributo de qualidade sem
+# teste direto vira criterio de design, nao requisito EARS (specify.md, A
+# partir do PRD), entao a linha existe sem requisito que a cite.
+DESIGN_CRITERION = re.compile(r"^[*_`\s]*(?:criterio de design|design criterion|fora desta capability|out of this capability)\s*:", re.IGNORECASE)
 
 
 def all_table_rows(lines, start, end, mask):
@@ -450,6 +480,14 @@ def id_only_cell(cell):
     return not re.sub(r"[,;/\s]", "", PRD_ID.sub("", cell))
 
 
+def is_design_criterion(cells):
+    """Linha cuja segunda coluna comeca com `Critério de design:` ou
+    `Fora desta capability:`: formas prescritas para o NFR que vira criterio
+    de design e para o FR ou cenario de outra capability; nenhuma tem
+    requisito que a cite."""
+    return len(cells) > 1 and bool(DESIGN_CRITERION.match(strip_accents(cells[1])))
+
+
 def check_traceability(rep, lines, mask, prefix, defined, orphans, retired):
     """Com `prd:` no comentario de maquina: secao obrigatoria, todo FR em
     escopo mapeado e todo ID EARS das tabelas definido na spec."""
@@ -462,12 +500,13 @@ def check_traceability(rep, lines, mask, prefix, defined, orphans, retired):
     for i, cells in all_table_rows(lines, sec[0], sec[1], mask):
         if not cells:
             continue
+        criterion = is_design_criterion(cells)
         for m in PRD_ID.finditer(cells[0]):
             if m.group(1) == prefix:
                 continue
             rid = f"{m.group(1)}-{m.group(2) or ''}{m.group(3)}"
             first_col.setdefault(rid, i)
-            if id_only_cell(cells[0]):
+            if id_only_cell(cells[0]) and not criterion:
                 mapped_only.setdefault(rid, i)
         for c in cells:
             for rid in REQ_ID.findall(c):
@@ -486,6 +525,47 @@ def check_traceability(rep, lines, mask, prefix, defined, orphans, retired):
             continue
         extra = " (consta da lista de aposentados)" if rid in retired else ""
         rep.hard(f"Rastreabilidade: {rid} nao e requisito definido nesta spec{extra}", idx + 1)
+
+
+def prd_scenarios(prd_path):
+    """Cenarios herdados: {nome normalizado: (nome, IDs de PRD citados na
+    linha)} da primeira coluna de toda tabela sob os Criterios de Aceitacao do
+    PRD (header e separador fora)."""
+    lines = read_lines(prd_path)
+    mask = fenced_line_mask(lines)
+    out = {}
+    for start, end, _ in find_sections_exact(lines, SECTION_ACCEPTANCE, mask=mask):
+        for _, cells in all_table_rows(lines, start, end, mask):
+            key = norm_cell(cells[0]) if cells else ""
+            if key:
+                ids = {f"{p}-{nfr or ''}{n}" for p, nfr, n in PRD_ID.findall(" ".join(cells))}
+                out.setdefault(key, (cells[0].strip(), ids))
+    return out
+
+
+def check_inherited_scenarios(rep, lines, mask, prd_path, cited):
+    """Cenario dos Criterios de Aceitacao do PRD que cita um FR em escopo
+    aparece na primeira coluna de alguma tabela da Rastreabilidade (HARD): e o
+    caso de teste que a spec tem de cobrir. Cenario que so cita FRs fora do
+    escopo e de outra capability e fica em silencio; cenario sem ID nenhum nao
+    e escopavel e vira WARN ate ser mapeado ou marcado `Fora desta capability:`."""
+    scenarios = prd_scenarios(prd_path)
+    if not scenarios:
+        return
+    sec = find_section_exact(lines, SECTION_TRACE, mask=mask)
+    if sec is None:
+        return
+    mapped = {norm_cell(cells[0]) for _, cells in all_table_rows(lines, sec[0], sec[1], mask) if cells}
+    for key, (name, ids) in scenarios.items():
+        if key in mapped:
+            continue
+        if ids & set(cited):
+            rep.hard(f"cenario '{name}' dos Criterios de Aceitacao do PRD sem linha na "
+                     "Rastreabilidade; cenario herdado mapeia para os IDs EARS que o cobrem",
+                     sec[0])
+        elif not ids:
+            rep.warn(f"cenario '{name}' do PRD nao cita requisito: mapeie-o na Rastreabilidade "
+                     "ou marque-o 'Fora desta capability:'", sec[0])
 
 
 # --- links ------------------------------------------------------------------
@@ -570,6 +650,7 @@ def main(argv):
         if not reqs:
             rep.hard("secao Requisitos sem requisito com ID")
         check_ears(rep, reqs)
+        check_requirement_themes(rep, lines, mask, reqs, sec)
     retired = retired_ids(lines, mask)
     defined, orphans = check_ids(rep, lines, mask, reqs, prefix, retired)
 
@@ -583,6 +664,9 @@ def main(argv):
     lint_prd(rep, lines, mask, fields, path, prefix)
     if fields.get("prd"):
         check_traceability(rep, lines, mask, prefix, defined, orphans, retired)
+        prd_path = resolve_local_path(path, fields["prd"])
+        if prd_path:
+            check_inherited_scenarios(rep, lines, mask, prd_path, cited_prd_ids(lines, mask, prefix))
     check_local_links(rep, lines, mask, path)
     check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, skip_first=(mc_idx or 0) + 1, mask=mask)

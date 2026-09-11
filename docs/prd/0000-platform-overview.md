@@ -48,8 +48,8 @@ sequenceDiagram
     participant Allocation
 
     Operador->>Offering: publicar (OFF-03)
-    Offering-->>ReservationBook: OfferPublished
-    Offering-->>Allocation: OfferPublished
+    Offering-->>ReservationBook: OfferPublished (OFF-03)
+    Offering-->>Allocation: OfferPublished (OFF-03)
     loop período de reserva (BOOK-01)
         Operador->>ReservationBook: registrar, alterar, cancelar reserva (BOOK-10, BOOK-11)
     end
@@ -58,7 +58,7 @@ sequenceDiagram
     Offering-->>Allocation: OfferClosed → inicia processamento (ALLOC-01)
     Allocation->>ReservationBook: ler livro fechado (BOOK-16)
     Allocation-->>Offering: BookProcessed (ALLOC-26)
-    Allocation-->>ReservationBook: BookProcessed
+    Allocation-->>ReservationBook: BookProcessed (ALLOC-26)
     alt formada
         Offering->>Offering: Fechada → Formada (OFF-10)
         ReservationBook->>ReservationBook: status por reserva (BOOK-17)
@@ -79,12 +79,12 @@ sequenceDiagram
     participant Allocation
 
     Operador->>Offering: revogar (OFF-12)
-    Offering-->>Allocation: OfferRevoked
-    Offering-->>ReservationBook: OfferRevoked
+    Offering-->>Allocation: OfferRevoked (OFF-12)
+    Offering-->>ReservationBook: OfferRevoked (OFF-12)
     alt processamento em curso
         Allocation->>Allocation: interrompe, nada é emitido (ALLOC-03)
     else BookProcessed já emitido
-        Allocation-->>Offering: BookProcessed chega após a revogação
+        Allocation-->>Offering: BookProcessed chega após a revogação (OFF-11)
         Offering->>Offering: descartado e registrado (OFF-11)
     end
     ReservationBook->>ReservationBook: toda reserva não cancelada passa a Sem efeito,<br/>antes ou depois do resultado (BOOK-18)

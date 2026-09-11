@@ -12,11 +12,11 @@ Quando a oferta fecha, o livro precisa virar resultado: a oferta se formou ou n�
 
 ## Alinhamento Estratégico
 
-Allocation é o núcleo do domínio: é onde as regras da CVM 160 sobre distribuição parcial, condicionamento e pessoas vinculadas produzem efeito, e onde a plataforma entrega o que promete. Os outros dois contextos existem para alimentar este; o rigor deste PRD está na precisão das regras e nos exemplos numéricos.
+Allocation é o núcleo do domínio: é onde as regras da CVM 160 sobre distribuição parcial, condicionamento e pessoas vinculadas produzem efeito, e onde a plataforma entrega o que promete. Os outros dois contextos existem para alimentar este. O rigor deste PRD está na precisão das regras e nos exemplos numéricos.
 
 ## Contexto e Problema
 
-Sem um processamento único e determinístico, cada leitura do livro produziria um resultado diferente, e nenhum contexto poderia confiar no desfecho. Sem regras precisas para vedação, formação, condicionamento e rateio, os casos de borda (exclusão que derruba a demanda abaixo da base, truncamento que deixa resto, condição que cancela reservas depois da formação) ficam a critério de quem implementa.
+Sem um processamento único e determinístico, cada leitura do livro produz um resultado diferente e nenhum contexto confia no desfecho. Sem regras precisas para vedação, formação, condicionamento e rateio, os casos de borda (exclusão que derruba a demanda abaixo da base, truncamento que deixa resto, condição que cancela reservas depois da formação) ficam a critério de quem implementa.
 
 As cotas efetivamente distribuídas são apuradas antes do condicionamento e não são recalculadas depois: formação e numerador do proporcional consideram todas as reservas do livro fechado, inclusive as que a opção de colocação total vai cancelar. É a leitura literal da CVM 160, art. 74, parágrafo único, e a única que o texto admite: o parágrafo existe para quebrar a circularidade entre "quanto foi distribuído" e "quais condições se cumprem". Consequência aceita: a oferta pode se formar com soma final abaixo do montante mínimo, e os investidores da opção 1 são restituídos (art. 73, § 4º).
 
@@ -35,17 +35,17 @@ Processar o livro fechado uma única vez por oferta, em etapas ordenadas com reg
 ```mermaid
 flowchart TD
     n0["Livro fechado: D, Dn (ALLOC-05)"] --> n1{"D > 4B/3 ?"}
-    n1 -- "não" --> n4
-    n1 -- "sim" --> n2{"Dn ≥ B ?"}
-    n2 -- "sim" --> n3["Excluir vinculadas; D' = Dn (ALLOC-06)"]
-    n2 -- "não" --> n7["Colocação limitada; D' = D > B (ALLOC-07)"]
+    n1 -- "não (ALLOC-08)" --> n4
+    n1 -- "sim (ALLOC-06, ALLOC-07)" --> n2{"Dn ≥ B ?"}
+    n2 -- "sim (ALLOC-06)" --> n3["Excluir vinculadas; D' = Dn (ALLOC-06)"]
+    n2 -- "não (ALLOC-07)" --> n7["Colocação limitada; D' = D > B (ALLOC-07)"]
     n3 --> n4{"D' < M ?"}
-    n4 -- "sim" --> n5["Não formada (ALLOC-09)"]
-    n4 -- "não" --> n6["Formada; E = min(D', B) (ALLOC-10)"]
+    n4 -- "sim (ALLOC-09)" --> n5["Não formada (ALLOC-09)"]
+    n4 -- "não (ALLOC-10)" --> n6["Formada; E = min(D', B) (ALLOC-10)"]
     n6 --> n8{"D' vs B"}
-    n8 -- "D' < B" --> n9["Distribuição parcial: condicionamento (ALLOC-11 a 14)"]
-    n8 -- "D' = B" --> n10["Colocação integral (ALLOC-15)"]
-    n8 -- "D' > B" --> n11["Rateio: R = B, Dr = D' (ALLOC-16 a 20)"]
+    n8 -- "D' < B (ALLOC-11 a 14)" --> n9["Distribuição parcial: condicionamento (ALLOC-11 a 14)"]
+    n8 -- "D' = B (ALLOC-15)" --> n10["Colocação integral (ALLOC-15)"]
+    n8 -- "D' > B (ALLOC-16 a 20)" --> n11["Rateio: R = B, Dr = D' (ALLOC-16 a 20)"]
     n7 --> n12["Não vinculadas: q; vinculadas rateiam R = B − Dn (ALLOC-21)"]
     n5 --> n13["BookProcessed (ALLOC-26)"]
     n9 --> n13
@@ -151,12 +151,11 @@ Produz `BookProcessed` (ALLOC-26). Consome `OfferPublished` (definição), `Offe
 
 Texto consolidado da CVM 160 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- Art. 56, caput, § 1º, III, e § 3º: vedação a vinculadas em excesso superior a um terço; exceção quando a exclusão derruba a demanda abaixo da quantidade ofertada; nessa hipótese a colocação para vinculadas "fica limitada ao necessário para perfazer a quantidade", preservada a colocação integral das não vinculadas. ALLOC-06, ALLOC-07, ALLOC-21. O cálculo do excesso ignora lote adicional e suplementar, inexistentes na v1.
-- Art. 73, §§ 3º e 4º: restituição integral abaixo do mínimo, inclusive a quem condicionou à distribuição total. ALLOC-09; ALLOC-11 em distribuição parcial.
-- Art. 74 e parágrafo único: opções de condicionamento; "efetivamente distribuídos" inclui as reservas condicionadas. ALLOC-10 fixa `E` antes do condicionamento. Incisos I e II obrigatórios na oferta (OFF-25); este contexto só aplica a opção declarada.
-- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Não modelado; a categoria não altera o condicionamento na v1.
-- Art. 49, III: o plano de distribuição fixa o rateio com tratamento equitativo; a norma não impõe critério. O critério da v1 é escolha do modelo.
-- ICVM 400, art. 31, § 1º (revogada): origem da distinção totalidade/proporcional, mantida pela prática de mercado.
+- Art. 56, caput, § 1º, III, e § 3º: vedação a vinculadas em excesso superior a um terço; exceção quando a exclusão derruba a demanda abaixo da quantidade ofertada, e nessa hipótese a colocação para vinculadas "fica limitada ao necessário para perfazer a quantidade", preservada a colocação integral das não vinculadas → ALLOC-06, ALLOC-07, ALLOC-21. O cálculo do excesso ignora lote adicional e suplementar, inexistentes na v1.
+- Art. 73, §§ 3º e 4º: restituição integral abaixo do mínimo, inclusive a quem condicionou à distribuição total → ALLOC-09, ALLOC-11.
+- Art. 74 e parágrafo único: opções de condicionamento; "efetivamente distribuídos" inclui as reservas condicionadas → ALLOC-10, OFF-25. `E` é fixado antes do condicionamento; este contexto só aplica a opção declarada.
+- Art. 49, III: o plano de distribuição fixa o rateio com tratamento equitativo, sem impor critério → ALLOC-16, ALLOC-17. O critério da v1 é escolha do modelo.
+- ICVM 400, art. 31, § 1º (revogada): origem da distinção entre totalidade e proporcional → ALLOC-13. Mantida pela prática de mercado.
 
 ## Não-objetivos
 
@@ -164,7 +163,7 @@ Texto consolidado da CVM 160 lido em 2026-09-05; artigos conferidos contra o tex
 - Garantia do investimento mínimo por investidor na alocação.
 - Lote adicional e suplementar; sobras de subscrição e direito de preferência; alocação discricionária e tranche institucional.
 - Exceções do art. 56 para formadores de mercado e aplicação mínima obrigatória.
-- Efeito da categoria do investidor; reprocessamento manual, aprovação ou ajuste pelo operador; liquidação, custódia e posição do cotista.
+- Efeito da categoria do investidor (art. 75); reprocessamento manual, aprovação ou ajuste pelo operador; liquidação, custódia e posição do cotista.
 
 ## Trade-offs Declarados
 
@@ -206,9 +205,9 @@ Projeto sem uso em produção; métricas de correção, verificáveis por teste.
 | Empate na fração | A 500, C 500, `B = 999` | 1000, 1000, 1000, 999 | rateio | 499 (499,5) cada; frações iguais; resto 1 → A, ordem de registro; A 500, C 499 |
 | Empate no instante de registro | idem, aceitas no mesmo instante, A anterior na ordem de registro | 1000, 1000, 1000, 999 | rateio | A 500, C 499 |
 
-- **Dado** um processamento em curso, **quando** a oferta é revogada, **então** nenhum `BookProcessed` é emitido.
-- **Dado** uma oferta com `BookProcessed` emitido, **quando** novo processamento é solicitado, **então** é rejeitado.
-- **Dado** um processamento interrompido por falha antes de emitir, **quando** é repetido, **então** emite o `BookProcessed` que o original produziria.
+- **Dado** um processamento em curso, **quando** a oferta é revogada, **então** nenhum `BookProcessed` é emitido (ALLOC-03).
+- **Dado** uma oferta com `BookProcessed` emitido, **quando** novo processamento é solicitado, **então** é rejeitado (ALLOC-02).
+- **Dado** um processamento interrompido por falha antes de emitir, **quando** é repetido, **então** emite o `BookProcessed` que o original produziria (ALLOC-02, ALLOC-04).
 
 ## Dependências e Riscos
 

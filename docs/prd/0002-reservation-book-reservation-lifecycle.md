@@ -129,20 +129,18 @@ Não produz eventos na v1: o único consumidor do livro é o Allocation, que o l
 
 Texto consolidado das Resoluções CVM 160 e CVM 30 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- CVM 160, art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. O modelo admite alteração e cancelamento até o fechamento por decisão do autor (BOOK-10 a BOOK-12). Ver Trade-offs e Ponto de Maior Fragilidade.
-- Art. 65, § 6º, II e V: o pedido de reserva contém as condições em distribuição parcial e identifica o investidor vinculado. BOOK-06, BOOK-08.
-- Art. 65, §§ 1º e 2º: depósito do montante reservado é facultativo. Não modelado.
-- Art. 66: a seção de reservas não se aplica a profissionais. Sem efeito na v1; é o gatilho quando a categoria passar a alterar regra.
-- Art. 2º, XVI, e art. 56: pessoa vinculada e vedação em excesso. Aqui só a declaração; a vedação, inclusive a colocação limitada do § 3º, é ALLOC-06 a ALLOC-08 e ALLOC-21.
-- Art. 2º, X e XI, e CVM 30, arts. 11 e 12: profissional e qualificado atestam por escrito sua condição. Categoria declarada, não verificada.
-- Art. 64: adequação ao perfil (suitability) é dever do intermediário. Fora do escopo.
-- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. Efeito da categoria é extensão futura.
-- Art. 69, § 1º, e art. 65, § 5º: desistência nasce de modificação da oferta ou divergência entre prospectos, ambos fora do escopo. Se modificação entrar, este contexto ganha cancelamento após o fechamento com prazo mínimo de cinco dias úteis e presunção de manutenção no silêncio.
+- CVM 160, art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta → BOOK-10, BOOK-11, BOOK-12. Alteração até o fechamento é decisão do autor; ver Trade-offs e Ponto de Maior Fragilidade.
+- Art. 65, § 6º, II e V: o pedido de reserva contém as condições em distribuição parcial e identifica o investidor vinculado → BOOK-06, BOOK-08.
+- Art. 66: a seção de reservas não se aplica a profissionais → BOOK-05. Sem efeito na v1; é o gatilho quando a categoria passar a alterar regra.
+- Art. 2º, XVI, e art. 56: pessoa vinculada e vedação em excesso → BOOK-06, ALLOC-06, ALLOC-07, ALLOC-08, ALLOC-21. Aqui só a declaração; a vedação, inclusive a colocação limitada do § 3º, vive no PRD 0003.
+- Art. 2º, X e XI, e CVM 30, arts. 11 e 12: profissional e qualificado atestam por escrito sua condição → BOOK-05. Categoria declarada, não verificada.
+- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais → BOOK-05. Efeito da categoria é extensão futura.
+- Art. 69, § 1º, e art. 65, § 5º: desistência após o fechamento nasce de modificação da oferta ou de divergência entre prospectos → BOOK-12. Causas fora do escopo; se modificação entrar, entra cancelamento após o fechamento com prazo mínimo de cinco dias úteis.
 
 ## Não-objetivos
 
-- Cadastro, identidade e autorização de investidor; verificação de suitability e das declarações, inclusive por política interna.
-- Depósito do montante reservado e movimentação financeira.
+- Cadastro, identidade e autorização de investidor; verificação de suitability (art. 64) e das declarações, inclusive por política interna.
+- Depósito do montante reservado (art. 65, §§ 1º e 2º) e movimentação financeira.
 - Vedação a vinculadas, condicionamento e rateio (Allocation); efeito da categoria do investidor.
 - Reservas por mais de um intermediário; direito de desistência após o fechamento; bookbuilding e intenções de investimento sem período de reserva.
 
@@ -168,18 +166,18 @@ Projeto sem uso em produção; métricas de correção, verificáveis por teste.
 Oferta Aberta dentro do período, investimento mínimo 10 e máximo 500, opções aceitas {1, 2, 3}, salvo indicação.
 
 - **Dado** um investidor existente, **quando** reserva 50 cotas com varejo, não vinculado e opção 3, **então** Ativa; **quando** registra uma segunda de 400 com opção 1, **então** aceita, posição 450; **quando** tenta uma terceira de 60, **então** rejeitada por BOOK-04 (posição 510); **quando** registra outra declarando vinculado, **então** rejeitada por BOOK-07.
-- **Dado** um investidor com duas reservas ativas, **quando** altera o vínculo de uma para vinculado, **então** as duas passam a vinculado e cada uma registra a mudança.
-- **Dado** uma reserva de 5 cotas com opção 4 sem declarar vínculo, **quando** registrada, **então** rejeitada com as três violações.
+- **Dado** um investidor com duas reservas ativas, **quando** altera o vínculo de uma para vinculado, **então** as duas passam a vinculado e cada uma registra a mudança (BOOK-07, BOOK-10).
+- **Dado** uma reserva de 5 cotas com opção 4 sem declarar vínculo, **quando** registrada, **então** rejeitada com as três violações (BOOK-03, BOOK-06, BOOK-08, BOOK-09).
 - **Dado** uma oferta sem distribuição parcial, **quando** a reserva informa opção, **então** rejeitada por BOOK-08.
 - **Dado** uma oferta em Draft, Fechada ou Revogada, ou Aberta com período terminado, **quando** alguém tenta reservar, **então** rejeitado por BOOK-01.
-- **Dado** uma reserva Ativa de 50 registrada às 10h, **quando** alterada para 80 às 11h, **então** aceita, histórico registra a mudança, instante e ordem do registro não mudam.
+- **Dado** uma reserva Ativa de 50 registrada às 10h, **quando** alterada para 80 às 11h, **então** aceita, histórico registra a mudança, instante e ordem do registro não mudam (BOOK-10, BOOK-13, BOOK-14).
 - **Dado** uma reserva Ativa, **quando** a oferta passa a Fechada e o investidor tenta cancelar, **então** rejeitado por BOOK-12.
-- **Dado** uma oferta Fechada com reservas Ativas e uma Cancelada pelo investidor, **quando** o Allocation consulta o livro fechado, **então** recebe só as Ativas, com quantidade, declarações, opção, instante e ordem do registro; duas aceitas no mesmo instante recebem ordens distintas.
-- **Dado** o livro fechado, **quando** chega o resultado, **então** reserva de 50 alocada em 40 passa a Atendida parcialmente com alocada 40 e reservada 50; reserva de 1 alocada em 0 por proporcional passa a Atendida parcialmente com 0; reserva excluída por vinculação passa a Excluída por vinculação com 0; em oferta não formada, todas passam a Sem efeito com 0.
-- **Dado** uma oferta Aberta com reservas Ativas, **quando** revogada, **então** todas passam a Sem efeito.
-- **Dado** uma oferta Formada com reservas Atendida (50 alocadas 50), Atendida parcialmente (50 alocadas 40) e uma Cancelada pelo investidor, **quando** revogada, **então** as duas primeiras passam a Sem efeito com alocada 0 e resultado anterior no histórico; a Cancelada não muda.
-- **Dado** um resultado para reserva Cancelada pelo investidor, **quando** recebido, **então** rejeitado e registrado, sem alterar a reserva.
-- **Dado** uma oferta Aberta com reservas ativas de 50, 400 e 30, **quando** o operador consulta o livro, **então** vê demanda acumulada 480 e as três com status Ativa.
+- **Dado** uma oferta Fechada com reservas Ativas e uma Cancelada pelo investidor, **quando** o Allocation consulta o livro fechado, **então** recebe só as Ativas, com quantidade, declarações, opção, instante e ordem do registro; duas aceitas no mesmo instante recebem ordens distintas (BOOK-15, BOOK-16).
+- **Dado** o livro fechado, **quando** chega o resultado, **então** reserva de 50 alocada em 40 passa a Atendida parcialmente com alocada 40 e reservada 50; reserva de 1 alocada em 0 por proporcional passa a Atendida parcialmente com 0; reserva excluída por vinculação passa a Excluída por vinculação com 0; em oferta não formada, todas passam a Sem efeito com 0 (BOOK-17).
+- **Dado** uma oferta Aberta com reservas Ativas, **quando** revogada, **então** todas passam a Sem efeito (BOOK-18).
+- **Dado** uma oferta Formada com reservas Atendida (50 alocadas 50), Atendida parcialmente (50 alocadas 40) e uma Cancelada pelo investidor, **quando** revogada, **então** as duas primeiras passam a Sem efeito com alocada 0 e resultado anterior no histórico; a Cancelada não muda (BOOK-18).
+- **Dado** um resultado para reserva Cancelada pelo investidor, **quando** recebido, **então** rejeitado e registrado, sem alterar a reserva (BOOK-19).
+- **Dado** uma oferta Aberta com reservas ativas de 50, 400 e 30, **quando** o operador consulta o livro, **então** vê demanda acumulada 480 e as três com status Ativa (BOOK-20).
 
 ## Dependências e Riscos
 

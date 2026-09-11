@@ -12,7 +12,7 @@ A plataforma cobre a janela entre a publicação de uma oferta de cotas de fundo
 
 ## Alinhamento Estratégico
 
-Offering é a raiz de dependência: os outros dois contextos leem a definição da oferta e não a alteram; o estado, por outro lado, avança com o desfecho que o Allocation produz. Erro de definição ou de estado aqui se propaga para todos; por isso o rigor deste PRD está na validação da publicação, no contrato de imutabilidade e na máquina de estados.
+Offering é a raiz de dependência: os outros dois contextos leem a definição da oferta e não a alteram. O estado, por outro lado, avança com o desfecho que o Allocation produz. Erro de definição ou de estado aqui se propaga para todos; por isso o rigor deste PRD está na validação da publicação, no contrato de imutabilidade e na máquina de estados.
 
 ## Contexto e Problema
 
@@ -142,25 +142,23 @@ Produz `OfferPublished` (OFF-03, carrega a definição completa), `OfferClosed` 
 
 ## Considerações Regulatórias
 
-Texto consolidado das Resoluções CVM 160 e CVM 30 lido em 2026-09-05; artigos conferidos contra o texto.
+Texto consolidado da Resolução CVM 160 lido em 2026-09-05; artigos conferidos contra o texto.
 
-- Art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro; § 3º manda restituir integralmente quando o mínimo não é atingido. O modelo adota quantidade de cotas e mapeia o § 3º em Não formada (OFF-09).
-- Art. 74: havendo distribuição parcial, "deve ser dada a opção ao investidor" de condicionar à totalidade (I) ou a quantidade maior ou igual ao mínimo (II). As opções 1 e 2 são obrigatórias; a variante proporcional (opção 3) não está na CVM 160 e é herança do art. 31, § 1º, da ICVM 400, mantida pela prática. OFF-25.
-- Art. 74, parágrafo único: "efetivamente distribuídos" inclui as reservas condicionadas. `E` (numerador de OFF-28) e a formação seguem essa definição, sem recálculo após o condicionamento. Detalhe: ALLOC-10.
-- Arts. 67, III, e 68: revogação pedida pelo ofertante e deferida pela CVM torna ineficazes oferta e aceitações, com restituição integral. Revogada modela o efeito; o deferimento não é modelado.
-- Art. 70: suspensão e cancelamento são atos da CVM por irregularidade. Por isso o estado de mínimo não atingido se chama Não formada, não Cancelada. Suspensão não é modelada.
-- Art. 76: o resultado é divulgado no anúncio de encerramento, no que ocorrer primeiro entre o fim do prazo (I) e a distribuição da totalidade (II). O inciso II sustenta o fechamento antecipado (OFF-07); Encerrada corresponde ao marco, o anúncio não é modelado.
-- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais. A categoria é declarada na reserva; seu efeito é extensão futura.
-- Art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta. Sem modificação no escopo, a decisão sobre alterar reserva antes do fechamento é BOOK-10 a BOOK-12.
-- Art. 50: lote adicional de até 25%. Fora do escopo; quando entrar, a quantidade base continua sendo o denominador do proporcional e a referência do lote.
-- Registro na CVM, prospecto, lâmina e aviso ao mercado (arts. 57 e 65) não são modelados. Nenhum atributo espelha documento formal; se precisar, o glossário muda antes do código.
+- Art. 73: o ato que delibera a oferta define o tratamento da distribuição parcial e o mínimo, em quantidade ou em montante financeiro; § 3º manda restituir integralmente quando o mínimo não é atingido → OFF-09, OFF-19. O modelo adota quantidade de cotas; o § 3º é Não formada.
+- Art. 74: havendo distribuição parcial, "deve ser dada a opção ao investidor" de condicionar à totalidade (I) ou a quantidade maior ou igual ao mínimo (II) → OFF-25. Opção 3 não está na CVM 160: herança do art. 31, § 1º, da ICVM 400, mantida pela prática.
+- Art. 74, parágrafo único: "efetivamente distribuídos" inclui as reservas condicionadas → OFF-28, ALLOC-10. `E` é apurado antes do condicionamento e não é recalculado depois.
+- Arts. 67, III, e 68: revogação pedida pelo ofertante e deferida pela CVM torna ineficazes oferta e aceitações, com restituição integral → OFF-12. Revogada modela o efeito; o deferimento não é modelado.
+- Art. 70: suspensão e cancelamento são atos da CVM por irregularidade → OFF-09. Por isso o estado de mínimo não atingido se chama Não formada, não Cancelada; suspensão não é modelada.
+- Art. 76: o resultado é divulgado no anúncio de encerramento, no que ocorrer primeiro entre o fim do prazo (I) e a distribuição da totalidade (II) → OFF-07, OFF-13. O inciso II sustenta o fechamento antecipado; Encerrada corresponde ao marco, o anúncio não é modelado.
+- Art. 75: distribuição parcial não se aplica a ofertas exclusivas para profissionais → BOOK-05. A categoria é declarada na reserva; seu efeito é extensão futura.
+- Art. 65, § 4º: a reserva é irrevogável, ressalvadas modificação e revogação da oferta → BOOK-10, BOOK-11, BOOK-12. Sem modificação no escopo, alterar a reserva antes do fechamento é decisão do PRD 0002.
 
 ## Não-objetivos
 
-- Série como nível de processamento, tranches, lote adicional, outros critérios de rateio, efeito da categoria do investidor, direito de preferência e sobras de subscrição.
+- Série como nível de processamento, tranches, lote adicional (art. 50), outros critérios de rateio, efeito da categoria do investidor, direito de preferência e sobras de subscrição.
 - Liquidação financeira e integrações externas; Encerrada só registra que a liquidação terminou.
 - Modificação de atributos, redução da quantidade base e suspensão de oferta publicada.
-- Cadastro de fundo, classes, subclasses e investidores; documentos da oferta e registro na CVM.
+- Cadastro de fundo, classes, subclasses e investidores; documentos da oferta e registro na CVM (arts. 57 e 65).
 - Calendário de dias úteis; o período de reserva é um intervalo de instantes.
 
 ## Trade-offs Declarados
@@ -188,19 +186,19 @@ Projeto sem uso em produção; métricas de correção, verificáveis por teste.
 
 ## Critérios de Aceitação
 
-- **Dado** um Draft com fundo, classe e emissão, preço 100, quantidade base 1000, montante mínimo 600, investimento mínimo 10 e máximo 500, período futuro e opções {1, 2, 3}, **quando** o operador publica, **então** passa a Aberta e fica disponível aos demais contextos com exatamente esses atributos; um segundo Draft com o mesmo nome também é publicado.
-- **Dado** um Draft sem número da emissão, investimento mínimo 500 e máximo 10, e montante mínimo maior que a quantidade base, **quando** publica, **então** rejeitado, permanece Draft, e a resposta lista as três violações com atributo e regra.
+- **Dado** um Draft com fundo, classe e emissão, preço 100, quantidade base 1000, montante mínimo 600, investimento mínimo 10 e máximo 500, período futuro e opções {1, 2, 3}, **quando** o operador publica, **então** passa a Aberta e fica disponível aos demais contextos com exatamente esses atributos; um segundo Draft com o mesmo nome também é publicado (OFF-03, OFF-14, OFF-15).
+- **Dado** um Draft sem número da emissão, investimento mínimo 500 e máximo 10, e montante mínimo maior que a quantidade base, **quando** publica, **então** rejeitado, permanece Draft, e a resposta lista as três violações com atributo e regra (OFF-04, OFF-16, OFF-19, OFF-21).
 - **Dado** um Draft válido cujo período começou ontem e termina amanhã, **quando** publica, **então** Aberta; se o período terminou ontem, rejeitado por OFF-24.
-- **Dado** um Draft com preço 96,53420001, **quando** publica, **então** o preço é consultado em seguida com exatamente esse valor.
-- **Dado** uma oferta fora de Draft, **quando** qualquer atributo é alterado, **então** rejeitado e a definição consultada é idêntica à publicada.
-- **Dado** um Draft válido, **quando** outro contexto consulta ofertas, **então** o Draft não aparece.
-- **Dado** uma oferta Fechada, **quando** chega o desfecho com demanda efetiva 500 e mínimo 600, **então** Não formada; com demanda efetiva 700 e alocação concluída, Formada.
-- **Dado** uma oferta Revogada, **quando** chega um desfecho, **então** permanece Revogada e o desfecho é registrado como descartado.
-- **Dado** uma oferta Formada, **quando** o operador revoga, **então** Revogada; **quando** encerra, Encerrada.
-- **Dado** uma oferta Não formada, Revogada ou Encerrada, **quando** qualquer transição é tentada, **então** rejeitada informando o estado corrente; **dado** um Draft, revogar ou fechar também é rejeitado.
-- **Dado** montante mínimo igual à quantidade base e conjunto de opções vazio, **quando** publica, **então** aceita e apresentada como sem distribuição parcial.
+- **Dado** um Draft com preço 96,53420001, **quando** publica, **então** o preço é consultado em seguida com exatamente esse valor (OFF-17, OFF-NFR-04).
+- **Dado** uma oferta fora de Draft, **quando** qualquer atributo é alterado, **então** rejeitado e a definição consultada é idêntica à publicada (OFF-05).
+- **Dado** um Draft válido, **quando** outro contexto consulta ofertas, **então** o Draft não aparece (OFF-14).
+- **Dado** uma oferta Fechada, **quando** chega o desfecho com demanda efetiva 500 e mínimo 600, **então** Não formada; com demanda efetiva 700 e alocação concluída, Formada (OFF-09, OFF-10).
+- **Dado** uma oferta Revogada, **quando** chega um desfecho, **então** permanece Revogada e o desfecho é registrado como descartado (OFF-11).
+- **Dado** uma oferta Formada, **quando** o operador revoga, **então** Revogada; **quando** encerra, Encerrada (OFF-12, OFF-13).
+- **Dado** uma oferta Não formada, Revogada ou Encerrada, **quando** qualquer transição é tentada, **então** rejeitada informando o estado corrente; **dado** um Draft, revogar ou fechar também é rejeitado (OFF-06).
+- **Dado** montante mínimo igual à quantidade base e conjunto de opções vazio, **quando** publica, **então** aceita e apresentada como sem distribuição parcial (OFF-20).
 - **Dado** montante mínimo menor que a quantidade base, **quando** publica com conjunto vazio ou {1, 3}, **então** rejeitado por OFF-25; com {1, 2}, aceito.
-- **Dado** quantidade base 1000, `E = 700` e reserva de 15 cotas, **quando** o Allocation aplica a semântica daqui, **então** opção 3 recebe 10 (⌊15 × 700 / 1000⌋ = ⌊10,5⌋), opção 1 é cancelada, opção 2 recebe 15; opção 3 com reserva de 1 cota recebe 0.
+- **Dado** quantidade base 1000, `E = 700` e reserva de 15 cotas, **quando** o Allocation aplica a semântica daqui, **então** opção 3 recebe 10 (⌊15 × 700 / 1000⌋ = ⌊10,5⌋), opção 1 é cancelada, opção 2 recebe 15; opção 3 com reserva de 1 cota recebe 0 (OFF-26 a OFF-28).
 
 ## Dependências e Riscos
 

@@ -2,7 +2,8 @@
 contextos do `; afeta` na tabela de Dependencias e Riscos) e
 secoes obrigatorias por igualdade, Requisitos Funcionais quando ha IDs,
 prefixo, MoSCoW e definicoes, fence, IDs entre PRDs, PRD 0000 e a referencia a
-ele, links locais, as regras de secao (conteudo, ordem, contagem de linhas,
+ele, links locais, a visao geral fora do numero 0000, as regras de secao
+(conteudo, secao fora da tabela fechada, ordem, contagem de linhas,
 trade-off, guardrail, Ponto de Maior Fragilidade, premissa 'se falsa' de
 Perguntas em Aberto (posicao, negrito e bullet fora da secao),
 cenario Dado/Quando/Entao, bullet regulatorio com a nota
@@ -11,8 +12,9 @@ rotulos de diagrama, as heuristicas WARN, `--lang pt|en` (heading fora do par
 do idioma, alias neutro, erro de uso), `--reverse` (o WARN de mecanismo em
 toda secao, marcador de exclusao e erro de uso), `--source` (as tres frases
 mais longas do PRD buscadas no material, selecao e erro de uso), a
-sincronizacao com a tabela de secoes de references/writing.md (nomes, ordem e
-idioma de cada alias) e a regressao do PRD de references/example.md.
+sincronizacao com as tabelas de references/writing.md (nomes, ordem e idioma
+de cada alias na de Secoes; nomes na de PRD 0000; nas duas, o par pt/en da
+primeira coluna) e a regressao do PRD de references/example.md.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_prd.py"
 """
@@ -295,10 +297,51 @@ class SectionOrderTests(LintCase):
         self.assert_no_hard(rc, out)
         self.assertNotIn("WARN", out)
 
-    def test_unknown_section_does_not_affect_order(self):
+    def test_section_outside_the_table_does_not_affect_order(self):
+        """A secao fora da tabela e HARD por si (ver UnknownSectionTests), mas
+        nao entra na ordem: as conhecidas em volta dela seguem verdes."""
         self.write("0001-onb-x.md", prd(body_extra="\n## Regras Locais\n\n- uma regra.\n" + METRICS))
         rc, out = self.run_lint()
+        self.assertEqual([ln for ln in out.splitlines() if "fora de ordem" in ln], [], out)
+
+
+class UnknownSectionTests(LintCase):
+    """A tabela de secoes de references/writing.md e fechada: secao `##` fora
+    dela e HARD, porque nao tem criterio de entrada nem posicao. A visao geral
+    responde a tabela da secao PRD 0000."""
+
+    def test_section_outside_the_table_is_hard(self):
+        self.hard_for(prd(body_extra="\n## Regras Locais\n\n- uma regra.\n"),
+                      "secao fora da tabela: 'Regras Locais'")
+
+    def test_only_table_sections_is_green(self):
+        self.write("0001-onb-x.md", prd(nfr=True, body_extra=TRADEOFF + METRICS))
+        rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
+        self.assertNotIn("fora da tabela", out)
+
+    def test_subsection_outside_the_table_is_green(self):
+        """A tabela nomeia secoes; `###` e subsecao e nao e cobrada."""
+        self.write("0001-onb-x.md",
+                   prd(body_extra="\n### Regras Locais\n\n- uma regra.\n"))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_overview_section_from_its_table_is_green(self):
+        self.write("0001-onb-x.md", prd(link_0000="0000-platform-overview.md"))
+        self.write("0000-platform-overview.md",
+                   overview() + "\n## Catálogo de eventos\n\n| Evento | Produtor |\n"
+                   "|---|---|\n| OfferPublished | CtxONB |\n")
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+
+    def test_overview_section_outside_its_table_is_hard(self):
+        self.write("0001-onb-x.md", prd(link_0000="0000-platform-overview.md"))
+        self.write("0000-platform-overview.md",
+                   overview() + "\n## Métricas de Sucesso\n\n- leading: adocao.\n")
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, "secao fora da tabela: 'Métricas de Sucesso'")
 
 
 def alignment(lines):
@@ -637,6 +680,22 @@ class OverviewTests(LintCase):
         self.write("0000-platform-overview.md", overview())
         rc, out = self.run_lint()
         self.assert_no_hard(rc, out)
+
+    def test_overview_outside_zero_is_hard(self):
+        """O numero da visao geral e fixo em 0000 e nao passa pelo contador
+        (SKILL.md, Caminho e numeracao)."""
+        self.write("0002-onb-x.md", prd(link_0000="0001-platform-overview.md"))
+        self.write("0001-platform-overview.md", overview())
+        rc, out = self.run_lint()
+        self.assertEqual(rc, 1, out)
+        self.assert_hard(out, "visao geral numerada 0001")
+
+    def test_overview_at_zero_is_green(self):
+        self.write("0001-onb-x.md", prd(link_0000="0000-platform-overview.md"))
+        self.write("0000-platform-overview.md", overview())
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("visao geral numerada", out)
 
 
 class LocalLinkTests(LintCase):
@@ -1058,7 +1117,8 @@ class LanguageTests(LintCase):
     def test_unknown_heading_is_not_a_language_finding(self):
         rc, out = self.lint_lang(prd(body_extra="\n## Regras de Rateio\n\nprosa.\n"),
                                  "--lang", "en")
-        self.assertNotIn("Regras de Rateio", out)
+        self.assertEqual([ln for ln in out.splitlines()
+                          if ln.startswith("WARN") and "Regras de Rateio" in ln], [], out)
 
     def test_invalid_lang_value_is_usage_error(self):
         rc, out = self.lint_lang(prd(), "--lang", "fr")
@@ -1135,7 +1195,7 @@ S2 = ("O operador fecha o livro de reservas quando o prazo termina ou quando a "
 S3 = ("A restituicao integral acontece quando o montante minimo da oferta nao e "
       "atingido ate o fechamento.")
 S4 = "O resultado da oferta e divulgado no anuncio de encerramento da distribuicao."
-LONG_PROSE = "\n## Detalhamento\n\n" + "\n\n".join((S1, S2, S3, S4)) + "\n"
+LONG_PROSE = "\n## Domain Events\n\n" + "\n\n".join((S1, S2, S3, S4)) + "\n"
 
 
 class SourceReformatTests(LintCase):
@@ -1197,7 +1257,7 @@ class SourceReformatTests(LintCase):
         self.assertNotIn("frase do PRD encontrada", out)
 
     def test_table_and_code_block_are_not_prose(self):
-        body = ("\n## Detalhamento\n\n| Caso | Resultado |\n|---|---|\n"
+        body = ("\n## Domain Events\n\n| Caso | Resultado |\n|---|---|\n"
                 f"| livro fechado | {S1} |\n\n```text\n" + S2 + "\n```\n")
         src = self.source("brief.md", S1 + "\n" + S2)
         rc, out = self.lint_source(body, "--source", src)
@@ -1215,18 +1275,33 @@ class SourceReformatTests(LintCase):
         self.assertIn("--source veio sem o arquivo", out)
 
 
+SECTION_CELL = re.compile(r"^(.*?)\s*\(([^()]*)\)$")
+
+
+def section_cell_names(cell):
+    """Nome pt e nome en da primeira coluna das tabelas de writing.md:
+    'Nao-objetivos (Non-goals)' -> ('Nao-objetivos', 'Non-goals'). Sem
+    parenteses, o nome vale para os dois idiomas."""
+    m = SECTION_CELL.match(cell.strip())
+    return ((m.group(1).strip(), m.group(2).strip()) if m
+            else (cell.strip(), cell.strip()))
+
+
 class SectionTableSyncTest(unittest.TestCase):
     """A tabela da secao Secoes de references/writing.md e a fonte dos nomes e
-    da ordem; SECTIONS e SECTION_ORDER a espelham."""
+    da ordem; SECTIONS e SECTION_ORDER a espelham. A tabela da secao PRD 0000
+    e a fonte das secoes da visao geral; OVERVIEW_SECTIONS a espelha. A
+    primeira coluna das duas nomeia a secao em portugues e, entre parenteses,
+    em ingles - os dois idiomas em que o PRD e escrito."""
 
-    def table_sections(self):
-        """Primeira coluna da tabela de secoes, na ordem do documento."""
+    def table_rows(self, heading):
+        """Primeira coluna da tabela sob `## <heading>`, na ordem do documento."""
         with open(WRITING_MD, encoding="utf-8") as f:
             lines = f.read().splitlines()
         start = next((i for i, l in enumerate(lines)
-                      if lint_prd.norm_heading(l) == "secoes"
+                      if lint_prd.norm_heading(l) == heading
                       and l.startswith("## ")), None)
-        self.assertIsNotNone(start, "secao '## Seções' nao encontrada em writing.md")
+        self.assertIsNotNone(start, f"secao '## {heading}' nao encontrada em writing.md")
         rows = []
         for raw in lines[start + 1:]:
             if raw.startswith("## "):
@@ -1234,10 +1309,35 @@ class SectionTableSyncTest(unittest.TestCase):
             cells = lint_prd.table_cells(raw)
             if cells and not all(lint_prd.SEPARATOR_CELL.match(c) for c in cells):
                 rows.append(cells[0])
-        self.assertTrue(rows, "tabela de secoes vazia em writing.md")
-        self.assertEqual(lint_prd.norm_heading(rows[0]), "secao",
+        self.assertTrue(rows, f"tabela de '{heading}' vazia em writing.md")
+        self.assertEqual(lint_prd.norm_heading(rows[0]), "secao (pt / en)",
                          "a primeira linha da tabela deveria ser o header")
         return rows[1:]
+
+    def table_sections(self):
+        return self.table_rows("secoes")
+
+    def section_cell_problems(self, cell):
+        """Problemas da celula, lista vazia quando ela nomeia a secao nos dois
+        idiomas: o nome pt e o nome en casam a mesma chave de SECTIONS e cada um
+        esta no conjunto de aliases do seu idioma. Celula sem parenteses so
+        passa quando o nome e neutro (o mesmo nos dois idiomas)."""
+        pt, en = section_cell_names(cell)
+        keys_pt = [k for k in lint_prd.SECTION_ORDER if lint_prd.heading_is(k, pt)]
+        keys_en = [k for k in lint_prd.SECTION_ORDER if lint_prd.heading_is(k, en)]
+        if len(keys_pt) != 1 or keys_pt != keys_en:
+            return [f"'{cell}': o nome pt e o nome en nao casam uma mesma chave "
+                    "de SECTIONS"]
+        npt, nen = lint_prd.norm_heading(pt), lint_prd.norm_heading(en)
+        if npt == nen:
+            return ([] if npt in lint_prd.ALIAS_NEUTRAL else
+                    [f"'{cell}': falta o nome em ingles entre parenteses"])
+        bad = []
+        if npt not in lint_prd.ALIAS_PT:
+            bad.append(f"'{cell}': '{pt}' nao esta em ALIAS_PT")
+        if nen not in lint_prd.ALIAS_EN:
+            bad.append(f"'{cell}': '{en}' nao esta em ALIAS_EN")
+        return bad
 
     def test_names_match_sections(self):
         for name in self.table_sections():
@@ -1246,6 +1346,22 @@ class SectionTableSyncTest(unittest.TestCase):
                         if lint_prd.heading_is(k, name)]
                 self.assertEqual(len(keys), 1,
                                  f"'{name}' nao casa exatamente um alias de SECTIONS")
+
+    def test_every_row_names_the_section_in_both_languages(self):
+        """O PRD e escrito em portugues ou em ingles (SKILL.md, Idioma), entao
+        a tabela da o nome nos dois: sem isso o alias en so existiria no codigo
+        e o HARD de secao fora da tabela nao teria fonte escrita em ingles."""
+        for cell in self.table_sections():
+            with self.subTest(section=cell):
+                self.assertEqual(self.section_cell_problems(cell), [])
+
+    def test_row_missing_or_wrong_english_name_is_caught(self):
+        """Negativo do teste acima: nome so em portugues, ou com um nome em
+        ingles que SECTIONS nao aceita, nao passa."""
+        self.assertTrue(self.section_cell_problems("Não-objetivos"))
+        self.assertTrue(self.section_cell_problems("Não-objetivos (Non-objectives)"))
+        self.assertEqual(self.section_cell_problems("Não-objetivos (Non-goals)"), [])
+        self.assertEqual(self.section_cell_problems("Domain Events"), [])
 
     def test_every_alias_has_a_language(self):
         """Alias novo em SECTIONS entra em ALIAS_PT, ALIAS_EN ou ALIAS_NEUTRAL:
@@ -1264,6 +1380,39 @@ class SectionTableSyncTest(unittest.TestCase):
         keys = [next(k for k in lint_prd.SECTION_ORDER if lint_prd.heading_is(k, name))
                 for name in self.table_sections()]
         self.assertEqual(keys, lint_prd.SECTION_ORDER)
+
+    def overview_cell_problems(self, cell):
+        """Problemas da celula da tabela PRD 0000: o nome pt e o nome en, que
+        precisam ser distintos, casam a mesma chave de OVERVIEW_SECTIONS."""
+        pt, en = section_cell_names(cell)
+        if lint_prd.norm_heading(pt) == lint_prd.norm_heading(en):
+            return [f"'{cell}': falta o nome em ingles entre parenteses"]
+        keys = [k for k in lint_prd.OVERVIEW_SECTIONS
+                if lint_prd.heading_in(lint_prd.OVERVIEW_SECTIONS, k, pt)]
+        if len(keys) != 1:
+            return [f"'{cell}': '{pt}' nao casa exatamente uma chave de "
+                    "OVERVIEW_SECTIONS"]
+        if not lint_prd.heading_in(lint_prd.OVERVIEW_SECTIONS, keys[0], en):
+            return [f"'{cell}': '{en}' nao e alias de '{keys[0]}'"]
+        return []
+
+    def test_overview_names_match_overview_sections(self):
+        """A tabela da secao PRD 0000 e a fonte das secoes da visao geral;
+        OVERVIEW_SECTIONS a espelha, uma chave por linha da tabela, com o nome
+        em portugues e o nome em ingles."""
+        rows = self.table_rows("prd 0000")
+        for cell in rows:
+            with self.subTest(section=cell):
+                self.assertEqual(self.overview_cell_problems(cell), [])
+        self.assertEqual(len(rows), len(lint_prd.OVERVIEW_SECTIONS),
+                         "OVERVIEW_SECTIONS tem chave sem linha na tabela")
+
+    def test_overview_row_missing_or_wrong_english_name_is_caught(self):
+        """Negativo do teste acima."""
+        self.assertTrue(self.overview_cell_problems("Catálogo de eventos"))
+        self.assertTrue(self.overview_cell_problems("Catálogo de eventos (Events)"))
+        self.assertEqual(
+            self.overview_cell_problems("Catálogo de eventos (Event Catalog)"), [])
 
 
 class ExampleRegressionTest(LintCase):

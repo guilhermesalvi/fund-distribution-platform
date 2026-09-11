@@ -37,24 +37,29 @@ caracteres; fecha com o mesmo caractere e comprimento >= abertura) e
 ignorado. O PRD nunca carrega resultado de lint: a saida e feedback para quem
 escreve, que corrige e roda de novo.
 
-O linter tambem nao julga convencao do repositorio, que e o unico motivo de
-manter um HARD (SKILL.md, passo Checar): a forma precisa aparecer em tres ou
-mais PRDs commitados da pasta - conte os commitados com `git ls-files` na
-pasta, o linter nao distingue arquivo commitado de arquivo em elaboracao - ou
-estar escrita no CLAUDE.md do repositorio.
+O linter tambem nao julga os dois motivos de manter um HARD (SKILL.md, passo
+Checar): o pedido da sessao, que precisa nomear literalmente a secao, o campo
+ou a forma de onde o HARD sai, e a convencao do repositorio, que precisa
+aparecer em tres ou mais PRDs commitados da pasta - conte os commitados com
+`git ls-files` na pasta, o linter nao distingue arquivo commitado de arquivo em
+elaboracao - ou estar escrita no CLAUDE.md do repositorio.
 
 HARD (exit 1):
   - titulo H1 ('# ...') ausente;
   - header sem a tabela de duas colunas entre o titulo e a linha de prefixo
     com um dos campos `**Contexto Originario**`, `**Modulo**` ou `**Area**`
-    (`**Escopo**` na visao geral); a lista e fechada;
+    (`**Escopo**` na visao geral); a lista e fechada, e cada rotulo tem o par
+    em ingles: `**Originating Context**`, `**Module**`, `**Area**`
+    (`**Scope**`);
   - secao obrigatoria ausente: Resumo Executivo, Contexto e Problema,
     Usuario-alvo, Solucao Proposta e, quando o PRD define IDs, Requisitos
     Funcionais (heading casado por igualdade com os aliases PT/EN, nunca por
     substring);
   - PRD com IDs sem a linha `Prefixo dos requisitos: `X`.` entre o titulo e
-    a primeira secao; definicao `- **X-nn (Must)**` / `- **X-NFR-nn**` com
-    prefixo diferente do declarado; `FR-nn` / `NFR-nn` sem prefixo;
+    a primeira secao (em PRD em ingles, `Requirement prefix: `X`.`; sao essas
+    as duas formas escritas - SKILL.md, Header); definicao
+    `- **X-nn (Must)**` / `- **X-NFR-nn**` com prefixo diferente do
+    declarado; `FR-nn` / `NFR-nn` sem prefixo;
   - FR definido sem prioridade MoSCoW (`- **X-nn (Must)**`); NFR nao leva
     MoSCoW;
   - citacao de ID sem definicao em nenhum PRD da pasta; ID definido mais de
@@ -64,9 +69,16 @@ HARD (exit 1):
     repositorio; ancora removida; URL com esquema, ancora pura, code span e
     bloco de codigo ficam fora);
   - PRD 0000: `<!-- prd: overview -->` na primeira linha identifica a visao
-    geral; arquivo `0000-*` sem o comentario; visao geral definindo
-    requisito; dois ou mais prefixos na pasta sem visao geral; pasta com
-    visao geral e PRD cuja linha de prefixo nao a referencia por link local.
+    geral; arquivo `0000-*` sem o comentario; visao geral fora do numero
+    0000 (o numero dela e fixo e nao passa pelo contador de `seq.py`); visao
+    geral definindo requisito; dois ou mais prefixos na pasta sem visao
+    geral; pasta com visao geral e PRD cuja linha de prefixo nao a
+    referencia por link local;
+  - secao `##` fora da tabela de secoes, que e fechada: a tabela da secao
+    Secoes de `references/writing.md` nos PRDs comuns, a da secao PRD 0000
+    na visao geral. A primeira coluna de cada uma nomeia a secao em portugues
+    e, entre parenteses, em ingles; as duas formas passam. Subsecao (`###` ou
+    mais) fica de fora.
 
   Fora da visao geral, sobre as secoes (a tabela e a ordem estao em
   `references/writing.md`, secao Secoes):
@@ -175,6 +187,17 @@ SECTIONS = {
         "ponto de maior fragilidade", "weakest point", "biggest weakness",
     ),
     "referencias": ("referencias", "references"),
+}
+# Secoes da tabela de `references/writing.md`, secao PRD 0000: a visao geral
+# tem lista propria, fechada do mesmo jeito. O teste de sincronizacao cobra a
+# correspondencia com a tabela.
+OVERVIEW_SECTIONS = {
+    "proposito": ("proposito", "purpose"),
+    "contextos": ("contextos", "contexts"),
+    "eventos": ("catalogo de eventos", "event catalog", "event catalogue"),
+    "fluxos": ("fluxos entre contextos", "flows between contexts"),
+    "termos": ("termos por contexto", "terms per context"),
+    "adr": ("decisoes delegadas a adr", "decisions delegated to adr"),
 }
 # Ordem da tabela de `references/writing.md`, secao Secoes.
 SECTION_ORDER = [
@@ -365,8 +388,13 @@ def heading_variants(s):
     return out
 
 
+def heading_in(table, key, heading):
+    """O titulo casa um alias de `table[key]` (SECTIONS ou OVERVIEW_SECTIONS)."""
+    return any(v in table[key] for v in heading_variants(heading))
+
+
 def heading_is(key, heading):
-    return any(v in SECTIONS[key] for v in heading_variants(heading))
+    return heading_in(SECTIONS, key, heading)
 
 
 def fence_mask(lines):
@@ -917,6 +945,26 @@ def check_empty_sections(doc):
                          "a secao.", sec.line)
 
 
+def check_unknown_sections(doc):
+    """Toda secao `##` esta na tabela de writing.md. A tabela e fechada: secao
+    fora dela nao tem criterio de entrada nem posicao, e entraria por forma. A
+    visao geral responde a tabela da secao PRD 0000; os demais PRDs, a de
+    Secoes. Subsecao (`###` ou mais) nao e cobrada: a tabela nomeia secoes."""
+    if doc.is_overview:
+        table, source = OVERVIEW_SECTIONS, "PRD 0000"
+    else:
+        table, source = SECTIONS, "Secoes"
+    for sec in doc.sections():
+        if sec.level != 2 or any(heading_in(table, k, sec.title) for k in table):
+            continue
+        doc.add_hard(f"secao fora da tabela: '{sec.title}'. A tabela da secao "
+                     f"{source} de references/writing.md e fechada; use a secao "
+                     "da tabela que cobre esse conteudo, com o nome da primeira "
+                     "coluna no idioma do PRD (o de fora dos parenteses em pt, "
+                     "o de dentro em en; ver --lang), ou mova o conteudo para "
+                     "ela.", sec.line)
+
+
 def check_section_order(doc):
     """As secoes conhecidas seguem a ordem da tabela de writing.md."""
     known = [(SECTION_ORDER.index(s.key), s.title, s.line)
@@ -1067,6 +1115,10 @@ def lint_doc(doc, lang=None, sources=(), reverse=False):
     if doc.number == 0 and not doc.is_overview:
         hard("arquivo 0000-* sem '<!-- prd: overview -->' na primeira linha; "
              "a visao geral e o unico PRD que o linter trata diferente.", 1)
+    if doc.is_overview and doc.number != 0:
+        hard(f"visao geral numerada {doc.number:04d}; o numero da visao geral e "
+             "fixo em 0000 e nao passa pelo contador de `seq.py` (SKILL.md, "
+             "Caminho e numeracao). Renomeie para '0000-<slug>-overview.md'.", 1)
 
     start = doc.body_start()
     body_lines = [raw if doc.visible(start + k) else "" for k, raw in enumerate(lines[start:])]
@@ -1082,6 +1134,7 @@ def lint_doc(doc, lang=None, sources=(), reverse=False):
         check_source_reformat(doc, sources)
 
     # --- secoes obrigatorias ---------------------------------------------
+    check_unknown_sections(doc)
     if not doc.is_overview:
         for key in REQUIRED:
             if not doc.has_section(key):
@@ -1110,7 +1163,8 @@ def lint_doc(doc, lang=None, sources=(), reverse=False):
     else:
         if doc.defs and not doc.prefix:
             hard("PRD com requisitos sem prefixo declarado. Acrescente a linha "
-                 "'Prefixo dos requisitos: `X`.' entre o titulo e a primeira secao.",
+                 "'Prefixo dos requisitos: `X`.' ('Requirement prefix: `X`.' em "
+                 "PRD em ingles) entre o titulo e a primeira secao.",
                  doc.h1_idx + 1)
         for rid, ln in doc.defs:
             p = rid.split("-", 1)[0]

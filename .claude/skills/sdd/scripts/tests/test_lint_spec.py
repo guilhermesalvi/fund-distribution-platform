@@ -633,14 +633,28 @@ class Placeholders(Base):
         self.assertEqual(code, 0, out)
         self.assertNotIn("possivel placeholder", out)
 
-    def test_eighty_characters_is_the_ceiling(self):
-        """O teto de 80 caracteres separa o texto por escrever da prosa que
-        so por acaso esta entre colchetes."""
-        code, out = self.lint(prd="", extra="\n[P" + "a" * 79 + "]\n")
+    def test_two_hundred_characters_is_the_ceiling(self):
+        """O teto de 200 caracteres separa o texto por escrever - inclusive o
+        placeholder longo de uma secao inteira - da prosa que so por acaso esta
+        entre colchetes."""
+        code, out = self.lint(prd="", extra="\n[P" + "a" * 199 + "]\n")
         self.assertWarn(out, "possivel placeholder de template")
-        code, out = self.lint(prd="", extra="\n[P" + "a" * 80 + "]\n")
+        code, out = self.lint(prd="", extra="\n[P" + "a" * 200 + "]\n")
         self.assertEqual(code, 0, out)
         self.assertNotIn("possivel placeholder", out)
+
+    def test_value_reduced_to_an_ellipsis_is_warn(self):
+        """Rotulo escrito e valor por escrever ('- Positivas: …') passava sem
+        sinal: o placeholder nao precisa de colchete."""
+        for text in ("- Positivas: …", "- Positivas: ...", "| Racional | ... |"):
+            code, out = self.lint(prd="", extra=f"\n{text}\n")
+            self.assertEqual(code, 0, out)
+            self.assertWarn(out, "valor reduzido a reticencias")
+
+    def test_ellipsis_inside_a_sentence_is_not_a_placeholder(self):
+        code, out = self.lint(prd="", extra="\nA fila aceita: pedido, retry e descarte.\n")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("reticencias", out)
 
 
 class TemplateRegressionTest(Base):

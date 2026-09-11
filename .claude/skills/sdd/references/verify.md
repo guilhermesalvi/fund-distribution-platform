@@ -13,7 +13,17 @@ O grau de independência não muda o resto: cada requisito tem evidência ou con
 
 ## Escopo
 
-O objeto da verificação é o diff da mudança: `git diff <base>`, onde `<base>` é o `git merge-base` entre o branch da mudança e o branch principal ou, sem branch próprio, o commit anterior ao primeiro commit desta mudança: o que criou a pasta `NNNN-<change-slug>` ou, sem pasta, o que gravou a alteração da spec (o usuário indica quando houver dúvida), mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline). Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
+O objeto da verificação é o diff da mudança, `git diff <base>`, mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline).
+
+`<base>` é o resultado da primeira destas regras que devolve um hash, nesta ordem:
+
+1. a base registrada antes da primeira task: o hash da linha `Base: <hash>` do parágrafo "Como este repositório testa" do `tasks.md`, ou do slot `; base: <hash>` da linha `Gate` do plano inline (execute.md, Antes da primeira task);
+2. com branch próprio: `git merge-base HEAD <branch principal>`;
+3. `git log --diff-filter=A --format=%H -1 -- <capability-dir>/NNNN-<change-slug>`, o commit que criou a pasta da mudança; a base é `<hash>^`.
+
+O commit que tocou a `spec.md` nunca serve de base: a spec é viva e o último commit dela pode ser de outra mudança, ou do meio desta. Nenhuma das três devolve hash: a verificação está bloqueada por falta de base. Diga qual regra falhou e pergunte qual commit é a base; não adivinhe.
+
+Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
 
 ## Eixo 1: conformidade à spec
 
@@ -37,12 +47,13 @@ Compare a contagem de testes com a contagem-base registrada no parágrafo "Como 
 - Teste pulado não é evidência.
 - Zero testes executados não é gate verde.
 - Gate que não pode rodar é bloqueio com motivo declarado, não falha.
+- **Gate vermelho não fecha a mudança.** Cada teste falho entra em Gaps com o nome do teste e vira uma task de correção `TCn` (Gaps e tasks de correção); a asserção não se afrouxa, não se pula e não se mocka. Teste que já falhava na base — confirmado rodando o mesmo comando em `<base>` (Escopo) — é reportado como pré-existente, fica fora dos gaps desta mudança e não vira `TCn`.
 
 ## Eixo 2: aderência ao design
 
 Compare com o `design.md`, com a estrutura declarada no `tasks.md` ou com o plano inline, conforme o que a mudança tem. Verifique:
 
-- **Estrutura:** arquivos, componentes e localização batem com o design.
+- **Estrutura:** arquivos, componentes e localização batem com o design. Arquivo que o design não listava e que uma task registrou no campo `Onde` com a nota de descoberta conta como conformidade, não como gap: a regra está em execute.md (execute.md, Ciclo por task) e é ela que vale aqui. Arquivo no diff que nem o design lista nem nota alguma explica é gap.
 - **Responsabilidades:** cada componente faz o que o design diz, e só isso.
 - **Interfaces:** assinaturas iguais às do design.
 - **Dependências:** nenhuma fora do planejado (pacote, módulo, serviço).
@@ -85,8 +96,14 @@ Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de co
 ## Desvios
 
 - **Desvio que muda comportamento** não sobrevive à verificação. O caminho é voltar ao artefato de origem (PRD, spec ou design), corrigi-lo, obter o commit dele (SKILL.md, Aprovação e autorizações), re-derivar a implementação e verificar de novo.
-- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Desvios` do `tasks.md` (ou do plano inline) com justificativa e é julgado no eixo 2.
+- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Desvios` do `tasks.md` (ou do plano inline) com justificativa e é julgado no eixo 2. Arquivo indispensável descoberto durante a task tem rota própria, e não é esta (execute.md, Ciclo por task).
 
 ## Mutação
 
-Teste de mutação roda quando a mudança toca dinheiro, liquidação, auth ou integridade de transição (riscos de design.md, Do risco à técnica); fora disso, não roda. Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap; ferramenta ausente é bloqueio com motivo, como o gate. Esta skill não descreve procedimento próprio de mutação.
+Teste de mutação roda quando o comando de mutação está declarado nesta mudança, e só então. A declaração tem um lugar, e ele depende só de a mudança ter ou não `tasks.md`: com `tasks.md`, é a linha `Mutação` da tabela Comandos de Gate (tasks.md, Comandos de Gate); sem ele, é o slot `; mutação: <comando>` da linha `Gate` do plano inline (execute.md, Plano inline). Vale igual nas quatro configurações: com design e sem design, com `tasks.md` e sem ele.
+
+Declarar o comando é obrigatório em dois casos: quando a tabela Riscos e técnicas do design tem linha de um destes três riscos, e só deles — dinheiro e cálculo financeiro; segurança e dado regulado; concorrência, duplicata e retry (design.md, Do risco à técnica) —, e quando o usuário pede mutação nesta mudança. Design com um desses três riscos e sem o comando declarado é gap do eixo 2: o risco não foi mitigado como o design prometeu. Fora dessas duas obrigações, declarar é opção do usuário.
+
+A obrigação vinda do design não espera o Verify quando há `tasks.md`: `lint_tasks.py` lê a tabela Riscos e técnicas do design e acusa como HARD a tabela Comandos de Gate sem a linha `Mutação` (tasks.md, Registro no `tasks.md`). Sem `tasks.md`, quem confere é você, no plano inline, antes de apresentá-lo.
+
+Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap; ferramenta ausente é bloqueio com motivo, como o gate. Esta skill não descreve procedimento próprio de mutação.

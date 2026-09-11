@@ -31,13 +31,23 @@ HARD (exit 1):
   (`No real alternative:` em ingles); com a secao, essa linha presente;
 - requisito `IF ... THEN` da spec (no escopo) cujo ID nao e citado na secao
   `## Tratamento de erros`: cenario de erro sem mecanismo escolhido;
-- ID em `scope:` que nao existe na spec.
+- ID em `scope:` que nao existe na spec;
+- tag fora de [PREMISSA] e [LACUNA] ([FATO], [PREMISSA-CRÍTICA] e grafias
+  erradas): texto sem tag e fato.
 
 WARN (nao afeta exit):
+- secao `##` com mais de 10 linhas de corpo - linhas nao vazias, fora de bloco
+  de codigo e dos headings. E o limite de profundidade proporcional ao risco:
+  o script conta, e voce confere se o assunto da secao aparece em
+  `## Riscos e técnicas`; se nao aparece, e inflacao. A propria secao
+  `## Riscos e técnicas` fica fora da contagem, porque o assunto dela aparece
+  nela por definicao;
 - em `## Componentes`, linha `- **Propósito:**` com mais de uma frase ou com
   a conjuncao 'e' fora de crases: um componente, um proposito;
-- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`) fora de bloco de
-  codigo.
+- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`, valor reduzido a
+  reticencias) fora de bloco de codigo;
+- hedging ('provavelmente', 'talvez') e meta-narracao ('este design ...'):
+  contexto de decisao se escreve declarativo.
 
 Exit 2 em erro de uso: opcao desconhecida, arquivo ausente ou fora de UTF-8.
 Linter verde e esqueleto conforme, nao design bom.
@@ -49,9 +59,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, fenced_line_mask, find_section_exact, find_sections_exact,
-    iter_headings, norm_heading, parse_machine_comment, read_lines, resolve_local_path,
-    scan_placeholders, strip_accents, usage,
+    REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
+    find_sections_exact, iter_headings, norm_heading, parse_machine_comment, read_lines,
+    resolve_local_path, scan_placeholders, scan_prose, strip_accents, usage,
 )
 
 # Ordem das secoes do design, como em references/design.md, secao "Secoes".
@@ -70,6 +80,10 @@ SECTIONS_ORDER = [
     ("Arquivos a criar ou modificar", "Files to Create or Modify"),
 ]
 SECTION_ERRORS = ("Tratamento de erros", "Error handling")
+SECTION_RISKS = ("Riscos e técnicas", "Risks and Techniques")
+# Profundidade proporcional ao risco: acima deste numero de linhas de corpo, a
+# secao so se justifica por um risco listado em Riscos e tecnicas.
+SECTION_MAX_LINES = 10
 SECTION_COMPONENTS = ("Componentes", "Components")
 SECTION_CRITERIA = ("Critérios de avaliação", "Evaluation Criteria")
 SECTION_APPROACHES = ("Abordagens", "Approaches")
@@ -127,6 +141,26 @@ def check_sections(rep, lines, mask):
                      "deveria precede-la; a ordem e a da lista de references/design.md, Secoes", i + 1)
         else:
             latest = (idx, text)
+
+
+def check_section_length(rep, lines, mask):
+    """Profundidade proporcional ao risco: secao acima de SECTION_MAX_LINES
+    linhas de corpo (nao vazias, fora de bloco de codigo e dos headings) so se
+    justifica por assunto que aparece em Riscos e tecnicas. O script conta; o
+    assunto e voce quem confere. Riscos e tecnicas nao se conta: o assunto dela
+    aparece nela (references/design.md, Do risco a tecnica)."""
+    risks = {norm_heading(a) for a in SECTION_RISKS}
+    hs = iter_headings(lines, 2, mask)
+    for n, (i, text) in enumerate(hs):
+        if norm_heading(text) in risks:
+            continue
+        end = hs[n + 1][0] if n + 1 < len(hs) else len(lines)
+        body = [j for j in range(i + 1, end)
+                if not mask[j] and lines[j].strip() and not lines[j].lstrip().startswith("#")]
+        if len(body) > SECTION_MAX_LINES:
+            rep.warn(f"secao '{text}' com {len(body)} linhas de corpo (limite "
+                     f"{SECTION_MAX_LINES}) - confirme que o assunto dela aparece em "
+                     f"{SECTION_RISKS[0]}; profundidade sem risco que a justifique e inflacao", i + 1)
 
 
 def check_no_alternative(rep, lines, mask):
@@ -254,6 +288,7 @@ def main(argv):
                  "(relativo a pasta do design ou `/docs/...` da raiz)", 1)
 
     check_sections(rep, lines, mask)
+    check_section_length(rep, lines, mask)
     check_no_alternative(rep, lines, mask)
     check_component_purpose(rep, lines, mask)
 
@@ -265,7 +300,9 @@ def main(argv):
         known, unwanted = spec_requirements(spec)
         check_error_handling(rep, lines, mask, scoped_unwanted(rep, fields, known, unwanted))
 
+    check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, skip_first=(mc_idx or 0) + 1, mask=mask)
+    scan_prose(rep, lines, mask=mask)
     return rep.emit(path)
 
 

@@ -1,7 +1,8 @@
 """Testes do lint_adr.py: titulo `# ADR NNNN: titulo`, linha `Participantes:`,
 secoes obrigatorias na ordem do template e com conteudo, `Regras derivadas`
-por ultimo, consequencia negativa, reciprocidade de `Substitui:` e
-`Substituída por:`, placeholder e prosa, pasta e erros de uso.
+por ultimo, alternativas preenchidas, consequencia negativa, reciprocidade de
+`Substitui:` e `Substituída por:`, placeholder, prosa, tags, pasta e erros de
+uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_adr.py"
 """
@@ -163,6 +164,48 @@ class SectionsTest(LintAdrBase):
         self.assertNoHard(out)
 
 
+class AlternativesTest(LintAdrBase):
+    """Alternativa descartada e o que impede re-litigar a decisao: a tabela
+    precisa de linha, e a linha precisa da alternativa e da razao."""
+
+    def alternatives(self, body):
+        return doc(SECTIONS[:2] + [("Alternativas consideradas", body)] + SECTIONS[3:])
+
+    def test_table_without_data_row_is_hard(self):
+        code, out = self.run_lint(self.alternatives("| Alternativa | Por que rejeitada |\n|---|---|"))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "com tabela sem linha de dados")
+
+    def test_row_without_reason_is_hard(self):
+        body = ALTERNATIVAS.replace("| Perde o evento quando a transacao falha |", "|  |")
+        code, out = self.run_lint(self.alternatives(body))
+        self.assertHard(out, "linha sem a alternativa ou sem a razao")
+
+    def test_row_reduced_to_an_ellipsis_is_hard(self):
+        body = ALTERNATIVAS.replace("| Perde o evento quando a transacao falha |", "| … |")
+        code, out = self.run_lint(self.alternatives(body))
+        self.assertHard(out, "linha sem a alternativa ou sem a razao")
+
+    def test_filled_table_passes(self):
+        code, out = self.run_lint(self.alternatives(ALTERNATIVAS))
+        self.assertNoHard(out)
+
+    def test_alternatives_without_table_are_not_reported(self):
+        code, out = self.run_lint(self.alternatives("Publicar direto no broker perde o evento."))
+        self.assertNoHard(out)
+
+
+class TagsTest(LintAdrBase):
+    def test_rejected_tag_is_hard(self):
+        code, out = self.run_lint(doc([("Contexto", CONTEXTO + " [FATO] o broker perde eventos.")] + SECTIONS[1:]))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "tag fora da convencao: [FATO]")
+
+    def test_allowed_tags_pass(self):
+        code, out = self.run_lint(doc([("Contexto", CONTEXTO + " [PREMISSA] o volume dobra.")] + SECTIONS[1:]))
+        self.assertNoHard(out)
+
+
 class NegativeConsequenceTest(LintAdrBase):
     def test_consequences_without_negative_line_is_hard(self):
         only_positive = "- Positivas: entrega ao menos uma vez sem transacao distribuida."
@@ -174,6 +217,13 @@ class NegativeConsequenceTest(LintAdrBase):
         empty_label = CONSEQUENCIAS.replace(
             "- Negativas: a latencia de publicacao sobe ate o intervalo do worker.", "- Negativas:")
         code, out = self.run_lint(doc(SECTIONS[:3] + [("Consequências", empty_label)]))
+        self.assertHard(out, "sem linha `- Negativas: <texto>`")
+
+    def test_negative_reduced_to_an_ellipsis_is_hard(self):
+        ellipsis = CONSEQUENCIAS.replace(
+            "- Negativas: a latencia de publicacao sobe ate o intervalo do worker.", "- Negativas: …")
+        code, out = self.run_lint(doc(SECTIONS[:3] + [("Consequências", ellipsis)]))
+        self.assertEqual(code, 1)
         self.assertHard(out, "sem linha `- Negativas: <texto>`")
 
     def test_bold_negative_label_is_accepted(self):

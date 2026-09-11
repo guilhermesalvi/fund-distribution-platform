@@ -34,9 +34,13 @@ PLACEHOLDER_HARD = [
 ]
 HEDGING = ["provavelmente", "talvez", "na verdade", "probably", "perhaps", "maybe"]
 # Placeholder de template: colchetes com texto livre comecando por letra, ate
-# 80 caracteres - `[nome]`, `[Uma frase: o que faremos.]`. Link Markdown fica
-# fora pelo `(` seguinte; tag ([PREMISSA], [BOOK-04]) fica fora por TAG_LIKE.
-TEMPLATE_PLACEHOLDER = re.compile(r"\[([A-Za-zÀ-Úà-ú][^\[\]]{2,79})\](?!\()")
+# 200 caracteres - `[nome]`, `[Uma frase: o que faremos.]`, `[Regra em
+# CLAUDE.md ... com o path.]`. Link Markdown fica fora pelo `(` seguinte; tag
+# ([PREMISSA], [BOOK-04]) fica fora por TAG_LIKE.
+TEMPLATE_PLACEHOLDER = re.compile(r"\[([A-Za-zÀ-Úà-ú][^\[\]]{2,199})\](?!\()")
+# Valor reduzido a reticencias - `- Positivas: …`, `| Racional | ... |`:
+# rotulo escrito, conteudo por escrever.
+ELLIPSIS_VALUE = re.compile(r"(?::|\|)\s*(?:…|\.{3})\s*(?:\||$)")
 TAG_LIKE = re.compile(r"^[A-ZÀ-Ú0-9\s\-]+$")
 # Trecho entre crases: `[Fact]` e codigo citado, nao texto por escrever.
 CODE_SPAN = re.compile(r"`[^`]*`")
@@ -259,8 +263,9 @@ def is_template_placeholder(line):
 
 def scan_placeholders(rep, lines, skip_first=0, mask=None):
     """Placeholder e WARN: a decisao de que aquilo e conteudo faltando e do
-    agente. `mask` (fenced_line_mask) e opcional: linhas marcadas sao
-    ignoradas."""
+    agente. Vale para marcador (TBD, TODO), colchete de template e valor
+    reduzido a reticencias. `mask` (fenced_line_mask) e opcional: linhas
+    marcadas sao ignoradas."""
     for i, l in enumerate(lines):
         if i < skip_first or (mask and mask[i]):
             continue
@@ -269,6 +274,8 @@ def scan_placeholders(rep, lines, skip_first=0, mask=None):
             rep.warn(f"placeholder: '{l.strip()[:70]}'", i + 1)
         elif is_template_placeholder(l):
             rep.warn(f"possivel placeholder de template: '{l.strip()[:70]}'", i + 1)
+        elif ELLIPSIS_VALUE.search(CODE_SPAN.sub(" ", l)):
+            rep.warn(f"valor reduzido a reticencias: '{l.strip()[:70]}'", i + 1)
 
 
 def scan_prose(rep, lines, mask=None):

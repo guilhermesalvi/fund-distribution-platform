@@ -21,15 +21,20 @@ HARD (exit 1):
 - secao presente sem conteudo: corpo vazio ou reduzido a uma linha entre
   'Nenhuma.', 'Nenhum.', 'N/A' e 'Nao se aplica.';
 - `## Regras derivadas`, quando presente, nao e a ultima secao;
+- Alternativas consideradas com tabela sem linha de dados, ou com linha cuja
+  alternativa ou razao esta vazia: a secao promete o que nao entrega;
 - Consequências sem uma linha `- Negativas: <texto>`: ADR sem consequencia
-  negativa e decisao nao examinada;
+  negativa e decisao nao examinada; rotulo seguido so de reticencias ou de
+  pontuacao conta como ausente;
+- tag fora de [PREMISSA] e [LACUNA] ([FATO], [PREMISSA-CRÍTICA] e grafias
+  erradas);
 - `Substitui: NNNN` abaixo do titulo cujo `NNNN-*.md` nao existe na mesma
   pasta, ou existe e nao tem `Substituída por: <este NNNN>`; o mesmo, ao
   contrario, para `Substituída por: NNNN`.
 
 WARN (nao afeta exit):
-- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`), hedging,
-  meta-narracao fora de bloco de codigo.
+- placeholder (TBD, TODO, `[nome]`, `[Uma frase: ...]`, valor reduzido a
+  reticencias), hedging, meta-narracao fora de bloco de codigo.
 
 Exit 2 em erro de uso: opcao desconhecida, arquivo ausente ou fora de UTF-8.
 Linter verde e esqueleto conforme, nao decisao bem tomada.
@@ -41,8 +46,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    Report, fenced_line_mask, find_section_exact, iter_headings, norm_heading,
-    read_lines, scan_placeholders, scan_prose, strip_accents, usage,
+    Report, check_tags, fenced_line_mask, find_section_exact, iter_headings, norm_heading,
+    read_lines, scan_placeholders, scan_prose, strip_accents, table_rows, usage,
 )
 
 # Ordem das secoes obrigatorias, como no template de references/adr.md.
@@ -64,6 +69,13 @@ SUPERSEDED_BY = re.compile(r"^\s*\**\s*(?:Substitu[ií]da por|Superseded by)\s*\
                            re.IGNORECASE)
 NEGATIVE = re.compile(r"^\s*[-*]\s*\**\s*(?:Negativas?|Negatives?)\s*\**\s*:\s*(\S.*)$", re.IGNORECASE)
 NUMBER = re.compile(r"\b(\d{4})\b")
+# Valor so com pontuacao ou reticencias: o rotulo esta escrito, o conteudo nao.
+NO_TEXT = re.compile(r"^[\s.…\-–—*_]*$")
+
+
+def has_text(value):
+    """Valor com conteudo, e nao so pontuacao ou reticencias."""
+    return not NO_TEXT.match(value)
 
 
 def section_index(title):
@@ -153,15 +165,40 @@ def check_sections(rep, lines, mask):
 
 
 def check_negative_consequence(rep, lines, mask):
-    """Consequências com uma linha `- Negativas: <texto>` alem do rotulo."""
+    """Consequências com uma linha `- Negativas: <texto>` alem do rotulo;
+    reticencias no lugar do texto nao sao o custo aceito."""
     sec = find_section_exact(lines, SECTIONS_ORDER[3], mask=mask)
     if sec is None:
         return
     for i in range(*sec):
-        if not mask[i] and NEGATIVE.match(lines[i]):
+        if mask[i]:
+            continue
+        m = NEGATIVE.match(lines[i])
+        if m and has_text(m.group(1)):
             return
     rep.hard(f"## {SECTIONS_ORDER[3][0]} sem linha `- Negativas: <texto>`; ADR sem "
-             "consequencia negativa e decisao nao examinada", sec[0])
+             "consequencia negativa e decisao nao examinada (reticencias nao sao "
+             "o custo aceito)", sec[0])
+
+
+def check_alternatives(rep, lines, mask):
+    """Alternativas consideradas com ao menos uma alternativa preenchida: sem
+    elas a IA re-propoe caminhos ja descartados e o time re-litiga o que ja foi
+    pago (references/adr.md, O que a ADR guarda)."""
+    sec = find_section_exact(lines, SECTIONS_ORDER[2], mask=mask)
+    if sec is None:
+        return
+    if not any(lines[i].strip().startswith("|") for i in range(*sec) if not mask[i]):
+        return
+    rows = [(i, cells) for i, cells in table_rows(lines, *sec) if not mask[i]]
+    if not rows:
+        rep.hard(f"## {SECTIONS_ORDER[2][0]} com tabela sem linha de dados; alternativa "
+                 "descartada e o que impede re-litigar a decisao", sec[0])
+        return
+    for i, cells in rows:
+        if len(cells) < 2 or not has_text(cells[0]) or not has_text(cells[1]):
+            rep.hard(f"## {SECTIONS_ORDER[2][0]}: linha sem a alternativa ou sem a razao "
+                     "da rejeicao", i + 1)
 
 
 # --- superseder -------------------------------------------------------------
@@ -226,8 +263,10 @@ def lint_file(path):
     head = header_range(lines, mask, h1_idx)
     check_participants(rep, lines, mask, head)
     check_sections(rep, lines, mask)
+    check_alternatives(rep, lines, mask)
     check_negative_consequence(rep, lines, mask)
     check_supersede(rep, lines, mask, head, path, number)
+    check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, mask=mask)
     scan_prose(rep, lines, mask=mask)
     return rep.emit(path)

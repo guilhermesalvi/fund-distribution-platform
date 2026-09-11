@@ -6,7 +6,8 @@
 
 1. **Pré-requisito.** O da tabela de SKILL.md, Abrir uma mudança. O pedido "implementa" autoriza editar os arquivos da mudança; commit é uma autorização própria, dada uma vez por mudança e válida para todos os commits dela (SKILL.md, Aprovação e autorizações).
 2. **Contexto.** Leia a task, o trecho do design que ela referencia e os requisitos da spec que ela atende. Não carregue outras mudanças no contexto.
-3. **`[LACUNA]` no caminho.** Vale a regra de SKILL.md, Tags e dúvidas; numa task, as três saídas tomam esta forma:
+3. **Base da verificação.** Se a mudança não tem branch próprio nem pasta `NNNN-<change-slug>` (as regras 2 e 3 de verify.md, Escopo, não devolvem hash), registre a base antes da primeira edição de código: `git rev-parse HEAD`, gravado como a linha `Base: <hash>` do parágrafo "Como este repositório testa" do `tasks.md` ou como o slot `; base: <hash>` da linha `Gate` do plano inline. Com branch próprio ou pasta da mudança, não registre nada: o Verify resolve a base sozinho, e um hash a mais seria uma segunda fonte da mesma informação.
+4. **`[LACUNA]` no caminho.** Vale a regra de SKILL.md, Tags e dúvidas; numa task, as três saídas tomam esta forma:
    - decida e registre a decisão, quando ela cabe na autonomia concedida;
    - marque `[PREMISSA]` na spec, com default e racional; a spec alterada entra no commit da task, e o Verify lê a spec commitada;
    - pergunte ao usuário ("O design tem uma lacuna: […]. Opções: […]. Recomendo […].") e execute só o que não depende da resposta.
@@ -19,10 +20,12 @@ Quando a entrada Tasks foi dispensada, o Execute começa por um plano inline, ap
 ## Plano
 Requisitos: [IDs da spec.md que o plano cobre]
 Estrutura: [uma ou duas linhas: onde entra, o que reusa]
-Gate: [comando de build e teste do repositório]; [total de testes que ele executa antes da mudança]
+Gate: [comando de build e teste do repositório]; [total de testes que ele executa antes da mudança][; base: hash, quando a mudança registra a base][; mutação: comando, quando a mudança declara mutação]
 1. [passo] → arquivos: […] → verifica: [como]
 2. …
 ```
+
+A linha `Gate` é onde o comando de mutação fica declarado quando a mudança não tem `tasks.md`: acrescente `; mutação: <comando>` a ela quando o usuário pede mutação nesta mudança ou quando a tabela Riscos e técnicas do design a obriga (verify.md, Mutação). Sem a declaração, a linha termina no total de testes e a mudança não roda mutação. O slot `; base: <hash>` da mesma linha é onde a base registrada (Base da verificação, acima) fica quando a mudança não tem `tasks.md`, e entra só quando as três primeiras regras da base falham.
 
 Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista disparar qualquer gatilho de `design.md` ou de `tasks.md` (SKILL.md, Abrir uma mudança), pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
 
@@ -40,7 +43,7 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
    - Nada além do pedido: sem abstração de uso único, sem flexibilidade não solicitada, sem tratamento de cenário impossível.
    - Não "melhore" código adjacente nem formatação; siga o estilo existente mesmo discordando dele.
    - Problema vizinho (bug, dívida, dead code) é reportado ao usuário, não corrigido na task.
-   - Arquivo indispensável descoberto durante a implementação (registro, config) entra no campo `Onde` da task, com uma nota dizendo por que entrou.
+   - Arquivo indispensável descoberto durante a implementação (registro, config) entra no campo `Onde` da task, com uma nota dizendo por que entrou. A nota é o registro completo e a única rota: o arquivo não vira `SPEC_DEVIATION` nem linha em `## Desvios`, e no eixo 2 do Verify conta como conformidade ao design, não como gap nem como desvio (verify.md, Eixo 2: aderência ao design). Arquivo que muda comportamento não cabe aqui: é desvio, pelo caminho de Refine o contexto, não o erro.
 5. **Rodar o gate.** Rode o comando do nível da task, lido da tabela Comandos de Gate do `tasks.md` da mudança (descrita em tasks.md, Comandos de Gate) ou da linha `Gate` do plano inline. Exit diferente de zero: corrija e rode de novo, no máximo duas vezes; se a terceira execução ainda não sair com exit 0, pare e relate a falha como ela é, sem enfraquecer o teste. Gate que não pode rodar (SDK ausente, dependência indisponível) não é gate verde: a task fica bloqueada, com o motivo registrado.
 6. **Revisar depois do gate.** Com o gate verde, confira:
    - todo item de `Pronto quando` está atendido, inclusive os critérios de comportamento;

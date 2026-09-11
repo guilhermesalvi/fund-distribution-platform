@@ -11,7 +11,7 @@ Uma decisão é **de projeto** quando fixa convenção, restrição ou padrão q
 - forma de persistência compartilhada;
 - política de versionamento.
 
-Decisão local à feature não vira ADR: fica na tabela de Decisões técnicas do design (design.md, Decisões técnicas).
+Decisão local à feature não vira ADR; quem fixa o destino dela é o design (design.md, Decisões técnicas).
 
 Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
 
@@ -25,7 +25,7 @@ Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "i
 
 Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` com `seq.py next docs/adr --slug <slug>`, nunca lendo a pasta; `seq.py check docs/adr` acusa duplicata (SKILL.md, Scripts).
 
-Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo.
+Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em três ou mais ADRs commitadas — conte com `git ls-files 'docs/adr/*.md'`, ou o glob do diretório que o projeto usa (SKILL.md, Scripts) — e então os HARD de `lint_adr.py` que decorrem dele não se corrigem nem contam rodada. Com uma ou duas ADRs em formato próprio não há convenção: pergunte qual formato vale antes de gravar, e sem resposta grave no formato desta entrada.
 
 ### Template
 
@@ -43,10 +43,11 @@ Participantes: [quem decidiu]; [quem foi consultado].
 ## Alternativas consideradas
 | Alternativa | Por que rejeitada |
 |---|---|
+| [alternativa avaliada] | [o que a derrubou, contra os mesmos critérios] |
 
 ## Consequências
-- Positivas: …
-- Negativas: … (o custo aceito; ADR sem consequência negativa é decisão não examinada)
+- Positivas: [o que a decisão compra]
+- Negativas: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
 
 ## Regras derivadas
 [Regra em CLAUDE.md, rules ou linter que existe por causa desta ADR, com o path. Presente quando há regra.]
@@ -54,7 +55,7 @@ Participantes: [quem decidiu]; [quem foi consultado].
 
 ## Antes de apresentar
 
-Rode `lint_adr.py <adr.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente.
+Rode `lint_adr.py <adr.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois percorra a lista fechada da entrada ADR (SKILL.md, Revisão por entrada) e apresente.
 
 ## Conformar e superseder
 

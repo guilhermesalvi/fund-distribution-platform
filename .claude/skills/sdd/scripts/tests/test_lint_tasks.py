@@ -1,11 +1,15 @@
 """Testes do lint_tasks.py: comentario de maquina, paragrafo "Como este
-repositorio testa", Comandos de Gate, plano e fases (a ultima task de cada
+repositorio testa", Comandos de Gate (nomes de linha fechados, com a linha
+de mutacao opcional, mas obrigatoria quando a tabela Riscos e tecnicas do
+design lista um dos tres riscos que a exigem), plano e fases (a ultima task de cada
 fase com `Gate: build`), campos por task e sua sincronia com
 references/tasks.md, `O quê` com 'e' (dois entregaveis sao duas tasks),
-`Pronto quando` (comando do gate e criterio de comportamento), Tests/Gate
-(com `Tests: none` silencioso na camada de config e schema), dependencias,
-Rastreabilidade (obrigatoria e coerente com os campos `Requisito`) e cobertura
-contra a spec viva (com e sem `scope:`).
+`Pronto quando` (o comando do gate da task e criterio de comportamento), Tests/Gate
+(a regra do campo `Gate`, com `Tests: none` silencioso na camada de config e
+schema), dependencias,
+Rastreabilidade (obrigatoria e coerente com os campos `Requisito`), cobertura
+contra a spec viva (com e sem `scope:`) e prosa (placeholder, hedging,
+meta-narracao e tag fora da convencao).
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_tasks.py"
 """
@@ -25,9 +29,12 @@ import lint_tasks  # noqa: E402
 TASKS_MD = os.path.join(os.path.dirname(SCRIPTS), "references", "tasks.md")
 
 GATES = """\
-| Quick | task com unit test | `dotnet test tests/Domain.Tests` |
-| Full | task com integration/e2e | `dotnet test` |
-| Build | ultima da fase; task sem teste | `dotnet build && dotnet test` |"""
+| Quick | `Gate: quick` | `dotnet test tests/Domain.Tests` |
+| Full | `Gate: full` | `dotnet test` |
+| Build | `Gate: build` | `dotnet build && dotnet test` |"""
+# Comando que cada gate declara em GATES: `Pronto quando` leva o do gate da task.
+GATE_CMD = {"quick": "dotnet test tests/Domain.Tests", "full": "dotnet test",
+            "build": "dotnet build && dotnet test"}
 PLAN = "### Fase 1: Dominio\nT1 → T2\n\n### Fase 2: Adapters\nT3"
 INTRO = ("Como este repositorio testa: xUnit em `tests/`, `dotnet test` na raiz. "
          "O gate Build executa 212 testes antes desta mudanca.")
@@ -48,9 +55,10 @@ c
 """
 
 
-def task(tid, deps="nenhuma", req="RSV-07", tests="unit", gate="quick", done=None, extra=""):
+def task(tid, deps="nenhuma", req="RSV-07", tests="unit", gate="quick", done=None, extra="",
+         gate_cmd=None):
     done = done or ["`Create` rejeita valor abaixo do lote com `MinLotNotMet`",
-                    "Gate passa: `dotnet test tests/Domain.Tests`"]
+                    f"Gate passa: `{gate_cmd or GATE_CMD.get(gate, GATE_CMD['quick'])}`"]
     d = "\n".join(f"  - [ ] {c}" for c in done)
     return f"""### {tid}: Criar coisa {tid}
 - **O quê:** value object com validacao de lote
@@ -278,6 +286,58 @@ class PhaseGateTest(LintTasksBase):
         self.assertNotIn("T3: ultima task", out)
 
 
+class TestsGateRuleTest(LintTasksBase):
+    """Regra do campo `Gate` (references/tasks.md, Campos): `unit` sozinho
+    exige `quick`, `integration`/`e2e` exigem `full`, `none` exige `build`; a
+    ultima task de cada fase exige `build` em qualquer caso."""
+
+    def three(self, first):
+        return [first, task("T2", deps="T1", gate="build"), task("T3", deps="T2", gate="build")]
+
+    def test_unit_with_gate_quick_passes(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="unit", gate="quick"))))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_unit_with_gate_full_is_hard(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="unit", gate="full"))))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T1: Tests: unit exige Gate: quick, veio full")
+
+    def test_unit_with_gate_build_outside_the_end_of_a_phase_is_hard(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="unit", gate="build"))))
+        self.assertHard(out, "T1: Tests: unit exige Gate: quick, veio build - so a ultima task "
+                             "da fase leva build")
+
+    def test_integration_with_gate_build_outside_the_end_of_a_phase_is_hard(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="integration", gate="build"))))
+        self.assertHard(out, "T1: Tests com integration/e2e exige Gate: full, veio build")
+
+    def test_integration_with_gate_full_passes(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="integration", gate="full"))))
+        self.assertNoHard(out)
+
+    def test_tests_none_with_gate_full_is_hard(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="none", gate="full"))))
+        self.assertHard(out, "T1: Tests: none com Gate: full - incoerente")
+
+    def test_last_task_of_a_phase_keeps_build_with_any_tests(self):
+        """A ultima task da fase leva build mesmo com `Tests: unit` ou
+        `integration`: e a unica excecao a regra."""
+        tasks = [task("T1"), task("T2", deps="T1", gate="build"),
+                 task("T3", deps="T2", tests="integration", gate="build")]
+        code, out = self.run_lint(doc(tasks))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_correction_task_follows_the_rule(self):
+        """`TCn` fica fora do plano e, por isso, nunca fecha fase: vale a regra
+        do `Tests`."""
+        extra = "## Tasks de correção\n\n" + task("TC1", deps="T3", tests="unit", gate="build")
+        code, out = self.run_lint(doc(extra=extra))
+        self.assertHard(out, "TC1: Tests: unit exige Gate: quick, veio build")
+
+
 class GateTableTest(LintTasksBase):
     def test_missing_gate_table_is_hard(self):
         code, out = self.run_lint(doc().replace("## Comandos de Gate", "## Gates"))
@@ -296,8 +356,38 @@ class GateTableTest(LintTasksBase):
         self.assertHard(out, "Gate 'quick' usado em T1 sem linha na tabela Comandos de Gate")
 
     def test_gate_row_match_is_case_insensitive(self):
-        code, out = self.run_lint(doc(gates="| QUICK | unit | `dotnet test` |\n| build | fase | `dotnet build` |"))
+        tasks = [task("T1", gate_cmd="dotnet test"),
+                 task("T2", deps="T1", gate="build", gate_cmd="dotnet build"),
+                 task("T3", deps="T2", gate="build", gate_cmd="dotnet build")]
+        code, out = self.run_lint(doc(tasks, gates="| QUICK | `Gate: quick` | `dotnet test` |\n"
+                                                   "| build | `Gate: build` | `dotnet build` |"))
         self.assertNoHard(out)
+
+    def test_row_name_outside_the_closed_list_is_hard(self):
+        gates = (GATES + "\n| Smoke | quando der | `dotnet test --filter Smoke` |")
+        code, out = self.run_lint(doc(gates=gates))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "Comandos de Gate: linha 'smoke' fora dos nomes aceitos")
+
+    def test_mutation_row_is_accepted(self):
+        """A linha `Mutação` e opcional e e onde o comando de mutacao da
+        mudanca fica declarado (references/tasks.md, Registro no tasks.md)."""
+        gates = GATES + "\n| Mutação | a mudança declara mutação | `dotnet stryker` |"
+        code, out = self.run_lint(doc(gates=gates))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_mutation_row_without_command_is_hard(self):
+        gates = GATES + "\n| Mutação | a mudança declara mutação |  |"
+        code, out = self.run_lint(doc(gates=gates))
+        self.assertHard(out, "Comandos de Gate: celula de comando vazia")
+
+    def test_mutation_is_not_a_task_gate(self):
+        tasks = [task("T1", tests="none", gate="mutação"),
+                 task("T2", deps="T1", gate="build"), task("T3", deps="T2", gate="build")]
+        gates = GATES + "\n| Mutação | a mudança declara mutação | `dotnet stryker` |"
+        code, out = self.run_lint(doc(tasks, gates=gates))
+        self.assertHard(out, "T1: Gate invalido: deve ser quick|full|build")
 
 
 class TestingIntroTest(LintTasksBase):
@@ -419,6 +509,43 @@ class FieldsTest(LintTasksBase):
         self.assertWarn(out, "placeholder")
 
 
+class ProseAndTagsTest(LintTasksBase):
+    """O executor le a task como instrucao: hedging e meta-narracao sao WARN e
+    tag fora da convencao e HARD, como na spec e no design."""
+
+    def with_prose(self, text):
+        return doc(extra=f"\n{text}\n")
+
+    def test_hedging_is_warn_not_hard(self):
+        code, out = self.run_lint(self.with_prose("O registro talvez precise de migration."))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "hedging lexical")
+
+    def test_meta_narration_is_warn_not_hard(self):
+        code, out = self.run_lint(self.with_prose("Este documento lista as tasks."))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "meta-narracao")
+
+    def test_declarative_prose_is_silent(self):
+        code, out = self.run_lint(self.with_prose("O registro no modulo entra na T2."))
+        warns = [l for l in out.splitlines() if l.startswith("WARN")]
+        self.assertFalse([l for l in warns if "hedging" in l or "meta-narracao" in l], out)
+
+    def test_rejected_tag_is_hard(self):
+        code, out = self.run_lint(self.with_prose("[FATO] a migration ja existe."))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "tag fora da convencao: [FATO]")
+
+    def test_allowed_tags_pass(self):
+        code, out = self.run_lint(self.with_prose("[PREMISSA] a migration roda no deploy."))
+        self.assertNoHard(out)
+
+    def test_value_reduced_to_an_ellipsis_is_warn(self):
+        code, out = self.run_lint(self.with_prose("- Estrutura: …"))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "valor reduzido a reticencias")
+
+
 class DoneWhenTest(LintTasksBase):
     def rest(self):
         return [task("T2", deps="T1", gate="build"), task("T3", deps="T2", gate="build")]
@@ -456,10 +583,36 @@ class DoneWhenTest(LintTasksBase):
 
     def test_single_word_command_declared_in_gate_table_counts(self):
         tasks = [task("T1", done=["`Create` rejeita valor abaixo do lote", "Gate passa: `pytest`"],
-                      tests="unit", gate="quick")] + self.rest()
-        gates = "| Quick | task com unit test | `pytest` |\n| Build | fase | `pytest && ruff check` |"
+                      tests="unit", gate="quick"),
+                 task("T2", deps="T1", gate="build", gate_cmd="pytest && ruff check"),
+                 task("T3", deps="T2", gate="build", gate_cmd="pytest && ruff check")]
+        gates = "| Quick | `Gate: quick` | `pytest` |\n| Build | `Gate: build` | `pytest && ruff check` |"
         code, out = self.run_lint(doc(tasks, gates=gates))
         self.assertNoHard(out)
+
+    def test_command_of_another_gate_is_hard(self):
+        """O comando tem de ser o do gate da task: o do Build numa task `quick`
+        prova o gate errado."""
+        tasks = [task("T1", gate="quick", gate_cmd="dotnet build && dotnet test")] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T1: Pronto quando com comando que nao e o do gate quick - escreva "
+                             "`dotnet test tests/Domain.Tests`, a linha quick da tabela Comandos de Gate")
+
+    def test_same_command_with_other_spacing_and_case_counts(self):
+        tasks = [task("T1", gate="quick", gate_cmd="DOTNET  test   tests/Domain.Tests")] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertNoHard(out)
+
+    def test_prose_code_span_without_a_declared_executable_is_not_a_command(self):
+        """`reserva ativa` e prosa entre crases: duas palavras minusculas nao
+        fazem um comando."""
+        tasks = [task("T1", done=["grava a `reserva ativa` no livro (RSV-07)",
+                                  "`Create` devolve `Result<Thing>`"])] + self.rest()
+        code, out = self.run_lint(doc(tasks))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T1: Pronto quando sem o comando do gate entre crases "
+                             "(ex.: Gate passa: `dotnet test tests/Domain.Tests`)")
 
     def test_checked_items_are_accepted_like_unchecked(self):
         done = ["`Create` rejeita valor abaixo do lote com `MinLotNotMet`",
@@ -594,6 +747,95 @@ class CoverageTest(LintTasksBase):
         self.assertIn("opcao desconhecida", err.getvalue())
 
 
+class MutationRowTest(LintTasksBase):
+    """Risco de dinheiro, seguranca ou concorrencia na tabela Riscos e tecnicas
+    do design obriga a linha `Mutação` na tabela Comandos de Gate
+    (references/verify.md, Mutação)."""
+
+    MUTATION_ROW = "\n| Mutação | a mudança declara mutação | `dotnet stryker` |"
+
+    def design(self, risk, name="design.md"):
+        return self.write(name, "<!-- sdd: design | spec: ../spec.md -->\n# Coisa — Design\n\n"
+                                "## Riscos e técnicas\n\n"
+                                "| Risco | Fonte | Técnica | Onde |\n|---|---|---|---|\n"
+                                f"| {risk} | RSV-07 | Idempotency key persistida | `Service` |\n")
+
+    def test_risk_without_mutation_row_is_hard(self):
+        self.design("Concorrência, duplicata, retry")
+        code, out = self.run_lint(doc())
+        self.assertEqual(code, 1)
+        self.assertHard(out, "Comandos de Gate sem a linha Mutação")
+        self.assertHard(out, "Concorrência, duplicata, retry")
+
+    def test_risk_with_mutation_row_passes(self):
+        self.design("Concorrência, duplicata, retry")
+        code, out = self.run_lint(doc(gates=GATES + self.MUTATION_ROW))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_each_closed_name_is_hard_with_its_connectors(self):
+        for risk in ("Dinheiro, cálculo financeiro", "Dinheiro e cálculo financeiro",
+                     "Segurança, dado regulado", "Concorrência, duplicata e retry"):
+            with self.subTest(risk=risk):
+                self.design(risk)
+                code, out = self.run_lint(doc())
+                self.assertHard(out, "Comandos de Gate sem a linha Mutação")
+
+    def test_risk_outside_the_closed_list_does_not_require_the_row(self):
+        self.design("Duplicata por retry do canal")
+        code, out = self.run_lint(doc())
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_design_option_overrides_the_machine_comment(self):
+        self.design("Performance")
+        other = self.design("Segurança, dado regulado", name="outro.md")
+        code, out = self.run_lint(doc(), "--design", other)
+        self.assertHard(out, "Comandos de Gate sem a linha Mutação")
+
+    def test_nonexistent_design_option_is_hard(self):
+        code, out = self.run_lint(doc(), "--design", os.path.join(self.dir, "nope.md"))
+        self.assertHard(out, "design nao encontrado")
+
+    def test_change_without_design_is_not_checked(self):
+        code, out = self.run_lint(doc(comment="<!-- sdd: tasks | spec: ../spec.md -->"))
+        self.assertNoHard(out)
+        self.assertNotIn("Mutação", out)
+
+    def test_declared_design_that_does_not_resolve_is_warn(self):
+        code, out = self.run_lint(doc())
+        self.assertWarn(out, "design do comentario de maquina nao encontrado")
+        self.assertNoHard(out)
+
+
+class MutationRisksInSyncWithReferencesTest(unittest.TestCase):
+    """Os tres riscos de MUTATION_RISKS sao os nomes de linha da tabela de
+    references/design.md, Do risco à técnica, e os mesmos que
+    references/verify.md, Mutação lista. Doc e script divergentes fariam o
+    linter exigir mutacao por risco que a referencia nao nomeia."""
+
+    @staticmethod
+    def read(name):
+        with open(os.path.join(os.path.dirname(SCRIPTS), "references", name), encoding="utf-8") as f:
+            return f.read()
+
+    def test_names_are_rows_of_the_design_table(self):
+        rows = set()
+        for l in self.read("design.md").splitlines():
+            if l.strip().startswith("|"):
+                rows.add(tuple(lint_tasks.risk_tokens(l.strip().strip("|").split("|")[0])))
+        for name in lint_tasks.MUTATION_RISKS:
+            self.assertIn(name, rows, f"risco {name} sem linha na tabela de references/design.md")
+
+    def test_names_appear_in_the_mutation_section_of_verify(self):
+        text = self.read("verify.md")
+        start = text.index("## Mutação")
+        stream = " ".join(lint_tasks.risk_tokens(text[start:]))
+        for name in lint_tasks.MUTATION_RISKS:
+            self.assertIn(" ".join(name), stream,
+                          f"risco {name} ausente de references/verify.md, Mutação")
+
+
 class TemplateRegressionTest(LintTasksBase):
     """O template de references/tasks.md, com a T2 elidida preenchida, linta
     sem HARD contra uma spec com os IDs que ele cita."""
@@ -604,6 +846,17 @@ class TemplateRegressionTest(LintTasksBase):
         m = re.search(r"## Template\b[^\n]*\n+`{3,4}markdown\n(.*?)\n`{3,4}\n", text, re.DOTALL)
         self.assertIsNotNone(m, "bloco de template nao encontrado em references/tasks.md")
         return m.group(1)
+
+    @staticmethod
+    def row_command(tpl, gate):
+        """Comando que a tabela Comandos de Gate do template declara para um
+        gate: e ele que `Pronto quando` tem de repetir."""
+        for l in tpl.splitlines():
+            cells = [c.strip() for c in l.strip().strip("|").split("|")]
+            if l.strip().startswith("|") and len(cells) == 3 and cells[0].lower() == gate.lower():
+                m = re.search(r"`([^`]+)`", cells[2])
+                return m.group(1) if m else cells[2]
+        return ""
 
     @staticmethod
     def traced(tpl, tid):
@@ -626,9 +879,13 @@ class TemplateRegressionTest(LintTasksBase):
                                                   "".join(f"- **{r}** — WHEN x THEN the system SHALL y\n" for r in ids)))
         t2 = self.traced(tpl, "T2")
         self.assertTrue(t2, "Rastreabilidade do template nao atribui requisito a T2")
-        # T2 fecha a Fase 1 do plano do template: Gate build, e Tests coerente com ele.
+        build = self.row_command(tpl, "Build")
+        self.assertTrue(build, "template sem comando na linha Build de Comandos de Gate")
+        # T2 fecha a Fase 1 do plano do template: Gate build, com o comando que
+        # a linha Build da tabela do proprio template declara.
         tpl = re.sub(r"### T2: …\n(?:<!--.*?-->\n)?",
-                     task("T2", deps="T1", req=", ".join(t2), tests="unit", gate="build"), tpl)
+                     task("T2", deps="T1", req=", ".join(t2), tests="unit", gate="build",
+                          gate_cmd=build), tpl)
         code, out = self.run_lint(tpl, spec=spec)
         self.assertNoHard(out)
         self.assertEqual(code, 0)

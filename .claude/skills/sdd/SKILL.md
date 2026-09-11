@@ -79,14 +79,14 @@ Cinco regras, detalhadas em execute.md; este resumo não as reescreve:
 Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py` (ou `python`, onde `python3` não existir); rodar sem argumentos imprime a docstring completa.
 
 - `HARD` exige correção e nova rodada. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. Linter que não roda por falha de ambiente (Python ausente) não é rodada: diga isso no chat e apresente sem essa verificação. Exit 2 é erro de uso (arquivo, `--spec` ou codificação) e se corrige como HARD.
-- `WARN` é heurística: cada um termina de uma de duas formas, corrigido ou mantido com uma linha de razão no chat.
-- HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório.
+- `WARN` é heurística: cada um termina de uma de duas formas, corrigido ou mantido com uma linha de razão no chat. A exceção é o WARN de `prd-rev` desatualizado, que é sempre corrigido e nunca mantido com razão (specify.md, Comentário de máquina).
+- HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório. Conte os artefatos com `git ls-files '<glob do tipo>'` (por exemplo `git ls-files 'docs/adr/*.md'`) e diga o número no chat; arquivo não commitado não conta.
 - Linter verde é esqueleto conforme, não artefato bom.
 
 | Antes de | Comando |
 |---|---|
 | criar a pasta de uma mudança ou uma ADR | `seq.py next <dir> --slug <slug>`: imprime `NNNN-<slug>` com o próximo número da pasta; recusa alocar sobre número duplicado |
-| apresentar qualquer artefato numerado | `seq.py check <dir>`: acusa número duplicado na pasta |
+| apresentar qualquer artefato numerado | `seq.py check <dir>`: acusa número duplicado na pasta. Renumere o item cujo branch entra depois: mova-o para um nome sem o prefixo `NNNN-` (o `next` recusa alocar enquanto a duplicata existe), rode `seq.py next <dir> --slug <slug>`, mova-o para o nome devolvido e rode o check de novo |
 | apresentar a spec | `lint_spec.py <spec.md>` |
 | apresentar o design | `lint_design.py <design.md> --spec <spec.md>` |
 | apresentar as tasks | `lint_tasks.py <tasks.md> --spec <spec.md>` |
@@ -104,7 +104,7 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 
 ### Redação
 
-- Declarativo, sem hedging, sem meta-narração, sem placeholder. `lint_spec.py` acusa os três na spec, `lint_tasks.py` e `lint_design.py` acusam placeholder nas tasks e no design, e `lint_adr.py` acusa os três na ADR.
+- Declarativo, sem hedging, sem meta-narração, sem placeholder: `lint_spec.py`, `lint_design.py`, `lint_tasks.py` e `lint_adr.py` acusam os três como WARN, cada um no seu artefato. Tag fora de `[PREMISSA]` e `[LACUNA]` é HARD nos quatro.
 - Um conceito por parágrafo.
 - Contexto de decisão (racional, mitigação) preservado: é sinal para humanos e para o próximo agente.
 
@@ -112,7 +112,7 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 
 Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
 
-A lista da entrada é fechada. Em Specify, Design e Tasks:
+A lista da entrada é fechada. Em Specify, Design, Tasks e ADR:
 
 - percorra o artefato inteiro para cada item e dê ao item a nota 100 menos 20 por ocorrência encontrada (mínimo 0); uma ocorrência já derruba o item, e a nota existe para registrar quantas;
 - item abaixo de 90 é reescrito; item com 90 ou mais fica como está;
@@ -133,7 +133,7 @@ Em Execute e Verify os itens são binários, atendido ou não: item não atendid
 
 ### Design
 
-- Profundidade proporcional ao risco: seção com mais de dez linhas cujo assunto não aparece em Riscos e técnicas é inflação; risco sem técnica ou aceite é buraco.
+- Profundidade proporcional ao risco: as linhas de cada seção não se contam a olho, `lint_design.py` acusa como WARN a seção acima de dez linhas de corpo; aqui você decide, para cada seção acusada, se o assunto dela aparece em Riscos e técnicas — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
 - Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
 - Nenhum comportamento decidido aqui que devia estar na spec.
 - Interfaces com tipos; a cobertura de todo `IF/THEN` da spec no tratamento de erros já é HARD de `lint_design.py`.
@@ -144,7 +144,16 @@ Em Execute e Verify os itens são binários, atendido ou não: item não atendid
 - Cobertura requisito para task e task para requisito já é HARD de `lint_tasks.py`; aqui: nenhuma task cita em `Requisito` um ID que ela não exercita.
 - `Consome` e `Produz` consistentes entre as tasks e com o design.
 - `Tests` coerente com a camada da task, com teste co-locado.
-- `Pronto quando` com critério de comportamento que a spec define; a presença do comando de gate e do critério `lint_tasks.py` já exige, o conteúdo do critério é você quem confere.
+- `Pronto quando` com critério de comportamento que a spec define; `lint_tasks.py` já exige que o comando entre crases seja o do gate da task e que exista critério além dele, o conteúdo do critério é você quem confere.
+
+### ADR
+
+Quatro itens, os que `lint_adr.py` não alcança porque são conteúdo, não forma:
+
+- A decisão fixa convenção, restrição ou padrão que features futuras seguem; decisão local à feature é ocorrência, e o destino dela é o design (adr.md, Quando a decisão é de projeto).
+- Cada linha de Alternativas consideradas é uma alternativa realmente avaliada, derrubada contra os mesmos critérios que sustentam a decisão; alternativa escrita para encher a tabela é ocorrência.
+- A linha `Negativas` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
+- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas com o path do arquivo onde ela vive (adr.md, Conformar e superseder); regra sem path é ocorrência, e ADR que não cria regra não tem a seção.
 
 ### Execute
 

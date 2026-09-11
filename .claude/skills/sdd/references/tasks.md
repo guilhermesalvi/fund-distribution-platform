@@ -32,14 +32,19 @@ Antes de escrever qualquer task, descubra como este repositório testa; não pre
 
 O resultado da descoberta entra no `tasks.md` de duas formas:
 
-- um parágrafo "Como este repositório testa", com guias, piso, camadas e o total de testes que o gate Build executa antes da mudança, a contagem-base que o Verify compara;
-- a tabela **Comandos de Gate**, gerada a partir do repositório:
+- um parágrafo "Como este repositório testa", com guias, piso, camadas e o total de testes que o gate Build executa antes da mudança, a contagem-base que o Verify compara; a linha `Base: <hash>` entra nesse parágrafo só quando o Execute registra a base da verificação (execute.md, Antes da primeira task);
+- a tabela **Comandos de Gate**, com a coluna Quando copiada desta e a coluna Comando vinda do item 3 da Descoberta:
 
 | Gate | Quando | Comando |
 |---|---|---|
-| Quick | Task com unit test | … |
-| Full | Task com integration/e2e | … |
-| Build | Task sem teste, e a última task de cada fase (o linter exige) | build + lint + todos os testes |
+| Quick | `Gate: quick` (Campos) | comando dos testes unitários |
+| Full | `Gate: full` (Campos) | comando de toda a suíte |
+| Build | `Gate: build` (Campos) | build + lint + todos os testes |
+| Mutação | mutação obrigatória ou pedida (verify.md, Mutação) | comando da ferramenta de mutação |
+
+A tabela dá o comando de cada gate; qual gate cada task recebe é a regra do campo `Gate` (Campos), e é lá que ela vive: a coluna Quando aponta para o campo e não repete a regra. O nome do gate na primeira coluna é um de `quick`, `full`, `build` e `Mutação`; `lint_tasks.py` acusa como HARD qualquer outro nome de linha.
+
+A linha `Mutação` é onde o comando de mutação da mudança fica declarado quando há `tasks.md`; sem ela, a mudança não roda mutação (verify.md, Mutação). Ela não é valor do campo `Gate` de task alguma. É opcional, exceto quando a tabela Riscos e técnicas do design tem linha de um dos três riscos que obrigam mutação (verify.md, Mutação): aí `lint_tasks.py` acusa a ausência como HARD, lendo o design pelo campo `design:` do comentário de máquina ou pela opção `--design <design.md>`.
 
 ## Task atômica
 
@@ -62,9 +67,9 @@ Toda task tem os campos abaixo:
 | **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás na ordem do Plano de execução (fase anterior ou task anterior da mesma fase); o linter acusa o contrário |
 | **Requisito** | IDs da spec que a task atende; task de refactor cita os IDs que preserva |
 | **Interfaces** | *Consome:* o que a task usa de tasks anteriores, com assinatura. *Produz:* o que tasks posteriores vão usar: nomes, parâmetros, retornos. O executor só vê a própria task |
-| **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando de gate |
+| **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando do gate da task, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; `lint_tasks.py` acusa como HARD o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
 | **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho |
-| **Gate** | `quick`, `full` ou `build`. Todo valor usado tem linha em Comandos de Gate; `integration`/`e2e` exige `full`, ou `build` quando a task é a última da fase; `none` exige `build` |
+| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`: `unit` exige `quick`, `integration`/`e2e` exigem `full`, `none` exige `build`; a última task de cada fase exige `build` em qualquer caso, e esse é o desempate. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; `lint_tasks.py` acusa como HARD toda combinação de `Tests` e `Gate` fora desta regra |
 
 ### Sem placeholder
 
@@ -99,9 +104,9 @@ Como este repositório testa: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `te
 
 | Gate | Quando | Comando |
 |---|---|---|
-| Quick | Task com unit test | `dotnet test tests/UnitTests` |
-| Full | Task com integration/e2e | `dotnet test FundDistributionPlatform.slnx` |
-| Build | Task sem teste; última de cada fase | `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx` |
+| Quick | `Gate: quick` | `dotnet test tests/UnitTests` |
+| Full | `Gate: full` | `dotnet test FundDistributionPlatform.slnx` |
+| Build | `Gate: build` | `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx` |
 
 ## Plano de execução
 

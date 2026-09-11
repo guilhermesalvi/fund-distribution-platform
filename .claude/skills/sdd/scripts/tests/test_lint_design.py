@@ -2,8 +2,9 @@
 que resolve), secoes conhecidas na ordem de references/design.md e sem secao
 vazia, fecho 'Sem alternativa real:' em Criterios de avaliacao contra a
 presenca de Abordagens, cobertura dos requisitos `IF ... THEN` da spec em
-Tratamento de erros (com e sem `scope:`), proposito de componente em uma so
-frase, placeholder e erros de uso.
+Tratamento de erros (com e sem `scope:`), linhas de corpo por secao (limite de
+profundidade proporcional ao risco), proposito de componente em uma so frase,
+placeholder, hedging, meta-narracao, tag fora da convencao e erros de uso.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_design.py"
 """
@@ -198,6 +199,49 @@ class SectionsTest(LintDesignBase):
         fenced = "```markdown\n## Secao Inventada\n\n```\n"
         code, out = self.run_lint(doc() + "\n" + fenced)
         self.assertNoHard(out)
+
+
+class SectionLengthTest(LintDesignBase):
+    """Profundidade proporcional ao risco: a contagem de linhas de corpo por
+    secao e do script; o assunto em Riscos e tecnicas e do agente."""
+
+    LIMIT = lint_design.SECTION_MAX_LINES
+
+    @staticmethod
+    def bullets(n):
+        return "\n".join(f"- linha {i} do modelo de dados" for i in range(1, n + 1))
+
+    def model(self, n):
+        return [("Contexto de design", CONTEXT), ("Componentes", COMPONENTS),
+                ("Modelo de dados", self.bullets(n)), ("Tratamento de erros", ERRORS)]
+
+    def test_section_at_the_limit_is_silent(self):
+        code, out = self.run_lint(doc(self.model(self.LIMIT)))
+        self.assertNoHard(out)
+        self.assertNoWarn(out, "linhas de corpo")
+
+    def test_section_above_the_limit_is_warn(self):
+        code, out = self.run_lint(doc(self.model(self.LIMIT + 2)))
+        self.assertEqual(code, 0)
+        self.assertWarn(out, f"secao 'Modelo de dados' com {self.LIMIT + 2} linhas de corpo "
+                             f"(limite {self.LIMIT})")
+
+    def test_risks_section_is_not_counted(self):
+        """O assunto de Riscos e tecnicas aparece nela por definicao."""
+        rows = "\n".join(f"| Risco {i} | RSV-07 | Tecnica {i} | `Servico` |" for i in range(1, 15))
+        sections = [("Contexto de design", CONTEXT),
+                    ("Riscos e técnicas", "| Risco | Fonte | Tecnica | Onde |\n|---|---|---|---|\n" + rows),
+                    ("Componentes", COMPONENTS), ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertNoWarn(out, "linhas de corpo")
+
+    def test_blank_lines_code_blocks_and_headings_do_not_count(self):
+        big = ("```mermaid\n" + "\n".join(f"  A{i} --> B{i}" for i in range(1, 20)) + "\n```\n\n"
+               "### Sub\n\n" + self.bullets(3))
+        sections = [("Contexto de design", CONTEXT), ("Visão da arquitetura", big),
+                    ("Componentes", COMPONENTS), ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertNoWarn(out, "linhas de corpo")
 
 
 CRITERIA = ("| # | Criterio | Origem |\n|---|---|---|\n"
@@ -397,6 +441,44 @@ class PlaceholderTest(LintDesignBase):
                     ("Tratamento de erros", ERRORS)]
         code, out = self.run_lint(doc(sections))
         self.assertEqual(self.findings(out, "WARN"), [], out)
+
+
+class ProseAndTagsTest(LintDesignBase):
+    """O design tambem e prosa declarativa: hedging e meta-narracao sao WARN e
+    tag fora da convencao e HARD, como na spec."""
+
+    def with_prose(self, text):
+        return doc([("Contexto de design", CONTEXT + f"\n\n{text}"),
+                    ("Tratamento de erros", ERRORS)])
+
+    def test_hedging_is_warn_not_hard(self):
+        code, out = self.run_lint(self.with_prose("Talvez o broker perca eventos."))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "hedging lexical")
+
+    def test_meta_narration_is_warn_not_hard(self):
+        code, out = self.run_lint(self.with_prose("Este design descreve o servico."))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "meta-narracao")
+
+    def test_declarative_prose_is_silent(self):
+        code, out = self.run_lint(self.with_prose("O broker perde eventos quando a transacao falha."))
+        self.assertNoWarn(out, "hedging lexical")
+        self.assertNoWarn(out, "meta-narracao")
+
+    def test_rejected_tag_is_hard(self):
+        code, out = self.run_lint(self.with_prose("[FATO] O livro fecha com a oferta."))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "tag fora da convencao: [FATO]")
+
+    def test_allowed_tags_pass(self):
+        code, out = self.run_lint(self.with_prose("[PREMISSA] A base usa outbox. [LACUNA] o prazo."))
+        self.assertNoHard(out)
+
+    def test_value_reduced_to_an_ellipsis_is_warn(self):
+        code, out = self.run_lint(self.with_prose("- Racional: …"))
+        self.assertEqual(code, 0, out)
+        self.assertWarn(out, "valor reduzido a reticencias")
 
 
 class TemplateRegressionTest(LintDesignBase):

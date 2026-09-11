@@ -287,9 +287,10 @@ class PhaseGateTest(LintTasksBase):
 
 
 class TestsGateRuleTest(LintTasksBase):
-    """Regra do campo `Gate` (references/tasks.md, Campos): `unit` sozinho
-    exige `quick`, `integration`/`e2e` exigem `full`, `none` exige `build`; a
-    ultima task de cada fase exige `build` em qualquer caso."""
+    """Regra do campo `Gate` (references/tasks.md, Campos): `none` exige
+    `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho
+    exige `quick`; a ultima task de cada fase exige `build` em qualquer
+    caso."""
 
     def three(self, first):
         return [first, task("T2", deps="T1", gate="build"), task("T3", deps="T2", gate="build")]
@@ -316,6 +317,18 @@ class TestsGateRuleTest(LintTasksBase):
     def test_integration_with_gate_full_passes(self):
         code, out = self.run_lint(doc(self.three(task("T1", tests="integration", gate="full"))))
         self.assertNoHard(out)
+
+    def test_list_with_unit_and_integration_with_gate_full_passes(self):
+        """`unit` na lista com `integration` nao e `unit` sozinho: a lista
+        exige `full`."""
+        code, out = self.run_lint(doc(self.three(task("T1", tests="unit, integration", gate="full"))))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_list_with_unit_and_integration_with_gate_quick_is_hard(self):
+        code, out = self.run_lint(doc(self.three(task("T1", tests="unit, integration", gate="quick"))))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "T1: Tests com integration/e2e exige Gate: full, veio quick")
 
     def test_tests_none_with_gate_full_is_hard(self):
         code, out = self.run_lint(doc(self.three(task("T1", tests="none", gate="full"))))
@@ -889,6 +902,58 @@ class TemplateRegressionTest(LintTasksBase):
         code, out = self.run_lint(tpl, spec=spec)
         self.assertNoHard(out)
         self.assertEqual(code, 0)
+
+
+class UnknownSectionTest(LintTasksBase):
+    """Secao `##` fora da lista de references/tasks.md, Secoes do tasks.md, e
+    HARD; as da lista passam."""
+
+    def test_section_outside_the_list_is_hard(self):
+        code, out = self.run_lint(doc(extra="## Notas adicionais\n\nx\n"))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "secao desconhecida: ## Notas adicionais; a lista de secoes "
+                             "e a de references/tasks.md, Secoes do tasks.md")
+
+    def test_section_in_the_list_passes(self):
+        code, out = self.run_lint(doc(extra="## Desvios\n\nNenhum desvio ate aqui.\n"))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_english_alias_of_a_known_section_passes(self):
+        code, out = self.run_lint(doc(extra="## Deviations\n\nNo deviation so far.\n"))
+        self.assertNoHard(out)
+
+
+class SectionsInSyncWithReferenceTest(unittest.TestCase):
+    """A lista de secoes do script e a de references/tasks.md, Secoes do
+    tasks.md: os mesmos nomes, o ingles entre parenteses depois do portugues.
+    Doc e script divergentes fazem o linter recusar a secao que a referencia
+    manda escrever."""
+
+    @staticmethod
+    def documented():
+        with open(TASKS_MD, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        start = next(i for i, l in enumerate(lines) if l.strip() == "## Seções do `tasks.md`")
+        end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("## "))
+        out = []
+        for l in lines[start:end]:
+            m = re.match(r"^-\s+\*\*(.+?)\*\*\s*(?:\((.+?)\))?", l.strip())
+            if m:
+                names = [m.group(1).strip()] + ([m.group(2).strip()] if m.group(2) else [])
+                out.append(tuple(names))
+        return out
+
+    @staticmethod
+    def norm(names):
+        """Aliases comparaveis: a grafia sem acento que o script aceita por
+        conveniencia nao precisa estar escrita na referencia."""
+        return [{lint_tasks.strip_accents(n).lower() for n in row} for row in names]
+
+    def test_names_and_order_match(self):
+        names = self.documented()
+        self.assertTrue(names, "lista de secoes nao encontrada em references/tasks.md")
+        self.assertEqual(self.norm(names), self.norm(lint_tasks.SECTIONS_KNOWN))
 
 
 class FieldsInSyncWithReferenceTest(unittest.TestCase):

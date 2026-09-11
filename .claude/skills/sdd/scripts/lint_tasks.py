@@ -58,13 +58,16 @@ HARD (exit 1):
   Verify, depois do plano);
 - plano de execucao nos dois sentidos: task citada no plano sem corpo; task
   `T` com corpo fora do plano (tasks `TC` ficam fora dessa exigencia);
+- secao `##` fora da lista de secoes (references/tasks.md, Secoes do tasks.md):
+  Comandos de Gate, Plano de execucao, Tasks, Rastreabilidade, Desvios e Tasks
+  de correcao, com os aliases em ingles;
 - `Tests` fora de unit|integration|e2e (lista) ou `none` sozinho; `Gate` fora
   de quick|full|build;
 - `Gate` que nao e o que o `Tests` da task exige (references/tasks.md, Campos,
-  campo `Gate`): `unit` sozinho exige `quick`, `integration`/`e2e` exigem
-  `full`, `none` exige `build`. A ultima task de cada fase exige `build` em
-  qualquer caso e fica fora desta regra, verificada pela regra da ultima task
-  da fase;
+  campo `Gate`): `none` exige `build`; lista que tem `integration` ou `e2e`
+  exige `full`; `unit` sozinho exige `quick`. A ultima task de cada fase exige
+  `build` em qualquer caso e fica fora desta regra, verificada pela regra da
+  ultima task da fase;
 - tag fora de [PREMISSA] e [LACUNA] ([FATO], [PREMISSA-CRÍTICA] e grafias
   erradas): texto sem tag e fato.
 
@@ -91,9 +94,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
-    find_sections_exact, parse_machine_comment, read_lines, resolve_local_path,
-    scan_placeholders, scan_prose, strip_accents, table_rows, usage,
+    REQ_ID, REQ_LINE, Report, check_tags, check_unknown_sections, fenced_line_mask,
+    find_section_exact, find_sections_exact, parse_machine_comment, read_lines,
+    resolve_local_path, scan_placeholders, scan_prose, strip_accents, table_rows, usage,
 )
 
 FIELDS = {
@@ -148,6 +151,13 @@ MUTATION_RISKS = (
 RISK_CONNECTORS = frozenset(("e", "and"))
 SECTION_PLAN = ("Plano de execução", "Plano de execucao", "Execution Plan")
 SECTION_TRACE = ("Rastreabilidade", "Traceability")
+SECTION_TASKS = ("Tasks",)
+SECTION_DEVIATIONS = ("Desvios", "Deviations")
+SECTION_CORRECTIONS = ("Tasks de correção", "Correction Tasks")
+# Lista fechada das secoes `##` do tasks.md (references/tasks.md, Secoes do
+# tasks.md); secao fora dela e HARD.
+SECTIONS_KNOWN = [SECTION_GATES, SECTION_PLAN, SECTION_TASKS, SECTION_TRACE,
+                  SECTION_DEVIATIONS, SECTION_CORRECTIONS]
 # Paragrafo da descoberta de testes, no topo do documento (references/tasks.md,
 # "Registro no tasks.md"), e a contagem-base que ele tem de carregar.
 TESTING_INTRO = re.compile(r"como este repositorio testa|how this repository tests", re.IGNORECASE)
@@ -656,8 +666,8 @@ def is_config_layer(where):
 
 def required_gate(test_types):
     """Gate que o `Tests` da task exige (references/tasks.md, Campos, campo
-    `Gate`): `none` -> build, integration/e2e -> full, `unit` sozinho ->
-    quick. None quando `Tests` nao e valido."""
+    `Gate`): `none` -> build; lista que tem integration ou e2e -> full; `unit`
+    sozinho -> quick. None quando `Tests` nao e valido."""
     if not test_types:
         return None
     if test_types == ["none"]:
@@ -778,6 +788,8 @@ def main(argv):
     check_mutation_row(rep, lines, mask, design_for(rep, path, fields, design))
     check_testing_intro(rep, lines, mask)
     check_traceability(rep, lines, mask, tasks, req_refs)
+    check_unknown_sections(rep, lines, SECTIONS_KNOWN,
+                           "references/tasks.md, Secoes do tasks.md", mask)
 
     if spec is None:
         rep.hard("--spec obrigatorio: cobertura requisito -> task nao verificada")

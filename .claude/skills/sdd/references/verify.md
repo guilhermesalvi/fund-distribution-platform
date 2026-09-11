@@ -19,11 +19,13 @@ O objeto da verificação é o diff da mudança, `git diff <base>`, mais os arqu
 
 1. a base registrada antes da primeira task: o hash da linha `Base: <hash>` do parágrafo "Como este repositório testa" do `tasks.md`, ou do slot `; base: <hash>` da linha `Gate` do plano inline (execute.md, Antes da primeira task);
 2. com branch próprio: `git merge-base HEAD <branch principal>`;
-3. `git log --diff-filter=A --format=%H -1 -- <capability-dir>/NNNN-<change-slug>`, o commit que criou a pasta da mudança; a base é `<hash>^`.
+3. `git log --diff-filter=A --format=%H --reverse -- <capability-dir>/NNNN-<change-slug> | head -n 1`, o primeiro commit que adicionou arquivo na pasta da mudança, isto é, o que criou a pasta; a base é `<hash>^`. O `--reverse` com `head -n 1` é o que devolve o primeiro: `-1` devolveria o commit mais recente que tocou a pasta, e com `design.md` e `tasks.md` em commits separados (SKILL.md, Aprovação e autorizações) os dois divergem.
 
 O commit que tocou a `spec.md` nunca serve de base: a spec é viva e o último commit dela pode ser de outra mudança, ou do meio desta. Nenhuma das três devolve hash: a verificação está bloqueada por falta de base. Diga qual regra falhou e pergunte qual commit é a base; não adivinhe.
 
-Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum.
+Pela regra 3, commit alheio feito entre a criação da pasta e o HEAD entra no diff. Arquivo que veio de commit assim não é gap: nomeie-o no relatório como fora da mudança e deixe-o fora dos dois eixos; `git log --format=%h --follow -- <arquivo>` diz de qual commit ele veio.
+
+Alterações do usuário fora da mudança ficam fora da verificação e intocadas: o Verify não faz `add`, `stash`, `checkout` nem "restaura" arquivo algum. Rodar o gate em `<base>` não é exceção: tem rota própria, em árvore separada, que não toca esta (Gate Build).
 
 ## Eixo 1: conformidade à spec
 
@@ -47,13 +49,23 @@ Compare a contagem de testes com a contagem-base registrada no parágrafo "Como 
 - Teste pulado não é evidência.
 - Zero testes executados não é gate verde.
 - Gate que não pode rodar é bloqueio com motivo declarado, não falha.
-- **Gate vermelho não fecha a mudança.** Cada teste falho entra em Gaps com o nome do teste e vira uma task de correção `TCn` (Gaps e tasks de correção); a asserção não se afrouxa, não se pula e não se mocka. Teste que já falhava na base — confirmado rodando o mesmo comando em `<base>` (Escopo) — é reportado como pré-existente, fica fora dos gaps desta mudança e não vira `TCn`.
+- **Gate vermelho não fecha a mudança.** Cada teste falho entra em Gaps com o nome do teste e vira uma task de correção `TCn` (Gaps e tasks de correção); a asserção não se afrouxa, não se pula e não se mocka. Teste que já falhava na base é reportado como pré-existente, fica fora dos gaps desta mudança e não vira `TCn` — e só com a confirmação abaixo.
+
+Confirmar falha pré-existente tem uma rota, e é esta:
+
+1. `git worktree add <dir-temporário> <base>`, com `<base>` sendo o hash do Escopo e `<dir-temporário>` um diretório que ainda não existe, fora da árvore de trabalho da mudança.
+2. Rode dentro de `<dir-temporário>` o mesmo comando de gate que rodou na árvore da mudança.
+3. `git worktree remove --force <dir-temporário>` ao fim, sempre, tenha o teste falhado lá ou não. O `--force` é obrigatório: o gate deixa artefato não rastreado dentro do worktree (`bin/`, `obj/`, `node_modules/`, `__pycache__`) e sem ele o remove sai 128 com `contains modified or untracked files`. Ali não há nada do usuário — o diretório só tem o que o passo 1 e o passo 2 puseram.
+
+O worktree checa `<base>` numa árvore separada e não mexe na árvore de trabalho da mudança. Por isso a proibição de `add`, `stash`, `checkout` e de "restaurar" arquivo algum (Escopo) continua valendo inteira: esta rota não usa nenhum dos quatro, e nenhum outro caminho até `<base>` está liberado.
+
+`git worktree add` que sai com código diferente de 0 encerra a tentativa: reporte o teste como falha não confirmada na base e trate-o como qualquer teste falho — entra em Gaps e vira `TCn`. Não repita o comando, não tente outra rota e não pergunte ao usuário. Se for o `git worktree remove --force` que sair diferente de 0, o resultado do gate na base vale do mesmo jeito; nomeie no relatório o diretório que ficou para trás e siga.
 
 ## Eixo 2: aderência ao design
 
 Compare com o `design.md`, com a estrutura declarada no `tasks.md` ou com o plano inline, conforme o que a mudança tem. Verifique:
 
-- **Estrutura:** arquivos, componentes e localização batem com o design. Arquivo que o design não listava e que uma task registrou no campo `Onde` com a nota de descoberta conta como conformidade, não como gap: a regra está em execute.md (execute.md, Ciclo por task) e é ela que vale aqui. Arquivo no diff que nem o design lista nem nota alguma explica é gap.
+- **Estrutura:** arquivos, componentes e localização batem com o design. Arquivo que o design não listava e que uma task registrou no campo `Onde` com a nota de descoberta conta como conformidade, não como gap: a regra está em execute.md (execute.md, Ciclo por task) e é ela que vale aqui. Arquivo no diff que nem o design lista nem nota alguma explica é gap, exceto o que veio de commit alheio dentro da janela da base (Escopo).
 - **Responsabilidades:** cada componente faz o que o design diz, e só isso.
 - **Interfaces:** assinaturas iguais às do design.
 - **Dependências:** nenhuma fora do planejado (pacote, módulo, serviço).

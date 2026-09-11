@@ -142,6 +142,35 @@ class ValidDocumentTest(LintDesignBase):
         self.assertNoHard(out)
 
 
+class SummaryLineTest(LintDesignBase):
+    """Ultima linha do relatorio (_common.Report.emit), herdada pelos quatro
+    linters: sem achado algum ela diz que o esqueleto esta conforme, e nao
+    manda julgar WARN que nao existe."""
+
+    def test_clean_run_says_ok_and_not_judge_warns(self):
+        code, out = self.run_lint(doc())
+        self.assertIn("0 HARD, 0 WARN", out)
+        self.assertIn("OK esqueleto conforme", out)
+        self.assertNotIn("Apenas WARN", out)
+        self.assertEqual(code, 0)
+
+    def test_warn_only_run_says_judge_each_one(self):
+        sections = [("Contexto de design", CONTEXT + "\n\nO livro talvez precise de indice."),
+                    ("Componentes", COMPONENTS), ("Tratamento de erros", ERRORS)]
+        code, out = self.run_lint(doc(sections))
+        self.assertNoHard(out)
+        self.assertIn("Apenas WARN - julgue cada um.", out)
+        self.assertNotIn("OK esqueleto conforme", out)
+        self.assertEqual(code, 0)
+
+    def test_hard_run_says_fix_and_run_again(self):
+        code, out = self.run_lint(doc(comment="<!-- sdd: tasks | spec: ../spec.md -->"))
+        self.assertIn("Corrija os HARD e rode de novo (lint_design).", out)
+        self.assertNotIn("OK esqueleto conforme", out)
+        self.assertNotIn("Apenas WARN", out)
+        self.assertEqual(code, 1)
+
+
 class MachineCommentTest(LintDesignBase):
     def test_missing_or_wrong_kind_is_hard(self):
         code, out = self.run_lint(doc(comment="<!-- sdd: tasks | spec: ../spec.md -->"))
@@ -543,8 +572,9 @@ class TemplateRegressionTest(LintDesignBase):
 
 class SectionsInSyncWithReferenceTest(unittest.TestCase):
     """A lista de secoes do script e a de references/design.md, secao Secoes:
-    mesmos nomes, mesma ordem. Doc e script divergentes fazem o linter recusar
-    a secao que a referencia manda escrever."""
+    mesmos nomes PT e EN, mesma ordem. O nome em ingles vem entre parenteses
+    depois do nome em portugues. Doc e script divergentes fazem o linter
+    recusar a secao que a referencia manda escrever."""
 
     @staticmethod
     def documented():
@@ -556,13 +586,16 @@ class SectionsInSyncWithReferenceTest(unittest.TestCase):
         for l in lines[start:end]:
             m = re.match(r"^\d+\.\s+(.+)$", l.strip())
             if m:
-                out.append(re.split(r"\s+—\s+", m.group(1))[0].strip().rstrip("."))
+                name = re.split(r"\s+—\s+", m.group(1))[0].strip().rstrip(".")
+                alias = re.match(r"^(.*?)\s*\((.+)\)$", name)
+                out.append((alias.group(1).strip(), alias.group(2).strip())
+                           if alias else (name,))
         return out
 
     def test_names_and_order_match(self):
         names = self.documented()
         self.assertTrue(names, "lista numerada de secoes nao encontrada em references/design.md")
-        self.assertEqual(names, [aliases[0] for aliases in lint_design.SECTIONS_ORDER])
+        self.assertEqual(names, [tuple(aliases) for aliases in lint_design.SECTIONS_ORDER])
 
 
 class UsageTest(LintDesignBase):

@@ -49,6 +49,9 @@ WARN (nao afeta exit):
 - `prd-rev` divergente de `git hash-object <prd>` (o PRD mudou desde a spec:
   re-derive); `prd-rev` ausente ou git indisponivel para conferir;
 - numero pulado na sequencia de IDs sem estar na lista de aposentados;
+- secao `##` fora da lista de secoes (references/specify.md, Secoes). E WARN,
+  e nao HARD como no lint_design.py, porque spec real da pasta docs/ carrega
+  secao herdada do PRD (`## Ponto de Maior Fragilidade`) que a lista nao tem;
 - secao `## Contexto` com menos de 3 ou mais de 5 linhas nao vazias; secao
   `## Requisitos` com 8 ou mais requisitos sem nenhum subtitulo `###` por tema,
   ou com menos de 8 e algum subtitulo;
@@ -70,10 +73,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
-    find_sections_exact, git_blob_rev, iter_headings, norm_heading, parse_machine_comment,
-    read_lines, repo_root_for, resolve_local_path, scan_placeholders, scan_prose, strip_accents,
-    table_rows, usage,
+    REQ_ID, REQ_LINE, Report, check_tags, check_unknown_sections, fenced_line_mask,
+    find_section_exact, find_sections_exact, git_blob_rev, iter_headings, norm_heading,
+    parse_machine_comment, read_lines, repo_root_for, resolve_local_path, scan_placeholders,
+    scan_prose, strip_accents, table_rows, usage,
 )
 
 EARS_LEAD = re.compile(r"^\s*(WHEN|WHILE|WHERE|IF)\b", re.IGNORECASE)
@@ -638,6 +641,8 @@ def main(argv):
         prefix = find_prefix(rep, lines, mask, h1)
 
     check_duplicate_sections(rep, lines, mask)
+    check_unknown_sections(rep, lines, SECTIONS_KNOWN, "references/specify.md, Secoes",
+                           mask, hard=False)
     for aliases in SECTIONS_REQUIRED:
         if find_section_exact(lines, aliases, mask=mask) is None:
             rep.hard(f"secao obrigatoria ausente: ## {aliases[0]}")

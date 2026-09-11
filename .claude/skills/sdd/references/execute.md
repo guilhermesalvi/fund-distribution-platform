@@ -25,7 +25,7 @@ Gate: [comando de build e teste do repositório]; [total de testes que ele execu
 2. …
 ```
 
-A linha `Gate` é onde o comando de mutação fica declarado quando a mudança não tem `tasks.md`: acrescente `; mutação: <comando>` a ela quando o usuário pede mutação nesta mudança ou quando a tabela Riscos e técnicas do design a obriga (verify.md, Mutação). Sem a declaração, a linha termina no total de testes e a mudança não roda mutação. O slot `; base: <hash>` da mesma linha é onde a base registrada (Base da verificação, acima) fica quando a mudança não tem `tasks.md`, e entra só quando as três primeiras regras da base falham.
+A linha `Gate` é onde o comando de mutação fica declarado quando a mudança não tem `tasks.md`: acrescente `; mutação: <comando>` a ela quando o usuário pede mutação nesta mudança ou quando a tabela Riscos e técnicas do design a obriga (verify.md, Mutação). Sem a declaração, a linha termina no total de testes e a mudança não roda mutação. O slot `; base: <hash>` da mesma linha é onde a base fica quando a mudança não tem `tasks.md`, e entra só nas condições de Base da verificação, acima.
 
 Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (tasks.md, Task atômica). Se a lista disparar qualquer gatilho de `design.md` ou de `tasks.md` (SKILL.md, Abrir uma mudança), pare e crie o artefato que faltou: é a catraca subindo (SKILL.md, Abrir uma mudança), e complexidade descoberta no meio promove a mudança ao artefato que ela pede.
 
@@ -48,7 +48,7 @@ Cada passo do plano é um entregável coeso, pelo mesmo critério de uma task (t
 6. **Revisar depois do gate.** Com o gate verde, confira:
    - todo item de `Pronto quando` está atendido, inclusive os critérios de comportamento;
    - nenhum `SPEC_DEVIATION` ficou sem registro em `## Desvios`;
-   - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo, uma única vez: se ficar vermelho, desfaça a simplificação, porque o teto de correções do passo 5 já foi usado;
+   - nenhum dos três sinais de complexidade está presente: abstração usada uma vez só, parâmetro ou opção sem chamador, camada que o design não pede. Se algum estiver, simplifique uma vez e rode o gate de novo, uma única vez: se ficar vermelho, desfaça a simplificação, porque o gate verde do passo 5 é o que a task entrega e insistir na simplificação abriria um ciclo de correção sem teto; diga no chat qual simplificação foi desfeita e o que o gate acusou;
    - a tabela de evidência: para cada critério, o `file:line` e a assertion que o provam; e, no sentido inverso, todo teste novo mapeia para um critério, requisito ou edge case. A tabela vai no chat ao fechar a task e não é persistida em arquivo.
 7. **Fechar.** Marque a task como concluída: todos os itens `- [ ]` de `Pronto quando` passam a `- [x]` no `tasks.md` (ou no plano inline). Com commit autorizado, faça um commit contendo só os arquivos da task, o `tasks.md` e a spec quando a task a alterou (passo 3), com mensagem no formato que o repositório convenciona; se o repositório tem validação de mensagem de commit, rode-a antes de commitar. Sem commit autorizado, a task fecha com o gate verde e os arquivos na árvore de trabalho.
 

@@ -25,7 +25,7 @@ Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "i
 
 Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` com `seq.py next docs/adr --slug <slug>`, nunca lendo a pasta; `seq.py check docs/adr` acusa duplicata (SKILL.md, Scripts).
 
-Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em três ou mais ADRs commitadas — conte com `git ls-files 'docs/adr/*.md'`, ou o glob do diretório que o projeto usa (SKILL.md, Scripts) — e então os HARD de `lint_adr.py` que decorrem dele não se corrigem nem contam rodada. Com uma ou duas ADRs em formato próprio não há convenção: pergunte qual formato vale antes de gravar, e sem resposta grave no formato desta entrada.
+Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em três ou mais ADRs commitadas — conte com `git ls-files 'docs/adr/*.md'`, ou o glob do diretório que o projeto usa (SKILL.md, Scripts) — e então os HARD de `lint_adr.py` que decorrem dele não se corrigem nem contam rodada. Com uma ou duas ADRs em formato próprio não há convenção: pergunte qual formato vale antes de gravar, e sem resposta grave no formato desta entrada. Pedido da sessão que nomeia literalmente a seção, o campo ou a forma isenta do mesmo modo, sem contagem (SKILL.md, Scripts).
 
 ### Template
 
@@ -50,8 +50,10 @@ Participantes: [quem decidiu]; [quem foi consultado].
 - Negativas: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
 
 ## Regras derivadas
-[Regra em CLAUDE.md, rules ou linter que existe por causa desta ADR, com o path. Presente quando há regra.]
+- [regra que existe por causa desta ADR] — `CLAUDE.md`
 ```
+
+As seções da ADR são as do template, e a lista é fechada: `lint_adr.py` acusa como HARD a seção `##` fora dela. Em inglês (SKILL.md, Idioma) os headings são `Context`, `Decision`, `Alternatives considered`, `Consequences` e `Derived rules`.
 
 ## Antes de apresentar
 
@@ -62,3 +64,4 @@ Rode `lint_adr.py <adr.md>` e siga o ciclo de correção de SKILL.md, Scripts; d
 - **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
 - **Como superseder.** Crie uma ADR nova com a linha `Substitui: NNNN` abaixo do título. Na ADR antiga, adicione `Substituída por: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
 - **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em CLAUDE.md, rules ou linter) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
+- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `CLAUDE.md`, `.claude/rules/tracing.md`, o linter. Regra sem path não é localizável e não é seguida; `lint_adr.py` acusa como HARD a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.

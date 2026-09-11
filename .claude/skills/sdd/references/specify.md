@@ -118,19 +118,19 @@ A spec é editada no lugar; a mudança é o diff.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade.
+Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: `lint_spec.py` acusa como WARN — e não como HARD, porque spec real pode carregar seção herdada do PRD — a seção `##` fora dela. A coluna Seção (en) traz o heading da spec escrita em inglês (SKILL.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
 
-| Seção | Conteúdo |
-|---|---|
-| Contexto | 3–5 linhas: a origem (o PRD e o que foi corrigido nele; a ideia; ou o código e por que está sendo especificado), a base lida, e o que a capability produz e consome |
-| Escopo e Fora de Escopo | O que entra; tabela item / razão para o que fica fora |
-| Premissas | Tabela premissa / default / racional, cada linha marcada `[PREMISSA]` |
-| Perguntas em Aberto | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
-| Requisitos | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
-| Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
-| Glossário | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
-| Rastreabilidade | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
-| Divergências | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
+| Seção | Seção (en) | Conteúdo |
+|---|---|---|
+| Contexto | Context | 3–5 linhas: a origem (o PRD e o que foi corrigido nele; a ideia; ou o código e por que está sendo especificado), a base lida, e o que a capability produz e consome |
+| Escopo e Fora de Escopo, Escopo | Scope / Out of Scope, Scope | O que entra; tabela item / razão para o que fica fora |
+| Premissas | Assumptions | Tabela premissa / default / racional, cada linha marcada `[PREMISSA]` |
+| Perguntas em Aberto | Open Questions | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
+| Requisitos | Requirements | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
+| Domain Events | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
+| Glossário | Glossary | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
+| Rastreabilidade | Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
+| Divergências | Divergences | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
 
 ## Template
 

@@ -1,6 +1,7 @@
 # Validates the agent skills (.claude/skills) and the artifacts they produce
-# (docs/prd, docs/specs, docs/adr): Python test suites, Mermaid parser self-test,
-# PRD, spec, design, tasks and ADR linters, the independence between skills, and the
+# (docs/prd, docs/specs, docs/adr): Python test suites, the Mermaid parser self-test
+# of each skill, PRD, spec, design, tasks, ADR and Mermaid linters, the
+# independence between skills, and the
 # commit-message policy of pull requests. Everything runs from the repository
 # root.
 name: skills
@@ -29,7 +30,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: .claude/skills/prd/scripts/mermaid-parser/package-lock.json
+          cache-dependency-path: |
+            .claude/skills/prd/scripts/mermaid-parser/package-lock.json
+            .claude/skills/sdd/scripts/mermaid-parser/package-lock.json
 
       - name: Print tool versions
         run: |
@@ -37,11 +40,15 @@ jobs:
           node --version
           git --version
 
-      - name: Install the pinned Mermaid parser (npm ci)
-        run: python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
+      - name: Install the pinned Mermaid parser of each skill (npm ci)
+        run: |
+          python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
+          python3 .claude/skills/sdd/scripts/lint_mermaid.py --setup
 
       - name: Mermaid parser self-test
-        run: python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
+        run: |
+          python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
+          python3 .claude/skills/sdd/scripts/lint_mermaid.py --self-test
 
       - name: prd test suite
         run: python3 -m unittest discover -s .claude/skills/prd/scripts/tests -v
@@ -80,6 +87,11 @@ jobs:
           [ -d docs/adr ] || { echo "no docs/adr"; exit 0; }
           python3 .claude/skills/sdd/scripts/lint_adr.py docs/adr
 
+      - name: Parse the Mermaid blocks of the specs (docs/specs)
+        run: |
+          [ -d docs/specs ] || { echo "no docs/specs"; exit 0; }
+          python3 .claude/skills/sdd/scripts/lint_mermaid.py docs/specs
+
       - name: Lint design and tasks against their living spec (docs/specs/*/*/*)
         run: |
           status=0
@@ -99,9 +111,9 @@ jobs:
           status=0
           # sdd: no mention of the other skill (by path: "prd" alone is the artifact, not the skill), its files,
           # or files this skill no longer has; itself never by path.
-          hits=$(grep -rIiE "skills/prd\b|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md" .claude/skills/sdd --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
+          hits=$(grep -rIiE "skills/prd\b|intake\.md|writing\.md|output\.md|review\.md|modes\.md|memory\.md" .claude/skills/sdd --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude=test_docs_consistency.py || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::sdd cites another skill or a removed file"; status=1; fi
-          hits=$(grep -rIiE "skills/sdd\b" .claude/skills/sdd --exclude-dir=__pycache__ --exclude=test_docs_consistency.py || true)
+          hits=$(grep -rIiE "skills/sdd\b" .claude/skills/sdd --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude=test_docs_consistency.py || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::sdd cites itself by path"; status=1; fi
           # prd: no mention of the other skill, its files or its artifacts; itself never by path
           # (the npm package name under mermaid-parser is not a skill citation).
@@ -110,7 +122,7 @@ jobs:
           hits=$(grep -rIiE "skills/prd\b" .claude/skills/prd --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude-dir=mermaid-parser || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::prd cites itself by path"; status=1; fi
           # commit policy belongs to the repository: the sdd scripts know nothing about it.
-          hits=$(grep -rIi "commit" .claude/skills/sdd/scripts --exclude-dir=__pycache__ --exclude-dir=tests || true)
+          hits=$(grep -rIi "commit" .claude/skills/sdd/scripts --exclude-dir=__pycache__ --exclude-dir=node_modules --exclude-dir=tests || true)
           if [ -n "$hits" ]; then echo "$hits"; echo "::error::commit policy inside the sdd scripts"; status=1; fi
           exit $status
 

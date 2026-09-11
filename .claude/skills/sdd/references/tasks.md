@@ -69,7 +69,7 @@ Toda task tem os campos abaixo:
 | **Interfaces** | *Consome:* o que a task usa de tasks anteriores, com assinatura. *Produz:* o que tasks posteriores vão usar: nomes, parâmetros, retornos. O executor só vê a própria task |
 | **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando do gate da task, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; `lint_tasks.py` acusa como HARD o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
 | **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho |
-| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`: `unit` exige `quick`, `integration`/`e2e` exigem `full`, `none` exige `build`; a última task de cada fase exige `build` em qualquer caso, e esse é o desempate. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; `lint_tasks.py` acusa como HARD toda combinação de `Tests` e `Gate` fora desta regra |
+| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`, na ordem: a última task de cada fase exige `build`, seja qual for o `Tests`; `none` exige `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho exige `quick`. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; `lint_tasks.py` acusa como HARD toda combinação de `Tests` e `Gate` fora desta regra |
 
 ### Sem placeholder
 
@@ -85,12 +85,16 @@ Nenhum destes entra numa task:
 
 ## Seções do `tasks.md`
 
-- **Plano de execução** lista as fases e a ordem das tasks.
+A lista é fechada: `lint_tasks.py` acusa como HARD a seção `##` fora dela. O nome entre parênteses é o heading do `tasks.md` escrito em inglês (SKILL.md, Idioma).
+
+- **Comandos de Gate** (Gate Commands) dá o comando de cada gate (Registro no `tasks.md`).
+- **Plano de execução** (Execution Plan) lista as fases e a ordem das tasks.
 - **Tasks** tem o corpo de cada task.
-- **Rastreabilidade** mapeia cada requisito para as tasks que o atendem; obrigatória, e o linter confere a coerência com os campos `Requisito`.
-- **Desvios** só é criada no Execute, quando há desvio.
-- **Tasks de correção** recebe as tasks que o Verify gera: IDs `TCn` sob `## Tasks de correção`, fora do Plano de execução.
-- **Comentário de máquina:** mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
+- **Rastreabilidade** (Traceability) mapeia cada requisito para as tasks que o atendem; obrigatória, e o linter confere a coerência com os campos `Requisito`.
+- **Desvios** (Deviations) só é criada no Execute, quando há desvio.
+- **Tasks de correção** (Correction Tasks) recebe as tasks que o Verify gera: IDs `TCn` sob `## Tasks de correção`, fora do Plano de execução.
+
+Fora da lista, no comentário de máquina: mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
 
 ## Template
 

@@ -1,8 +1,13 @@
-"""Helpers compartilhados por lint_spec.py, lint_design.py e lint_tasks.py.
+"""Helpers compartilhados por lint_spec.py, lint_design.py, lint_tasks.py e
+lint_adr.py.
 
 Saida padrao dos linters:
   HARD  -> violacao mecanica do esqueleto; corrija e rode de novo. Exit code 1.
   WARN  -> heuristica com risco de falso-positivo; julgue. Nao afeta exit.
+
+A ultima linha resume: com HARD manda corrigir; sem HARD e com WARN manda
+julgar cada um; com 0 HARD e 0 WARN diz que o esqueleto esta conforme, para
+o chamador nao procurar WARN inexistente.
 """
 
 import os
@@ -73,8 +78,12 @@ class Report:
         for line, msg in self.warn_findings:
             print(f"WARN  {fmt(line):>6}  {msg}")
         h, w = len(self.hard_findings), len(self.warn_findings)
-        tail = (f"Corrija os HARD e rode de novo ({self.label})."
-                if h else "Apenas WARN - julgue cada um.")
+        if h:
+            tail = f"Corrija os HARD e rode de novo ({self.label})."
+        elif w:
+            tail = "Apenas WARN - julgue cada um."
+        else:
+            tail = "OK esqueleto conforme; a semantica nao foi verificada."
         print(f"\n{self.label}: {h} HARD, {w} WARN em {path}. {tail}")
         return 1 if h else 0
 
@@ -164,6 +173,20 @@ def iter_headings(lines, level=2, mask=None):
     if mask is None:
         mask = fenced_line_mask(lines)
     return [(i, t) for i, t in headings(lines, level) if not mask[i]]
+
+
+def check_unknown_sections(rep, lines, known, source, mask=None, hard=True):
+    """Secao `##` fora da lista fechada do artefato. `known` e a lista de
+    tuplas de alias PT/EN; `source` diz onde a lista vive, no formato
+    `references/<arquivo>.md, <Titulo>`. A mensagem e a mesma nos quatro
+    linters; `hard=False` a rebaixa para WARN."""
+    if mask is None:
+        mask = fenced_line_mask(lines)
+    wanted = {norm_heading(a) for aliases in known for a in aliases}
+    for i, text in iter_headings(lines, 2, mask):
+        if norm_heading(text) not in wanted:
+            msg = f"secao desconhecida: ## {text}; a lista de secoes e a de {source}"
+            (rep.hard if hard else rep.warn)(msg, i + 1)
 
 
 def find_sections_exact(lines, aliases, level=2, mask=None):

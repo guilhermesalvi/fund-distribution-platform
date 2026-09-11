@@ -18,9 +18,17 @@ HARD (exit 1):
   consideradas` e `## Consequências` (heading casa por igualdade com os
   aliases PT/EN, nunca por prefixo);
 - secao obrigatoria fora da ordem dessa lista;
+- secao `##` fora da lista de secoes da ADR: as quatro obrigatorias mais
+  `## Regras derivadas`, com os aliases em ingles (references/adr.md,
+  Template);
 - secao presente sem conteudo: corpo vazio ou reduzido a uma linha entre
   'Nenhuma.', 'Nenhum.', 'N/A' e 'Nao se aplica.';
 - `## Regras derivadas`, quando presente, nao e a ultima secao;
+- `## Regras derivadas` sem bullet algum, ou com bullet sem o path do arquivo
+  onde a regra vive entre crases (`CLAUDE.md`, `.claude/rules/x.md`,
+  `docs/adr`): regra sem path e seguida cegamente ou ignorada
+  (references/adr.md, Conformar e superseder). O path pode estar em qualquer
+  linha do bullet;
 - Alternativas consideradas com tabela sem linha de dados, ou com linha cuja
   alternativa ou razao esta vazia: a secao promete o que nao entrega;
 - Consequências sem uma linha `- Negativas: <texto>`: ADR sem consequencia
@@ -46,8 +54,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    Report, check_tags, fenced_line_mask, find_section_exact, iter_headings, norm_heading,
-    read_lines, scan_placeholders, scan_prose, strip_accents, table_rows, usage,
+    Report, check_tags, check_unknown_sections, fenced_line_mask, find_section_exact,
+    iter_headings, norm_heading, read_lines, scan_placeholders, scan_prose, strip_accents,
+    table_rows, usage,
 )
 
 # Ordem das secoes obrigatorias, como no template de references/adr.md.
@@ -58,6 +67,9 @@ SECTIONS_ORDER = [
     ("Consequências", "Consequences"),
 ]
 SECTION_RULES = ("Regras derivadas", "Derived rules")
+# Lista fechada das secoes `##` da ADR: as obrigatorias mais Regras derivadas
+# (references/adr.md, Template); secao fora dela e HARD.
+SECTIONS_KNOWN = SECTIONS_ORDER + [SECTION_RULES]
 # Corpo de secao reduzido a uma dessas linhas conta como secao sem conteudo.
 NO_CONTENT_LINES = frozenset(("nenhuma", "nenhum", "n/a", "nao se aplica", "not applicable"))
 
@@ -69,6 +81,10 @@ SUPERSEDED_BY = re.compile(r"^\s*\**\s*(?:Substitu[ií]da por|Superseded by)\s*\
                            re.IGNORECASE)
 NEGATIVE = re.compile(r"^\s*[-*]\s*\**\s*(?:Negativas?|Negatives?)\s*\**\s*:\s*(\S.*)$", re.IGNORECASE)
 NUMBER = re.compile(r"\b(\d{4})\b")
+BULLET = re.compile(r"^\s*[-*]\s+(\S.*)$")
+# Conteudo de code span que e path: tem separador de diretorio, ou nome com
+# extensao (`CLAUDE.md`), ou dotfile (`.editorconfig`).
+PATH_SPAN = re.compile(r"^(?:[^\s`]*[/\\][^\s`]*|[\w.\-]+\.[A-Za-z0-9]{1,10}|\.[\w\-]+)$")
 # Valor so com pontuacao ou reticencias: o rotulo esta escrito, o conteudo nao.
 NO_TEXT = re.compile(r"^[\s.…\-–—*_]*$")
 
@@ -181,6 +197,47 @@ def check_negative_consequence(rep, lines, mask):
              "o custo aceito)", sec[0])
 
 
+def bullet_items(lines, start, end, mask):
+    """Bullets da faixa, como (idx da primeira linha, texto do item inteiro).
+    Linha seguinte que nao abre bullet nem esta vazia continua o item."""
+    items = []
+    for i in range(start, end):
+        if mask[i]:
+            continue
+        m = BULLET.match(lines[i])
+        if m:
+            items.append([i, m.group(1)])
+        elif items and lines[i].strip():
+            items[-1][1] += " " + lines[i].strip()
+        elif not lines[i].strip():
+            continue
+    return [(i, text) for i, text in items]
+
+
+def has_path_span(text):
+    """Trecho entre crases que e um path: `CLAUDE.md`, `docs/adr`,
+    `.claude/rules/tracing.md`."""
+    return any(PATH_SPAN.match(m.group(1).strip()) for m in re.finditer(r"`([^`]+)`", text))
+
+
+def check_derived_rules(rep, lines, mask):
+    """Cada regra derivada e um bullet com o path do arquivo onde ela vive:
+    regra sem path e seguida cegamente ou ignorada (references/adr.md,
+    Conformar e superseder)."""
+    sec = find_section_exact(lines, SECTION_RULES, mask=mask)
+    if sec is None:
+        return
+    items = bullet_items(lines, sec[0], sec[1], mask)
+    if not items:
+        rep.hard(f"## {SECTION_RULES[0]} sem bullet; cada regra derivada e um bullet com o "
+                 "path do arquivo onde ela vive, entre crases", sec[0])
+        return
+    for i, text in items:
+        if not has_path_span(text):
+            rep.hard(f"## {SECTION_RULES[0]}: regra sem o path do arquivo onde ela vive, "
+                     f"entre crases (veio '{text[:60]}')", i + 1)
+
+
 def check_alternatives(rep, lines, mask):
     """Alternativas consideradas com ao menos uma alternativa preenchida: sem
     elas a IA re-propoe caminhos ja descartados e o time re-litiga o que ja foi
@@ -262,9 +319,11 @@ def lint_file(path):
     h1_idx, number = find_h1(rep, lines, mask)
     head = header_range(lines, mask, h1_idx)
     check_participants(rep, lines, mask, head)
+    check_unknown_sections(rep, lines, SECTIONS_KNOWN, "references/adr.md, Template", mask)
     check_sections(rep, lines, mask)
     check_alternatives(rep, lines, mask)
     check_negative_consequence(rep, lines, mask)
+    check_derived_rules(rep, lines, mask)
     check_supersede(rep, lines, mask, head, path, number)
     check_tags(rep, lines, mask=mask)
     scan_placeholders(rep, lines, mask=mask)

@@ -1,6 +1,7 @@
 """Testes do lint_adr.py: titulo `# ADR NNNN: titulo`, linha `Participantes:`,
 secoes obrigatorias na ordem do template e com conteudo, `Regras derivadas`
-por ultimo, alternativas preenchidas, consequencia negativa, reciprocidade de
+por ultimo e com bullet que traz o path entre crases, alternativas
+preenchidas, consequencia negativa, reciprocidade de
 `Substitui:` e `Substituída por:`, placeholder, prosa, tags, pasta e erros de
 uso.
 
@@ -33,7 +34,7 @@ ALTERNATIVAS = """\
 CONSEQUENCIAS = """\
 - Positivas: entrega ao menos uma vez sem transacao distribuida.
 - Negativas: a latencia de publicacao sobe ate o intervalo do worker."""
-REGRAS = "Outbox obrigatorio para evento de dominio (CLAUDE.md, Contextos)."
+REGRAS = "- Outbox obrigatorio para evento de dominio (ADR 0007) — `CLAUDE.md`"
 
 SECTIONS = [("Contexto", CONTEXTO), ("Decisão", DECISAO),
             ("Alternativas consideradas", ALTERNATIVAS), ("Consequências", CONSEQUENCIAS)]
@@ -162,6 +163,54 @@ class SectionsTest(LintAdrBase):
     def test_heading_inside_fence_is_ignored(self):
         code, out = self.run_lint(doc() + "\n```markdown\n## Secao Inventada\n```\n")
         self.assertNoHard(out)
+
+
+class DerivedRulesPathTest(LintAdrBase):
+    """`## Regras derivadas`: cada regra e um bullet com o path do arquivo onde
+    ela vive, entre crases (references/adr.md, Conformar e superseder)."""
+
+    def rules(self, body):
+        return doc(SECTIONS + [("Regras derivadas", body)])
+
+    def test_bullet_with_backticked_path_passes(self):
+        code, out = self.run_lint(self.rules(REGRAS))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_bullet_with_directory_path_passes(self):
+        code, out = self.run_lint(self.rules("- Toda ADR nova entra em `docs/adr`"))
+        self.assertNoHard(out)
+
+    def test_bullet_with_dotfile_path_passes(self):
+        code, out = self.run_lint(self.rules("- Fim de linha LF — `.editorconfig`"))
+        self.assertNoHard(out)
+
+    def test_path_on_the_wrapped_line_of_the_bullet_passes(self):
+        code, out = self.run_lint(self.rules("- Outbox obrigatorio para evento de dominio,\n"
+                                             "  escrito em `CLAUDE.md`"))
+        self.assertNoHard(out)
+
+    def test_bullet_without_path_is_hard(self):
+        code, out = self.run_lint(self.rules("- Outbox obrigatorio para evento de dominio"))
+        self.assertHard(out, "regra sem o path do arquivo onde ela vive")
+        self.assertEqual(code, 1)
+
+    def test_backticked_term_that_is_not_a_path_is_hard(self):
+        code, out = self.run_lint(self.rules("- Todo evento passa pelo `OutboxWriter`"))
+        self.assertHard(out, "regra sem o path do arquivo onde ela vive")
+
+    def test_prose_without_bullet_is_hard(self):
+        code, out = self.run_lint(self.rules("Outbox obrigatorio, escrito em `CLAUDE.md`."))
+        self.assertHard(out, "sem bullet")
+
+    def test_section_absent_is_not_checked(self):
+        code, out = self.run_lint(doc())
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_english_heading_is_checked_too(self):
+        code, out = self.run_lint(doc(SECTIONS + [("Derived rules", "- Outbox for every event")]))
+        self.assertHard(out, "regra sem o path do arquivo onde ela vive")
 
 
 class AlternativesTest(LintAdrBase):
@@ -353,6 +402,52 @@ class UsageTest(LintAdrBase):
         code, err = self.exit_code(self.adr)
         self.assertEqual(code, 2)
         self.assertIn("UTF-8", err)
+
+
+class UnknownSectionTest(LintAdrBase):
+    """Secao `##` fora da lista da ADR (references/adr.md, Template) e HARD;
+    as do template, em portugues ou em ingles, passam."""
+
+    def test_section_outside_the_list_is_hard(self):
+        code, out = self.run_lint(doc(SECTIONS + [("Notas adicionais", "x")]))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "secao desconhecida: ## Notas adicionais; a lista de secoes "
+                             "e a de references/adr.md, Template")
+
+    def test_derived_rules_section_passes(self):
+        code, out = self.run_lint(doc(SECTIONS + [("Regras derivadas", REGRAS)]))
+        self.assertNoHard(out)
+        self.assertEqual(code, 0)
+
+    def test_english_headings_pass(self):
+        english = [("Context", CONTEXTO), ("Decision", DECISAO),
+                   ("Alternatives considered", ALTERNATIVAS),
+                   ("Consequences", CONSEQUENCIAS), ("Derived rules", REGRAS)]
+        code, out = self.run_lint(doc(english))
+        self.assertNoHard(out)
+
+    def test_spanish_heading_is_hard(self):
+        """Terceiro idioma nao tem alias: cada secao vira HARD (SKILL.md, Idioma)."""
+        spanish = [("Contexto", CONTEXTO), ("Decisión", DECISAO),
+                   ("Alternativas consideradas", ALTERNATIVAS),
+                   ("Consecuencias", CONSEQUENCIAS), ("Reglas derivadas", REGRAS)]
+        code, out = self.run_lint(doc(spanish))
+        self.assertEqual(code, 1)
+        self.assertHard(out, "secao desconhecida: ## Consecuencias")
+        self.assertHard(out, "secao desconhecida: ## Reglas derivadas")
+
+
+class SectionsInSyncWithReferenceTest(unittest.TestCase):
+    """Todo nome de secao que o script aceita esta escrito em
+    references/adr.md: o portugues no template, o ingles na prosa que fecha a
+    lista. Nome so no codigo deixa a ADR em ingles sem fonte para acertar."""
+
+    def test_every_alias_is_written_in_the_reference(self):
+        with open(ADR_MD, encoding="utf-8") as f:
+            text = f.read()
+        for aliases in lint_adr.SECTIONS_KNOWN:
+            for name in aliases:
+                self.assertIn(name, text, f"alias '{name}' nao esta escrito em references/adr.md")
 
 
 if __name__ == "__main__":

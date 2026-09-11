@@ -23,7 +23,7 @@ O linter é feedback para o agente, não carimbo no artefato: o que ele acusa se
 
 Duas perguntas decidem quais artefatos a mudança pede, além da spec:
 
-1. Há decisão de deploy, de estilo arquitetural ou de biblioteca compartilhada (design.md, Unidade de deploy e reuso); padrão visto em menos de três arquivos da mesma camada (design.md, Base de código); interação entre três ou mais componentes a planejar; ou risco de integração, dinheiro, regulação, contrato público, migração ou preocupação encontrada na base (as fontes de design.md, Do risco à técnica, fora as dimensões implícitas, que já viraram requisito)? Se sim, a mudança pede `design.md`.
+1. Há decisão de deploy, de estilo arquitetural ou de biblioteca compartilhada (design.md, Unidade de deploy e reuso); arquivo novo numa camada com menos de três arquivos do mesmo tipo, contados antes de decidir com `git ls-files '<glob da camada>'` — sem três exemplares não há convenção a copiar (design.md, Base de código); interação entre três ou mais componentes a planejar; ou risco de integração, dinheiro, regulação, contrato público, migração ou preocupação encontrada na base (as fontes de design.md, Do risco à técnica, fora as dimensões implícitas, que já viraram requisito)? Se sim, a mudança pede `design.md`.
 2. Há mais de cinco passos, ou algum passo depende de outro que não é o imediatamente anterior? Se sim, a mudança pede `tasks.md`.
 
 **Catraca.** A resposta só sobe. Complexidade descoberta no meio da mudança promove o nível de artefato: pare, diga o que descobriu e crie o artefato que faltou. Nada rebaixa o nível já decidido.
@@ -64,6 +64,8 @@ Leia a referência inteira antes de agir em qualquer entrada. O layout de arquiv
   2. Convenção do repositório.
   3. Defaults desta skill.
 
+  A lista fechada de seções de cada artefato é default desta skill, degrau 3: HARD que decorre de um dos dois primeiros degraus é mantido, não corrigido (Scripts).
+
 ## Contrato de execução
 
 Cinco regras, detalhadas em execute.md; este resumo não as reescreve:
@@ -76,11 +78,11 @@ Cinco regras, detalhadas em execute.md; este resumo não as reescreve:
 
 ## Scripts
 
-Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py` (ou `python`, onde `python3` não existir); rodar sem argumentos imprime a docstring completa.
+Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 <skill-dir>/scripts/<nome>.py` (ou `python`, onde `python3` não existir); rodar sem argumentos imprime a docstring completa. O `lint_mermaid.py` exige Node além do Python.
 
-- `HARD` exige correção e nova rodada. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. Linter que não roda por falha de ambiente (Python ausente) não é rodada: diga isso no chat e apresente sem essa verificação. Exit 2 é erro de uso (arquivo, `--spec` ou codificação) e se corrige como HARD.
+- `HARD` exige correção e nova rodada. O ciclo é: grave o artefato, rode o linter, corrija todo `HARD`, rode de novo e apresente quando a saída for `0 HARD`. São no máximo duas rodadas de correção: se a segunda ainda terminar com `HARD`, apresente o artefato e liste no chat cada `HARD` remanescente com o motivo de ele ter sobrado. Linter que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada: é bloqueio de ambiente, dito no chat, e o artefato é apresentado sem essa verificação. No exit 3, a ordem é: peça a autorização de `--setup` uma vez, antes de apresentar; autorizada, rode `--setup` e o linter de novo e trate a saída como qualquer outra; recusada ou sem resposta, apresente sem essa verificação. Exit 2 é erro de uso (arquivo ausente, opção desconhecida ou codificação fora de UTF-8) e se corrige como HARD.
 - `WARN` é heurística: cada um termina de uma de duas formas, corrigido ou mantido com uma linha de razão no chat. A exceção é o WARN de `prd-rev` desatualizado, que é sempre corrigido e nunca mantido com razão (specify.md, Comentário de máquina).
-- HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório. Conte os artefatos com `git ls-files '<glob do tipo>'` (por exemplo `git ls-files 'docs/adr/*.md'`) e diga o número no chat; arquivo não commitado não conta.
+- HARD que decorre do pedido da sessão ou da convenção do repositório — os dois primeiros degraus da Precedência — não se corrige nem conta como rodada: diga no chat qual HARD é e qual dos dois o mantém, com as palavras "mantido por pedido" ou "mantido por convenção". Pedido é o da sessão que nomeia literalmente a seção, o campo ou a forma de onde o HARD sai ("inclua uma seção Plano de Rollout no design"). Convenção é forma presente em três ou mais artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório: conte os artefatos com `git ls-files '<glob do tipo>'` (por exemplo `git ls-files 'docs/adr/*.md'`) e diga o número no chat; arquivo não commitado não conta.
 - Linter verde é esqueleto conforme, não artefato bom.
 
 | Antes de | Comando |
@@ -91,12 +93,15 @@ Os scripts ficam em `scripts/`, no diretório desta skill, e rodam com `python3 
 | apresentar o design | `lint_design.py <design.md> --spec <spec.md>` |
 | apresentar as tasks | `lint_tasks.py <tasks.md> --spec <spec.md>` |
 | apresentar a ADR | `lint_adr.py <adr.md \| dir>` |
+| apresentar qualquer artefato com diagrama Mermaid | `lint_mermaid.py <arquivo.md \| dir>`: faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue. `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão |
 
 ## Idioma e redação
 
 ### Idioma
 
-- O artefato fica no idioma do PRD; sem PRD, no do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, no do pedido; se o pedido mistura idiomas, português.
+- **O artefato é escrito em português ou em inglês, nunca em outro idioma.** Os quatro linters casam os headings por igualdade com os aliases PT/EN da lista de seções do artefato, e cada lista traz os dois nomes: spec (specify.md, Seções), design (design.md, Seções), tasks (tasks.md, Seções do `tasks.md`) e ADR (adr.md, Template). Seção fora da lista é HARD em `lint_design.py`, `lint_tasks.py` e `lint_adr.py`; em `lint_spec.py` é WARN, porque spec real pode carregar seção herdada do PRD. Artefato em terceiro idioma sai com um achado por seção — HARD nos três, WARN na spec — e sem correção possível.
+- Qual dos dois: o idioma do PRD; sem PRD, o do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, o do pedido; se o pedido mistura idiomas, português.
+- Quando o idioma que essa regra devolve não é português nem inglês, o artefato fica em inglês e a apresentação diz, em uma linha, qual era o idioma do material e que o artefato saiu em inglês por isso.
 - Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
 - Termo sem tradução de mesma força fica em inglês: domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate.
 - Keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem.
@@ -153,7 +158,7 @@ Quatro itens, os que `lint_adr.py` não alcança porque são conteúdo, não for
 - A decisão fixa convenção, restrição ou padrão que features futuras seguem; decisão local à feature é ocorrência, e o destino dela é o design (adr.md, Quando a decisão é de projeto).
 - Cada linha de Alternativas consideradas é uma alternativa realmente avaliada, derrubada contra os mesmos critérios que sustentam a decisão; alternativa escrita para encher a tabela é ocorrência.
 - A linha `Negativas` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
-- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas com o path do arquivo onde ela vive (adr.md, Conformar e superseder); regra sem path é ocorrência, e ADR que não cria regra não tem a seção.
+- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas; o bullet e o path do arquivo já são HARD de `lint_adr.py` (adr.md, Conformar e superseder), aqui: cada regra listada é mesmo criada ou alterada por esta decisão, e ADR que não cria regra não tem a seção.
 
 ### Execute
 

@@ -22,7 +22,7 @@ Não leia a base inteira; a spec é o guia de foco.
 1. Identifique os módulos e arquivos ligados ao escopo. Leia a estrutura de diretórios antes de abrir qualquer arquivo.
 2. Leia nesta ordem: interfaces e contratos; entidades de domínio; serviços e casos de uso; infraestrutura. Abra a implementação completa só quando assinatura e nome não bastam.
 3. Declare o que foi lido e o que foi ignorado, na forma: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
-4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto.
+4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto; conte os arquivos da camada com `git ls-files '<glob da camada>'`, o mesmo limite que decide se a mudança pede design (SKILL.md, Quanto artefato a mudança pede).
 5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Riscos e técnicas, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[PREMISSA]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
 6. Reuso: cada componente novo referencia o componente existente que ele segue; componente sem reuso justifica por quê.
 
@@ -103,20 +103,20 @@ Decisão que fixa convenção, restrição ou padrão para features futuras vira
 
 ## Seções
 
-Cada seção existe quando há o que dizer; nenhuma seção vazia. Na ordem do documento:
+Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: `lint_design.py` acusa como HARD a seção `##` fora dela e a seção fora desta ordem. O nome entre parênteses é o heading do design escrito em inglês (SKILL.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
 
-1. Contexto de design — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
-2. Critérios de avaliação.
-3. Riscos e técnicas.
-4. Abordagens — só quando há alternativa real.
-5. Visão da arquitetura.
-6. Unidade de deploy — uma linha quando a mudança fica no deployável existente.
-7. Componentes.
+1. Contexto de design (Design Context) — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
+2. Critérios de avaliação (Evaluation Criteria).
+3. Riscos e técnicas (Risks and Techniques).
+4. Abordagens (Approaches) — só quando há alternativa real.
+5. Visão da arquitetura (Architecture Overview) — um parágrafo e, quando três ou mais componentes trocam mensagens, um diagrama Mermaid.
+6. Unidade de deploy (Deployment Unit) — uma linha quando a mudança fica no deployável existente.
+7. Componentes (Components).
 8. Domain Events.
-9. Modelo de dados.
-10. Tratamento de erros.
-11. Decisões técnicas.
-12. Arquivos a criar ou modificar — insumo direto do `tasks.md`.
+9. Modelo de dados (Data Model).
+10. Tratamento de erros (Error handling).
+11. Decisões técnicas (Technical Decisions).
+12. Arquivos a criar ou modificar (Files to Create or Modify) — insumo direto do `tasks.md`.
 
 ## Template
 
@@ -145,7 +145,7 @@ Sem alternativa real: a ADR 0001 já fixa o transporte e a spec fixa o comportam
 
 ## Visão da arquitetura
 
-[Parágrafo; diagrama Mermaid quando três ou mais componentes trocam mensagens.]
+[Parágrafo; diagrama Mermaid pelo critério da seção Seções.]
 
 ## Unidade de deploy
 
@@ -178,4 +178,4 @@ Fica em `src/ReservationBook`.
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo
 ```
 
-Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente o design e espere antes de começar as Tasks.
+Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e, quando o design tem diagrama, `lint_mermaid.py <design.md>`; siga o ciclo de correção de SKILL.md, Scripts; depois apresente o design e espere antes de começar as Tasks.

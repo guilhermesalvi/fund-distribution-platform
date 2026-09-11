@@ -94,16 +94,18 @@ Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema a
 | [ontology-from-transcript](.claude/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
 | [sdd](.claude/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
-Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede):
+Pré-requisitos dos scripts: Python 3 (testado com 3.11 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs e dos designs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede). Cada skill é um pacote autocontido e traz o seu parser:
 
 ```bash
 python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
+python3 .claude/skills/sdd/scripts/lint_mermaid.py --setup
 ```
 
 Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`):
 
 ```bash
 python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
+python3 .claude/skills/sdd/scripts/lint_mermaid.py --self-test
 python3 -m unittest discover -s .claude/skills/prd/scripts/tests
 python3 -m unittest discover -s .claude/skills/sdd/scripts/tests
 python3 .claude/skills/prd/scripts/seq.py check docs/prd
@@ -114,10 +116,11 @@ python3 .claude/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capabilit
 python3 .claude/skills/sdd/scripts/lint_design.py docs/specs/<contexto>/<capability>/<NNNN-slug>/design.md --spec docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
 python3 .claude/skills/sdd/scripts/lint_adr.py docs/adr
+python3 .claude/skills/sdd/scripts/lint_mermaid.py docs/specs
 ```
 
 Em pull requests, a CI valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md), e confere que nenhuma skill cita a outra pelo nome.
 
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; no `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (o `lint_prd.py` não chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
+Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; nos dois `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (nenhum dos outros linters chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
 
 A CI executa exatamente esses passos e, em pull requests, a validação das mensagens de commit. Ela não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.

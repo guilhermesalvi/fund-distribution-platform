@@ -59,9 +59,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (  # noqa: E402
-    REQ_ID, REQ_LINE, Report, check_tags, fenced_line_mask, find_section_exact,
-    find_sections_exact, iter_headings, norm_heading, parse_machine_comment, read_lines,
-    resolve_local_path, scan_placeholders, scan_prose, strip_accents, usage,
+    REQ_ID, REQ_LINE, Report, check_tags, check_unknown_sections, fenced_line_mask,
+    find_section_exact, find_sections_exact, iter_headings, norm_heading,
+    parse_machine_comment, read_lines, resolve_local_path, scan_placeholders, scan_prose,
+    strip_accents, usage,
 )
 
 # Ordem das secoes do design, como em references/design.md, secao "Secoes".
@@ -123,7 +124,8 @@ def is_no_content(body):
 
 
 def check_sections(rep, lines, mask):
-    """Secao conhecida, na ordem da lista, e com conteudo."""
+    """Secao na ordem da lista e com conteudo; secao fora da lista e HARD de
+    check_unknown_sections (_common), que a reporta."""
     hs = iter_headings(lines, 2, mask)
     latest = None
     for n, (i, text) in enumerate(hs):
@@ -133,8 +135,6 @@ def check_sections(rep, lines, mask):
                      "preencha ou remova", i + 1)
         idx = section_index(text)
         if idx is None:
-            rep.hard(f"secao desconhecida: ## {text}; a lista de secoes e a de "
-                     "references/design.md, Secoes", i + 1)
             continue
         if latest and idx < latest[0]:
             rep.hard(f"secao fora de ordem: '{latest[1]}' aparece antes de '{text}', que "
@@ -287,6 +287,7 @@ def main(argv):
         rep.hard(f"spec do comentario de maquina nao encontrada: '{declared}' "
                  "(relativo a pasta do design ou `/docs/...` da raiz)", 1)
 
+    check_unknown_sections(rep, lines, SECTIONS_ORDER, "references/design.md, Secoes", mask)
     check_sections(rep, lines, mask)
     check_section_length(rep, lines, mask)
     check_no_alternative(rep, lines, mask)

@@ -688,10 +688,31 @@ class TemplateRegressionTest(Base):
         self.assertEqual(code, 0, out)
 
 
+class UnknownSectionTest(Base):
+    """Secao `##` fora da tabela de references/specify.md, Secoes, e WARN - e
+    nao HARD, porque spec real carrega secao herdada do PRD."""
+
+    def test_section_outside_the_table_is_warn(self):
+        code, out = self.lint(prd="", extra="\n## Notas adicionais\n\nx\n")
+        self.assertEqual(code, 0)
+        self.assertWarn(out, "secao desconhecida: ## Notas adicionais; a lista de secoes "
+                             "e a de references/specify.md, Secoes")
+
+    def test_section_in_the_table_is_silent(self):
+        code, out = self.lint(prd="", extra="\n## Premissas\n\n[PREMISSA] x\n")
+        self.assertEqual(code, 0)
+        self.assertNotIn("secao desconhecida", out)
+
+    def test_english_alias_is_silent(self):
+        code, out = self.lint(prd="", extra="\n## Assumptions\n\n[PREMISSA] x\n")
+        self.assertNotIn("secao desconhecida", out)
+
+
 class SectionsInSyncWithReferenceTest(unittest.TestCase):
     """A lista de secoes do script e a tabela de references/specify.md, secao
-    Secoes: mesmos nomes. Doc e script divergentes fazem o linter ignorar a
-    secao que a referencia manda escrever."""
+    Secoes: os mesmos nomes, PT na primeira coluna e EN na segunda, virgula
+    separando formas alternativas. Doc e script divergentes deixam sem fonte
+    escrita o nome que o linter aceita."""
 
     @staticmethod
     def documented():
@@ -703,16 +724,20 @@ class SectionsInSyncWithReferenceTest(unittest.TestCase):
         for l in lines[start:end]:
             if not l.strip().startswith("|"):
                 continue
-            cell = l.strip().strip("|").split("|")[0].strip().strip("*").strip()
-            if cell and cell != "Seção" and not re.fullmatch(r":?-{2,}:?", cell):
-                out.append(cell)
+            cells = [c.strip().strip("*").strip() for c in l.strip().strip("|").split("|")]
+            if len(cells) < 2 or not cells[0] or cells[0] == "Seção":
+                continue
+            if re.fullmatch(r":?-{2,}:?", cells[0]):
+                continue
+            names = [n.strip() for n in (cells[0] + "," + cells[1]).split(",") if n.strip()]
+            out.append(tuple(dict.fromkeys(names)))
         return out
 
     def test_names_match(self):
-        names = self.documented()
-        self.assertTrue(names, "tabela de secoes nao encontrada em references/specify.md")
-        self.assertEqual(sorted(names),
-                         sorted(aliases[0] for aliases in lint_spec.SECTIONS_KNOWN))
+        rows = self.documented()
+        self.assertTrue(rows, "tabela de secoes nao encontrada em references/specify.md")
+        self.assertEqual(sorted(rows),
+                         sorted(tuple(aliases) for aliases in lint_spec.SECTIONS_KNOWN))
 
 
 class Usage(Base):

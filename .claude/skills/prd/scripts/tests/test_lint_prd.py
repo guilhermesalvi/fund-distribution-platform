@@ -4,10 +4,15 @@ secoes obrigatorias por igualdade, Requisitos Funcionais quando ha IDs,
 prefixo, MoSCoW e definicoes, fence, IDs entre PRDs, PRD 0000 e a referencia a
 ele, links locais, as regras de secao (conteudo, ordem, contagem de linhas,
 trade-off, guardrail, Ponto de Maior Fragilidade, premissa 'se falsa' de
-Perguntas em Aberto, cenario Dado/Quando/Entao, bullet regulatorio), os
-rotulos de diagrama, as heuristicas WARN, a
-sincronizacao com a tabela de secoes de references/writing.md e a regressao do
-PRD de references/example.md.
+Perguntas em Aberto (posicao, negrito e bullet fora da secao),
+cenario Dado/Quando/Entao, bullet regulatorio com a nota
+de ate 20 palavras depois do ID), os
+rotulos de diagrama, as heuristicas WARN, `--lang pt|en` (heading fora do par
+do idioma, alias neutro, erro de uso), `--reverse` (o WARN de mecanismo em
+toda secao, marcador de exclusao e erro de uso), `--source` (as tres frases
+mais longas do PRD buscadas no material, selecao e erro de uso), a
+sincronizacao com a tabela de secoes de references/writing.md (nomes, ordem e
+idioma de cada alias) e a regressao do PRD de references/example.md.
 
     python -m unittest discover -s <skill-dir>/scripts/tests -p "test_lint_prd.py"
 """
@@ -436,6 +441,35 @@ class FalsePremiseTests(LintCase):
         self.assert_no_hard(rc, out)
         self.assertNotIn("premissa 'se falsa'", out)
 
+    def test_false_premise_in_another_section_is_hard(self):
+        body = "\n## Dependências e Riscos\n\n" + PREMISE
+        self.hard_for(prd(body_extra=body),
+                      "premissa 'se falsa' fora de Perguntas em Aberto")
+
+    def test_false_premise_outside_is_hard_even_with_the_section(self):
+        body = "\n## Dependências e Riscos\n\n" + PREMISE + QUESTIONS + QUESTION
+        self.hard_for(prd(body_extra=body),
+                      "premissa 'se falsa' fora de Perguntas em Aberto")
+
+    def test_english_if_false_in_another_section_is_hard(self):
+        body = "\n## Dependências e Riscos\n\n" + PREMISE_EN
+        self.hard_for(prd(body_extra=body),
+                      "premissa 'se falsa' fora de Perguntas em Aberto")
+
+    def test_false_premise_in_a_subsection_of_the_section_is_green(self):
+        body = QUESTIONS + "\n### Premissa\n\n" + PREMISE
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("premissa 'se falsa'", out)
+
+    def test_prose_with_se_falsa_outside_the_section_is_green(self):
+        body = "\nA razão e o \"se falsa\" da premissa carregam sinal.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("premissa 'se falsa'", out)
+
 
 class WarnTests(LintCase):
     def test_unknown_tag_is_warn(self):
@@ -787,6 +821,10 @@ class OverviewReferenceTests(LintCase):
 
 CRITERIA = "\n## Critérios de Aceitação\n\n"
 REGULATORY = "\n## Considerações Regulatórias\n\nCVM 160 lida em 2026-01-10.\n\n"
+NOTE_20_WORDS = ("a vedacao alcanca o coordenador contratado e as pessoas a ele "
+                 "ligadas, conforme o entendimento consolidado da autarquia desde "
+                 "2023.")
+NOTE_21_WORDS = NOTE_20_WORDS.replace("alcanca o", "alcanca tambem o")
 STATE_DIAGRAM = ("\n```mermaid\nstateDiagram-v2\n"
                  "    [*] --> Draft: criar (ONB-01)\n"
                  "    Draft --> Open: publicar\n"
@@ -836,6 +874,11 @@ class ScenarioIdTests(LintCase):
 
 
 class RegulatoryLineTests(LintCase):
+    def test_note_fixtures_have_the_expected_word_count(self):
+        self.assertEqual(len(NOTE_20_WORDS.split()), 20)
+        self.assertEqual(len(NOTE_21_WORDS.split()), 21)
+        self.assertEqual(lint_prd.REGULATORY_NOTE_MAX_WORDS, 20)
+
     def test_bullet_without_arrow_and_id_is_warn(self):
         body = REGULATORY + "- Art. 73: restituicao integral abaixo do minimo.\n"
         self.write("0001-onb-x.md", prd(body_extra=body))
@@ -887,6 +930,35 @@ class RegulatoryLineTests(LintCase):
         rc, out = self.run_lint()
         self.assert_warn(out, "bullet regulatorio sem '-> ID'")
 
+    def test_note_longer_than_the_limit_is_warn(self):
+        body = REGULATORY + ("- Art. 56, § 1º, III: veda vinculacao em excesso "
+                             "→ ONB-01, " + NOTE_21_WORDS + "\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "nota de 21 palavras depois do ID")
+
+    def test_note_within_the_limit_is_silent(self):
+        body = REGULATORY + ("- Art. 56, § 1º, III: veda vinculacao em excesso "
+                             "→ ONB-01, " + NOTE_20_WORDS + "\n")
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("palavras depois do ID", out)
+
+    def test_bullet_without_note_is_silent(self):
+        body = REGULATORY + "- Art. 73: restituicao abaixo do minimo → ONB-01.\n"
+        self.write("0001-onb-x.md", prd(body_extra=body))
+        rc, out = self.run_lint()
+        self.assertNotIn("palavras depois do ID", out)
+
+    def test_note_counts_from_the_last_id_of_the_bullet(self):
+        body = REGULATORY + ("- Art. 73: restituicao abaixo do minimo → ONB-01, "
+                             "ONB-NFR-01, " + NOTE_20_WORDS + "\n")
+        self.write("0001-onb-x.md", prd(nfr=True, body_extra=body))
+        rc, out = self.run_lint()
+        self.assertNotIn("palavras depois do ID", out)
+
 
 class DiagramLabelTests(LintCase):
     def test_state_transition_without_id_is_warn(self):
@@ -937,6 +1009,212 @@ class IdentifierColumnTests(LintCase):
         self.assertNotIn("coluna Identificador", out)
 
 
+class LanguageTests(LintCase):
+    """`--lang pt|en` acusa heading fora do par do idioma fixado (WARN)."""
+
+    def lint_lang(self, text, *args):
+        self.write("0001-onb-x.md", text)
+        return self.run_lint(self.root, *args)
+
+    def test_pt_headings_are_silent_with_lang_pt(self):
+        rc, out = self.lint_lang(prd(), "--lang", "pt")
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("idioma", out)
+
+    def test_english_heading_in_pt_prd_is_warn(self):
+        rc, out = self.lint_lang(
+            prd().replace("## Contexto e Problema", "## Context and Problem"),
+            "--lang", "pt")
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "heading em en num PRD em pt: 'Context and Problem'")
+
+    def test_pt_heading_in_en_prd_is_warn(self):
+        rc, out = self.lint_lang(prd(), "--lang=en")
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "heading em pt num PRD em en: 'Contexto e Problema'")
+
+    def test_without_lang_the_pair_is_accepted(self):
+        rc, out = self.lint_lang(
+            prd().replace("## Contexto e Problema", "## Context and Problem"))
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("idioma", out)
+
+    def test_neutral_alias_never_warns(self):
+        text = prd().replace("## Usuário-alvo / JTBD", "## JTBD")
+        for lang in ("pt", "en"):
+            with self.subTest(lang=lang):
+                rc, out = self.lint_lang(text, f"--lang={lang}")
+                self.assert_no_hard(rc, out)
+                self.assertNotIn("'JTBD'", out)
+
+    def test_parenthetical_pair_is_silent(self):
+        rc, out = self.lint_lang(
+            prd().replace("## Contexto e Problema",
+                          "## Contexto e Problema (Context and Problem)"),
+            "--lang", "pt")
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("idioma", out)
+
+    def test_unknown_heading_is_not_a_language_finding(self):
+        rc, out = self.lint_lang(prd(body_extra="\n## Regras de Rateio\n\nprosa.\n"),
+                                 "--lang", "en")
+        self.assertNotIn("Regras de Rateio", out)
+
+    def test_invalid_lang_value_is_usage_error(self):
+        rc, out = self.lint_lang(prd(), "--lang", "fr")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("--lang aceita", out)
+
+    def test_lang_without_value_is_usage_error(self):
+        rc, out = self.lint_lang(prd(), "--lang")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("--lang", out)
+
+    def test_unknown_option_is_usage_error(self):
+        rc, out = self.lint_lang(prd(), "--idioma")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("opcao desconhecida", out)
+
+
+MECHANISM_OUTSIDE = ("O servico publica a confirmacao num topico Kafka para o "
+                     "contexto de alocacao.")
+MECHANISM_WARN = "mecanismo nomeado em secao de problem space: 'kafka'"
+
+
+class ReverseModeTests(LintCase):
+    """`--reverse` estende o WARN de mecanismo a todas as secoes
+    (references/modes.md, Modo reverse PRD)."""
+
+    def lint_reverse(self, text, *args):
+        self.write("0001-onb-x.md", text)
+        return self.run_lint(self.root, *args)
+
+    def outside_target(self):
+        return prd().replace("problema do Feature X.", MECHANISM_OUTSIDE)
+
+    def test_mechanism_outside_target_sections_is_silent_without_reverse(self):
+        rc, out = self.lint_reverse(self.outside_target())
+        self.assert_no_hard(rc, out)
+        self.assertNotIn(MECHANISM_WARN, out)
+
+    def test_mechanism_outside_target_sections_is_warn_with_reverse(self):
+        rc, out = self.lint_reverse(self.outside_target(), "--reverse")
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, MECHANISM_WARN)
+
+    def test_mechanism_in_solution_is_warn_with_reverse(self):
+        rc, out = self.lint_reverse(
+            prd().replace("Capability.", "Publicar no Kafka a cada mudanca."),
+            "--reverse")
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, MECHANISM_WARN)
+
+    def test_reverse_keeps_the_exclusion_marker(self):
+        text = prd().replace("problema do Feature X.",
+                             "Fora de escopo: publicar em topico Kafka.")
+        rc, out = self.lint_reverse(text, "--reverse")
+        self.assert_no_hard(rc, out)
+        self.assertNotIn(MECHANISM_WARN, out)
+
+    def test_reverse_without_mechanism_is_silent(self):
+        rc, out = self.lint_reverse(prd(), "--reverse")
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("mecanismo", out)
+
+    def test_reverse_takes_no_value(self):
+        rc, out = self.lint_reverse(prd(), "--reverse=pt")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("opcao desconhecida", out)
+
+
+S1 = ("A oferta publicada com montante minimo em quantidade de cotas exige que o "
+      "livro de reservas registre cada condicionamento declarado pelo investidor "
+      "no ato da reserva.")
+S2 = ("O operador fecha o livro de reservas quando o prazo termina ou quando a "
+      "quantidade ofertada e integralmente distribuida.")
+S3 = ("A restituicao integral acontece quando o montante minimo da oferta nao e "
+      "atingido ate o fechamento.")
+S4 = "O resultado da oferta e divulgado no anuncio de encerramento da distribuicao."
+LONG_PROSE = "\n## Detalhamento\n\n" + "\n\n".join((S1, S2, S3, S4)) + "\n"
+
+
+class SourceReformatTests(LintCase):
+    """`--source` busca as tres frases mais longas do PRD no material de
+    discovery (references/intake.md, Material de discovery)."""
+
+    def source(self, name, content):
+        p = os.path.join(self.tmp.name, name)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(content)
+        return p
+
+    def lint_source(self, body_extra=LONG_PROSE, *sources):
+        self.write("0001-onb-x.md", prd(body_extra=body_extra))
+        return self.run_lint(self.root, *sources)
+
+    def test_sentence_found_in_the_material_is_warn(self):
+        src = self.source("brief.md", f"Ata da reuniao.\n\n{S1}\n")
+        rc, out = self.lint_source(LONG_PROSE, "--source", src)
+        self.assert_no_hard(rc, out)
+        self.assert_warn(out, "frase do PRD encontrada em brief.md")
+
+    def test_material_without_the_sentences_is_silent(self):
+        src = self.source("brief.md", "Ata da reuniao sobre o livro de reservas.\n")
+        rc, out = self.lint_source(LONG_PROSE, "--source", src)
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("frase do PRD encontrada", out)
+
+    def test_without_the_option_the_check_does_not_run(self):
+        self.source("brief.md", S1)
+        rc, out = self.lint_source()
+        self.assert_no_hard(rc, out)
+        self.assertNotIn("frase do PRD encontrada", out)
+
+    def test_only_the_three_longest_sentences_are_searched(self):
+        src = self.source("brief.md", S4)
+        rc, out = self.lint_source(LONG_PROSE, "--source", src)
+        self.assertNotIn("frase do PRD encontrada", out)
+
+    def test_emphasis_and_line_wrapping_do_not_hide_the_sentence(self):
+        wrapped = S1.replace("livro de reservas", "**livro de reservas**")
+        src = self.source("brief.md", wrapped.replace("exige que", "exige\nque"))
+        rc, out = self.lint_source(LONG_PROSE, "--source", src)
+        self.assert_warn(out, "frase do PRD encontrada em brief.md")
+
+    def test_two_materials_are_both_searched(self):
+        empty = self.source("a.md", "nada em comum.\n")
+        hit = self.source("b.md", S2)
+        rc, out = self.lint_source(LONG_PROSE, "--source", empty, f"--source={hit}")
+        self.assert_warn(out, "frase do PRD encontrada em b.md")
+
+    def test_short_sentences_do_not_compete(self):
+        """Frase com menos de 12 palavras nao disputa: o PRD sem prosa longa
+        nao tem frase a buscar."""
+        src = self.source("brief.md", "Capability.\n")
+        rc, out = self.lint_source("", "--source", src)
+        self.assertEqual(lint_prd.longest_sentences(
+            lint_prd.Doc(os.path.join(self.root, "0001-onb-x.md"))), [])
+        self.assertNotIn("frase do PRD encontrada", out)
+
+    def test_table_and_code_block_are_not_prose(self):
+        body = ("\n## Detalhamento\n\n| Caso | Resultado |\n|---|---|\n"
+                f"| livro fechado | {S1} |\n\n```text\n" + S2 + "\n```\n")
+        src = self.source("brief.md", S1 + "\n" + S2)
+        rc, out = self.lint_source(body, "--source", src)
+        self.assertNotIn("frase do PRD encontrada", out)
+
+    def test_missing_material_is_usage_error(self):
+        rc, out = self.lint_source(LONG_PROSE, "--source",
+                                   os.path.join(self.tmp.name, "nao-existe.md"))
+        self.assertEqual(rc, 2, out)
+        self.assertIn("erro ao abrir o material", out)
+
+    def test_source_without_value_is_usage_error(self):
+        rc, out = self.lint_source(LONG_PROSE, "--source")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("--source veio sem o arquivo", out)
+
+
 class SectionTableSyncTest(unittest.TestCase):
     """A tabela da secao Secoes de references/writing.md e a fonte dos nomes e
     da ordem; SECTIONS e SECTION_ORDER a espelham."""
@@ -968,6 +1246,19 @@ class SectionTableSyncTest(unittest.TestCase):
                         if lint_prd.heading_is(k, name)]
                 self.assertEqual(len(keys), 1,
                                  f"'{name}' nao casa exatamente um alias de SECTIONS")
+
+    def test_every_alias_has_a_language(self):
+        """Alias novo em SECTIONS entra em ALIAS_PT, ALIAS_EN ou ALIAS_NEUTRAL:
+        sem isso `--lang` acusaria (ou deixaria passar) heading em silencio."""
+        buckets = (lint_prd.ALIAS_PT, lint_prd.ALIAS_EN, lint_prd.ALIAS_NEUTRAL)
+        classified = set().union(*buckets)
+        aliases = {a for names in lint_prd.SECTIONS.values() for a in names}
+        self.assertEqual(aliases - classified, set(), "alias sem idioma")
+        self.assertEqual(classified - aliases, set(), "idioma de alias inexistente")
+        for a in aliases:
+            with self.subTest(alias=a):
+                self.assertEqual(sum(a in b for b in buckets), 1,
+                                 f"'{a}' classificado em mais de um conjunto")
 
     def test_order_matches_section_order(self):
         keys = [next(k for k in lint_prd.SECTION_ORDER if lint_prd.heading_is(k, name))

@@ -3,8 +3,8 @@
 seq.py - contador sequencial dos PRDs: proximo numero e numero duplicado.
 
     Uso:
-      python scripts/seq.py check <root>
-      python scripts/seq.py next  <root> [--slug <slug>]
+      python <skill-dir>/scripts/seq.py check <root>
+      python <skill-dir>/scripts/seq.py next  <root> [--slug <slug>]
 
 `<root>` e o diretorio real dos PRDs; na documentacao da skill, `/docs/prd`
 e caminho relativo a raiz do repositorio. PRD e todo `NNNN-<slug>.md` abaixo

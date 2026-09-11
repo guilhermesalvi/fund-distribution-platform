@@ -2,7 +2,9 @@
 """
 lint_prd.py - verificacao deterministica do esqueleto de PRDs.
 
-    Uso:  python scripts/lint_prd.py <caminho-do-prd.md | diretorio> [...]
+    Uso:  python <skill-dir>/scripts/lint_prd.py
+              <caminho-do-prd.md | diretorio> [...]
+              [--lang pt|en] [--source <material>] [--reverse]
 
 Um arquivo lint a esse arquivo; um diretorio lint a todos os PRDs abaixo
 dele. As checagens entre PRDs (IDs, prefixos, PRD 0000, paragrafos repetidos)
@@ -13,11 +15,33 @@ explicitamente fora dessa forma e erro de uso (exit 2). Na documentacao da
 skill, `/docs/prd` e caminho relativo a raiz do repositorio; o chamador passa
 o caminho real.
 
+`--lang pt|en` fixa o idioma do PRD e liga a checagem de heading (WARN); sem
+a opcao, o par PT/EN de cada heading vale igual. O idioma do PRD e fixado pela
+precedencia da skill, nao por este script.
+
+`--source <arquivo>` liga a checagem de reformatacao (WARN): as tres frases
+mais longas do PRD (prosa com 12 ou mais palavras, fora de tabela, heading e
+bloco de codigo) sao buscadas no material de discovery. A opcao se repete, uma
+por arquivo de material, e o material e texto (`.md`, `.txt`, extracao de PDF);
+sem a opcao, a checagem nao roda. A busca e literal, com espacos colapsados,
+enfase markdown removida e caixa ignorada.
+
+`--reverse` declara que o PRD e reverso (references/modes.md, Modo reverse
+PRD) e estende o WARN de mecanismo a todas as secoes; sem a opcao, esse WARN
+so varre Solucao Proposta e Requisitos Funcionais. O modo do PRD e fixado pelo
+pedido, nao por este script.
+
 O linter verifica o esqueleto, nao a qualidade: linter verde e esqueleto
 conforme, nao PRD bom. Tudo dentro de bloco de codigo (``` ou ~~~, 3+
 caracteres; fecha com o mesmo caractere e comprimento >= abertura) e
 ignorado. O PRD nunca carrega resultado de lint: a saida e feedback para quem
 escreve, que corrige e roda de novo.
+
+O linter tambem nao julga convencao do repositorio, que e o unico motivo de
+manter um HARD (SKILL.md, passo Checar): a forma precisa aparecer em tres ou
+mais PRDs commitados da pasta - conte os commitados com `git ls-files` na
+pasta, o linter nao distingue arquivo commitado de arquivo em elaboracao - ou
+estar escrita no CLAUDE.md do repositorio.
 
 HARD (exit 1):
   - titulo H1 ('# ...') ausente;
@@ -54,13 +78,14 @@ HARD (exit 1):
   - Ponto de Maior Fragilidade seguido por outra secao que nao Referencias;
   - bullet de Perguntas em Aberto com "se falsa" ("if false") fora da
     primeira posicao, ou primeiro bullet com "se falsa" sem abrir em negrito
-    (`- **`);
+    (`- **`); bullet com "se falsa" fora de Perguntas em Aberto: a premissa
+    que derruba o PRD e declarada uma vez, e e ela que faz a secao entrar;
   - contexto citado em `; afeta <lista>` no campo do header sem linha na
     primeira coluna da tabela de Dependencias e Riscos.
 
 WARN (nao afeta o exit; julgue):
   - hedging; meta-narracao; mecanismo nomeado em Solucao Proposta ou
-    Requisitos Funcionais;
+    Requisitos Funcionais - com `--reverse`, em qualquer secao do PRD;
   - tag entre colchetes fora de [PREMISSA] e [LACUNA] (texto sem tag e
     fato); placeholder (TBD, TODO, `[nome]`);
   - paragrafo de prosa identico em mais de um PRD (12+ palavras);
@@ -76,10 +101,17 @@ WARN (nao afeta o exit; julgue):
     fonte e data no topo da secao, sem bullet, nao conta, e o bullet que abre
     com `[LACUNA]` fica de fora: norma nao identificada nao tem artigo a
     mapear;
+  - nota de mais de 20 palavras depois do ultimo ID do mesmo bullet: o que
+    nao cabe na nota e regra e vive no FR;
   - rotulo de transicao, aresta ou mensagem de `stateDiagram-v2`,
     `flowchart` ou `sequenceDiagram` sem ID: o diagrama e indice, nao
     segunda fonte;
-  - `stateDiagram-v2` sem nenhuma tabela com coluna Identificador.
+  - `stateDiagram-v2` sem nenhuma tabela com coluna Identificador;
+  - com `--lang`, heading de secao conhecida cujo alias e do outro idioma
+    ('## Open Questions' com `--lang pt`). Alias sem idioma proprio (JTBD,
+    persona, trade-offs, Domain Events) nunca acusa;
+  - com `--source`, uma das tres frases mais longas do PRD encontrada no
+    material: reformatar o material nao e sintetizar.
 
 Saida: `HARD  Lnn  mensagem` / `WARN  Lnn  mensagem` por PRD e um resumo.
 Exit 2 em erro de uso (opcao ou arquivo invalido).
@@ -151,6 +183,42 @@ SECTION_ORDER = [
     "tradeoffs", "metricas", "aceitacao", "dependencias", "perguntas",
     "fragilidade", "referencias",
 ]
+# Idioma de cada alias de SECTIONS, para `--lang`. Alias neutro e o termo que a
+# skill nao traduz (Domain Events) ou que e o mesmo nos dois idiomas (JTBD,
+# persona, trade-offs): nunca acusa. Todo alias de SECTIONS esta em exatamente
+# um dos tres conjuntos - o teste de sincronizacao cobra isso.
+ALIAS_NEUTRAL = frozenset((
+    "jtbd", "persona", "personas", "trade-offs", "tradeoffs", "domain events",
+))
+ALIAS_EN = frozenset((
+    "executive summary", "strategic alignment", "context and problem",
+    "context & problem", "context", "problem", "problem statement",
+    "background", "target user / jtbd", "target user", "target users",
+    "users", "opportunity / hypothesis", "opportunity/hypothesis",
+    "opportunity", "hypothesis", "proposed solution", "domain glossary",
+    "glossary", "functional requirements", "non-functional requirements",
+    "non functional requirements", "nonfunctional requirements",
+    "regulatory considerations", "non-goals", "non goals",
+    "declared trade-offs", "declared tradeoffs", "success metrics",
+    "acceptance criteria", "dependencies and risks", "dependencies & risks",
+    "open questions", "weakest point", "biggest weakness", "references",
+))
+ALIAS_PT = frozenset((
+    "resumo executivo", "sumario executivo", "alinhamento estrategico",
+    "contexto e problema", "contexto", "problema", "contexto e problem",
+    "usuario-alvo / jtbd", "usuario-alvo", "usuario alvo", "usuarios-alvo",
+    "usuarios-alvo / jtbd", "usuario-alvo e jtbd", "usuarios",
+    "oportunidade / hipotese", "oportunidade/hipotese", "oportunidade",
+    "hipotese", "solucao proposta", "glossario de dominio", "glossario",
+    "requisitos funcionais", "eventos de dominio", "eventos",
+    "requisitos nao funcionais", "requisitos nao-funcionais",
+    "consideracoes regulatorias", "nao-objetivos", "nao objetivos",
+    "trade-offs declarados", "tradeoffs declarados", "metricas de sucesso",
+    "metricas", "criterios de aceitacao", "dependencias e riscos",
+    "perguntas em aberto", "ponto de maior fragilidade", "referencias",
+))
+LANGS = {"pt": ALIAS_PT, "en": ALIAS_EN}
+
 LABELS = {
     "resumo": "Resumo Executivo",
     "contexto": "Contexto e Problema",
@@ -239,9 +307,20 @@ BOLD_OPEN = re.compile(r"^\*\*\S")
 GWT_MARKERS = (("dado", "quando", "entao"), ("given", "when", "then"))
 
 # Consideracoes Regulatorias: `o que a norma diz -> ID`. Norma nao
-# identificada abre o bullet com `[LACUNA]` e nao aponta ID.
+# identificada abre o bullet com `[LACUNA]` e nao aponta ID. Depois do ID cabe
+# uma nota curta (tabela de secoes de `references/writing.md`); o que nao cabe
+# nela e regra e vive no FR.
 ARROW = re.compile(r"->|→")
 GAP_BULLET = re.compile(r"^[*`\s]*\[LACUNA\]")
+REGULATORY_NOTE_MAX_WORDS = 20
+NOTE_LEAD = re.compile(r"^[\s.,;:)\]}*`_\-–—]+")
+
+# `--source`: as tres frases mais longas do PRD nao aparecem no material de
+# discovery (`references/intake.md`, Material de discovery). O piso de palavras
+# tira da disputa a frase curta, que casa com qualquer material por acaso.
+SOURCE_SENTENCES = 3
+SOURCE_MIN_WORDS = 12
+EMPHASIS = re.compile(r"[*_`]")
 
 # Rotulos de diagrama Mermaid.
 MERMAID_OPEN = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*mermaid\s*$", re.IGNORECASE)
@@ -691,11 +770,22 @@ def check_scenario_cites_id(doc):
                              "o FR que exercita.", line)
 
 
+def regulatory_note(tail):
+    """Nota do bullet regulatorio: o texto depois do ultimo ID citado no trecho
+    que vem apos a seta."""
+    last = None
+    for m in ID_REF.finditer(tail):
+        if m.group(1) not in BARE_PREFIXES:
+            last = m
+    return NOTE_LEAD.sub("", tail[last.end():]).strip() if last else ""
+
+
 def check_regulatory_lines(doc):
     """Bullet de Consideracoes Regulatorias termina apontando o ID que modela a
-    norma: `o que a norma diz -> ID`. A linha de fonte e data, sem bullet, fica
-    de fora, e o bullet que abre com `[LACUNA]` tambem: norma nao identificada
-    nao tem artigo a mapear."""
+    norma: `o que a norma diz -> ID`, e depois do ID cabe uma nota de ate 20
+    palavras. A linha de fonte e data, sem bullet, fica de fora, e o bullet que
+    abre com `[LACUNA]` tambem: norma nao identificada nao tem artigo a
+    mapear."""
     for sec in doc.sections():
         if sec.key != "regulatorio":
             continue
@@ -703,11 +793,79 @@ def check_regulatory_lines(doc):
             body = strip_md_prefix(text).strip()
             if GAP_BULLET.match(body):
                 continue
-            if ARROW.search(body) and cites_id(ARROW.split(body)[-1]):
+            tail = ARROW.split(body)[-1] if ARROW.search(body) else None
+            if tail is None or not cites_id(tail):
+                doc.add_warn(f"bullet regulatorio sem '-> ID': '{body[:50]}'. O "
+                             "bullet termina no ID que modela a norma; norma sem "
+                             "ID nao entra.", line)
                 continue
-            doc.add_warn(f"bullet regulatorio sem '-> ID': '{body[:50]}'. O "
-                         "bullet termina no ID que modela a norma; norma sem ID "
-                         "nao entra.", line)
+            note = regulatory_note(tail)
+            words = len(note.split())
+            if words > REGULATORY_NOTE_MAX_WORDS:
+                doc.add_warn(f"nota de {words} palavras depois do ID: "
+                             f"'{note[:50]}'. A nota vai ate "
+                             f"{REGULATORY_NOTE_MAX_WORDS} palavras; o que nao "
+                             "couber e regra e vive no FR.", line)
+
+
+def search_key(s):
+    """Texto comparavel na busca de `--source`: sem enfase markdown, espacos
+    colapsados e caixa ignorada."""
+    return re.sub(r"\s+", " ", EMPHASIS.sub("", s)).casefold().strip()
+
+
+def split_sentences(text):
+    """Frases de uma linha de prosa, cortadas em `.`, `!` ou `?` seguidos de
+    espaco ou fim de linha."""
+    out, start = [], 0
+    for m in SENTENCE_END.finditer(text):
+        out.append(text[start:m.end()])
+        start = m.end()
+    out.append(text[start:])
+    return [s.strip() for s in out if s.strip()]
+
+
+def prose_sentences(doc):
+    """(linha_1based, frase) de cada frase de prosa do PRD, na ordem do
+    arquivo. Bloco de codigo, heading, linha de tabela, comentario e a linha de
+    prefixo ficam de fora; marcador de lista e enfase saem do texto."""
+    out = []
+    for i, raw in enumerate(doc.lines):
+        if not doc.visible(i):
+            continue
+        s = raw.strip()
+        if not s or s[0] in "#|" or s.startswith("<!--") or PREFIX_LINE.match(s):
+            continue
+        text = re.sub(r"\s+", " ", EMPHASIS.sub("", strip_md_prefix(s))).strip()
+        for sentence in split_sentences(text):
+            out.append((i + 1, sentence))
+    return out
+
+
+def longest_sentences(doc, count=SOURCE_SENTENCES):
+    """As `count` frases mais longas do PRD, da maior para a menor; empate se
+    decide pela ordem no arquivo. Frase com menos de SOURCE_MIN_WORDS palavras
+    nao disputa."""
+    candidates = [(line, s) for line, s in prose_sentences(doc)
+                  if len(s.split()) >= SOURCE_MIN_WORDS]
+    return sorted(candidates, key=lambda x: (-len(x[1]), x[0]))[:count]
+
+
+def check_source_reformat(doc, sources):
+    """Nenhuma das tres frases mais longas do PRD aparece no material de
+    discovery: sintetizar nao e reformatar, e a frase que sobreviveu literal
+    veio do material sem passar por sintese."""
+    for line, sentence in longest_sentences(doc):
+        key = search_key(sentence)
+        if not key:
+            continue
+        for label, text in sources:
+            if key in text:
+                doc.add_warn(f"frase do PRD encontrada em {label}: "
+                             f"'{sentence[:50]}'. Uma das tres frases mais "
+                             "longas do PRD esta literal no material; sintetize "
+                             "em vez de reformatar.", line)
+                break
 
 
 def check_diagram_labels(doc):
@@ -771,6 +929,22 @@ def check_section_order(doc):
                          "tabela de secoes em references/writing.md.", line)
         else:
             latest = (idx, title)
+
+
+def check_heading_language(doc, lang):
+    """Heading de secao conhecida esta no idioma fixado. O heading passa quando
+    algum de seus aliases e do idioma ou e neutro; alias do outro idioma e WARN,
+    porque o PRD fala um idioma so."""
+    other = "en" if lang == "pt" else "pt"
+    for sec in doc.sections():
+        if not sec.key:
+            continue
+        matched = [v for v in heading_variants(sec.title) if v in SECTIONS[sec.key]]
+        if not matched or any(v in ALIAS_NEUTRAL or v in LANGS[lang] for v in matched):
+            continue
+        doc.add_warn(f"heading em {other} num PRD em {lang}: '{sec.title}'. Use o "
+                     f"alias {lang} da tabela de secoes (references/writing.md); "
+                     "o PRD fala um idioma so.", sec.line)
 
 
 def check_tradeoff_cost_and_reason(doc):
@@ -855,7 +1029,35 @@ def check_false_premise_bullet(doc):
                              "Resolve-se ...'.", line)
 
 
-def lint_doc(doc):
+def open_questions_body_ranges(doc):
+    """Intervalos (primeira, ultima) de linha 1-based do corpo de cada secao
+    Perguntas em Aberto, subsecoes incluidas."""
+    return [(sec.line + 1, sec.line + len(sec.body))
+            for sec in doc.sections() if sec.key == "perguntas"]
+
+
+def check_false_premise_section(doc):
+    """Bullet com 'se falsa' ('if false') fora de Perguntas em Aberto: a
+    premissa que derruba o PRD e declarada uma vez, na secao que ela mesma faz
+    entrar (`references/writing.md`, Secoes). Sem a checagem, a premissa fica
+    em outra secao e a secao obrigatoria some sem achado."""
+    ranges = open_questions_body_ranges(doc)
+    for i, raw in enumerate(doc.lines):
+        line = i + 1
+        if not doc.visible(i) or not BULLET.match(raw):
+            continue
+        if any(first <= line <= last for first, last in ranges):
+            continue
+        if not FALSE_PREMISE.search(norm(raw)):
+            continue
+        doc.add_hard(f"premissa 'se falsa' fora de Perguntas em Aberto: "
+                     f"'{strip_md_prefix(raw.strip())[:50]}'. A premissa que "
+                     "derruba a abordagem do PRD e declarada uma vez, no "
+                     "primeiro bullet de Perguntas em Aberto, e e ela que faz "
+                     "a secao entrar; onde importa, cite-a.", line)
+
+
+def lint_doc(doc, lang=None, sources=(), reverse=False):
     lines = doc.lines
     hard, warn = doc.add_hard, doc.add_warn
 
@@ -874,6 +1076,10 @@ def lint_doc(doc):
     check_header_field(doc)
     check_diagram_labels(doc)
     check_state_identifier_column(doc)
+    if lang:
+        check_heading_language(doc, lang)
+    if sources:
+        check_source_reformat(doc, sources)
 
     # --- secoes obrigatorias ---------------------------------------------
     if not doc.is_overview:
@@ -891,6 +1097,7 @@ def lint_doc(doc):
         check_metric_guardrail(doc)
         check_fragility_is_last(doc)
         check_false_premise_bullet(doc)
+        check_false_premise_section(doc)
         check_scenario_cites_id(doc)
         check_regulatory_lines(doc)
         check_affects_dependencies(doc)
@@ -948,7 +1155,7 @@ def lint_doc(doc):
     in_target = False
     for offset, raw in enumerate(body_lines):
         if re.match(r"^##\s+", raw.strip()):
-            in_target = heading_is("solucao", raw) or heading_is("frs", raw)
+            in_target = reverse or heading_is("solucao", raw) or heading_is("frs", raw)
             continue
         if in_target:
             low = raw.lower()
@@ -1061,12 +1268,61 @@ def report(doc, multi):
         print(f"WARN  {_fmt(line):>6}  {msg}")
 
 
+def parse_args(args):
+    """(caminhos, idioma, materiais, reverse) da linha de comando, ou (None,
+    mensagem, None, None) no erro de uso. `--lang` e `--source` aceitam as duas
+    formas (`--lang pt` e `--lang=pt`); `--source` se repete, uma vez por
+    material; `--reverse` nao leva valor."""
+    paths, lang, sources, reverse, rest = [], None, [], False, list(args)
+    while rest:
+        a = rest.pop(0)
+        if a == "--lang" or a.startswith("--lang="):
+            value = a.split("=", 1)[1] if "=" in a else (rest.pop(0) if rest else "")
+            if value not in LANGS:
+                return None, (f"erro: --lang aceita {' ou '.join(sorted(LANGS))}"
+                              + (f", nao '{value}'" if value else " e veio sem valor")), None, None
+            lang = value
+        elif a == "--source" or a.startswith("--source="):
+            value = a.split("=", 1)[1] if "=" in a else (rest.pop(0) if rest else "")
+            if not value:
+                return None, "erro: --source veio sem o arquivo de material", None, None
+            sources.append(value)
+        elif a == "--reverse":
+            reverse = True
+        elif a.startswith("-") and a != "-":
+            return None, f"erro: opcao desconhecida: {a}", None, None
+        else:
+            paths.append(a)
+    return paths, lang, sources, reverse
+
+
+def load_sources(paths):
+    """[(rotulo, texto comparavel)] por material de `--source`, ou (None,
+    mensagem) quando um deles nao se le."""
+    out = []
+    for p in paths:
+        try:
+            with open(p, encoding="utf-8", errors="replace") as f:
+                out.append((os.path.basename(p), search_key(f.read())))
+        except OSError as e:
+            return None, f"erro ao abrir o material {p}: {e}"
+    return out, None
+
+
 def main(argv):
     if len(argv) < 2:
         print(__doc__, file=sys.stderr)
         return 2
+    args, lang, source_paths, reverse = parse_args(argv[1:])
+    if args is None:
+        print(lang, file=sys.stderr)
+        return 2
+    sources, err = load_sources(source_paths)
+    if sources is None:
+        print(err, file=sys.stderr)
+        return 2
     targets, roots = [], []
-    for a in argv[1:]:
+    for a in args:
         a = os.path.abspath(a)
         if os.path.isdir(a):
             targets.extend(prd_files(a))
@@ -1098,7 +1354,7 @@ def main(argv):
             return 2
     target_set = set(targets)
     for p in targets:
-        lint_doc(docs[p])
+        lint_doc(docs[p], lang, sources, reverse)
     cross_checks(list(docs.values()), target_set)
 
     multi = len(targets) > 1

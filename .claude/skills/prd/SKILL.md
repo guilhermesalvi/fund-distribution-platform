@@ -35,8 +35,8 @@ Dois enquadramentos têm tratamento próprio:
 3. **Checar.** Rode os scripts da tabela em Scripts e siga este ciclo:
    - corrija todo HARD, rode de novo e apresente quando a saída for 0 HARD;
    - são no máximo duas rodadas de correção: se a segunda ainda terminar com HARD, apresente o PRD e liste no chat cada HARD remanescente com o motivo de ele ter sobrado;
-   - HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais PRDs commitados da pasta, ou escrita no CLAUDE.md do repositório;
-   - script que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada de correção: é bloqueio de ambiente, dito no chat, e o PRD é apresentado sem essa verificação; exit 2 é erro de uso (caminho ou nome de arquivo fora do padrão) e se corrige como HARD; exit 1 de `seq.py` (slug inválido ou número duplicado) também é HARD;
+   - HARD que decorre de convenção do repositório (Precedência) não se corrige nem conta como rodada: diga no chat qual HARD é e qual convenção o justifica; convenção é forma presente em três ou mais PRDs commitados da pasta — os commitados são os que `git ls-files` lista, e a forma se confere neles — ou escrita no CLAUDE.md do repositório;
+   - script que não roda por falha de ambiente (Python ou Node ausentes; exit 3 de `lint_mermaid.py` por parser ausente) não é rodada de correção: é bloqueio de ambiente, dito no chat, e o PRD é apresentado sem essa verificação. No exit 3, a ordem é: peça a autorização de `--setup` uma vez, antes de apresentar; autorizada, rode `--setup` e o linter de novo e trate a saída como qualquer outra; recusada ou sem resposta, apresente sem essa verificação. Exit 2 é erro de uso (caminho, opção ou nome de arquivo fora do padrão) e se corrige como HARD; exit 1 de `seq.py` (slug inválido ou número duplicado) também é HARD;
    - cada WARN termina de uma de duas formas: corrigido, ou mantido com uma linha de razão no chat;
    - depois, faça a revisão de cinco itens de Revisão antes de apresentar; se ela alterou o PRD, rode os scripts uma vez mais, fora do teto: HARD nessa execução é corrigido uma vez e, se persistir, listado no chat como os demais.
 
@@ -45,7 +45,7 @@ Dois enquadramentos têm tratamento próprio:
 ### Caminho e numeração
 
 - O path é `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, com slug em kebab-case em inglês e sem prefixo `prd-`.
-- `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número com `seq.py next`, nunca lendo o diretório.
+- `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número com `seq.py next`, nunca lendo o diretório; a exceção é o PRD 0000, cujo número é fixo e não passa pelo contador.
 - `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000).
 - O contador colide quando dois PRs paralelos alocam o mesmo número: renumere o branch cujo merge acontece depois. `seq.py check` acusa a duplicata.
 - Sem repositório, use o mesmo layout sob o diretório de trabalho atual e diga no chat o caminho gravado.
@@ -99,7 +99,7 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 - Sem tradução de mesma força, o termo fica em inglês: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off.
 - Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem.
 - Fora das duas listas, traduza o termo só quando a tradução já aparece no material recebido ou no PRD 0000; caso contrário, mantenha o original em inglês.
-- O linter aceita o par PT/EN de cada heading como alias.
+- O linter reconhece o par PT/EN de cada heading como alias; qual dos dois vale neste PRD é o `--lang` da tabela de Scripts, que acusa o heading do outro idioma como WARN.
 
 ### IDs
 
@@ -115,23 +115,23 @@ Depois do linter, para cada um dos cinco itens abaixo:
 - corrigido o item, repontue só ele: são no máximo duas passadas;
 - item ainda abaixo de 90 na segunda passada não segura o PRD: apresente e diga em uma linha no chat qual item é, com a nota e o que falta.
 
-1. **Capability test.** A Solução Proposta, a frase de solução do Resumo Executivo e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test); em reverse PRD, todas as seções (modes.md, Modo reverse PRD).
+1. **Capability test.** A Solução Proposta, a frase de solução do Resumo Executivo e cada FR descrevem comportamento observável, não mecanismo (writing.md, Capability test); em reverse PRD, todas as seções (modes.md, Modo reverse PRD). Os termos de mecanismo da lista do script não se contam a olho: `lint_prd.py`, na forma da tabela de Scripts, acusa cada um como WARN em Solução Proposta e Requisitos Funcionais e, com `--reverse`, em toda seção do PRD; termo cujo WARN você manteve com uma linha de razão no passo Checar (Workflow) não é ocorrência aqui. A leitura cobre o que a lista do script não tem e a frase de solução do Resumo Executivo.
 2. **Uma regra, um lugar.** Cada regra existe em um único FR e o resto cita o ID. Paráfrase que diverge do FR não se resolve aqui: vira `[LACUNA]` em Perguntas em Aberto (writing.md, Uma regra, um lugar).
 3. **Tags.** Toda inferência está marcada `[PREMISSA]` ou `[LACUNA]`; discovery sintetizado tem a origem marcada (intake.md, Material de discovery).
 4. **Forma.** Nenhuma seção existe só para cumprir forma (writing.md, Seções). O que é forma verificável já é HARD ou WARN de `lint_prd.py` (docstring); aqui sobram os dois que só a leitura pega:
-   - bullet inserido para completar contagem;
+   - bullet inserido para completar contagem, isto é, bullet cuja remoção não tira informação nenhuma do PRD; bullet que uma regra de writing.md exige, como o guardrail de Métricas de Sucesso marcado `[PREMISSA]` (writing.md, Seções), nunca é ocorrência;
    - Ponto de Maior Fragilidade sem decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo), isto é, cosmético.
-5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação). Ocorrência: heading fora do par PT/EN do idioma fixado, parágrafo com dois assuntos, ou dois parágrafos adjacentes sobre o mesmo ponto.
+5. **Idioma e headings.** Seguem a precedência; há um conceito por parágrafo (writing.md, Redação). Ocorrência: heading fora do par PT/EN do idioma fixado, parágrafo com dois assuntos, ou dois parágrafos adjacentes sobre o mesmo ponto. Os headings não se contam a olho: `lint_prd.py --lang`, na forma da tabela de Scripts, acusa cada um como WARN; heading cujo WARN você manteve com uma linha de razão no passo Checar (Workflow) não é ocorrência aqui, porque a razão já o fechou. A leitura cobre só os dois casos de parágrafo.
 
 ## Apresentar e iterar
 
-- Ao apresentar, aponte o que existe no PRD: o Ponto de Maior Fragilidade, as `[PREMISSA]` e `[LACUNA]` que bloqueiam decisão e as perguntas críticas.
+- Ao apresentar, aponte o que existe no PRD: o Ponto de Maior Fragilidade e cada linha de Perguntas em Aberto — o conjunto é o que a coluna "Entra quando" da tabela de Seções fez entrar na seção (writing.md, Seções), e não há segundo recorte. O recorte rege o que se aponta do PRD e nada além dele: os três acréscimos que intake.md manda dizer neste mesmo momento — quem é o usuário-alvo e a lista do que falta preencher (intake.md, Casos de borda), e a busca que ficou pendente (intake.md, Pesquisa) — não saem do PRD, então o recorte não os alcança e cada um entra quando a sua condição se cumpre.
 - Mudança pedida pelo usuário que toca duas ou mais seções, ou que altera Contexto e Problema ou Solução Proposta, regenera o PRD inteiro, porque a consistência entre seções é o que se perde no ajuste pontual. Mudança localizada (um FR, um threshold, uma frase, uma `[LACUNA]`) é ajuste pontual. Regeneração ou ajuste pedido pelo usuário reinicia o passo Checar com os tetos zerados.
 - Antes de alterar ou remover um FR, liste quem cita os IDs tocados (writing.md, IDs).
 
 ## Scripts
 
-- Os scripts ficam em `scripts/`, no diretório desta skill, e são executados a partir dele com `python` (ou `python3`, onde `python` não existir). O parser Mermaid exige Node.
+- Os scripts ficam na pasta `scripts/` do diretório desta skill e são chamados pelo caminho completo, `python <skill-dir>/scripts/<nome>.py` (ou `python3`, onde `python` não existir), de qualquer diretório de trabalho. `<skill-dir>` é o diretório que contém este SKILL.md. O parser Mermaid exige Node.
 - `/docs/prd` nos exemplos é caminho relativo à raiz do repositório; passe o caminho real.
 - A docstring completa de cada script sai ao rodá-lo sem argumentos.
 - O ciclo de correção, o teto e as exceções estão no passo Checar (Workflow). `WARN` é heurística com risco de falso-positivo.
@@ -139,10 +139,10 @@ Depois do linter, para cada um dos cinco itens abaixo:
 
 | Comando | Quando | O que faz |
 |---|---|---|
-| `python scripts/seq.py next /docs/prd --slug <domain-slug>-<feature-slug>` | Antes de criar o arquivo | Imprime `NNNN-<slug>` com o próximo número; recusa alocar quando há número duplicado |
-| `python scripts/seq.py check /docs/prd` | Antes de apresentar | Acusa número duplicado |
-| `python scripts/lint_prd.py <arquivo.md \| /docs/prd>` | Antes de apresentar | Forma das seções e do header, IDs, links, PRD 0000 e heurísticas de redação; a lista completa de HARD e WARN é a docstring do script (rode-o sem argumentos) e não é repetida aqui |
-| `python scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue; parser indisponível (exit 3) é bloqueio de ambiente e segue o passo Checar (Workflow). `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão; ao receber exit 3, peça essa autorização uma vez |
+| `python <skill-dir>/scripts/seq.py next /docs/prd --slug <domain-slug>-<feature-slug>` | Antes de criar o arquivo | Imprime `NNNN-<slug>` com o próximo número; recusa alocar quando há número duplicado |
+| `python <skill-dir>/scripts/seq.py check /docs/prd` | Antes de apresentar | Acusa número duplicado |
+| `python <skill-dir>/scripts/lint_prd.py <arquivo.md \| /docs/prd> --lang <pt\|en> [--source <material>] [--reverse]` | Antes de apresentar | Forma das seções e do header, IDs, links, PRD 0000 e heurísticas de redação; a lista completa de HARD e WARN é a docstring do script (rode-o sem argumentos) e não é repetida aqui. `--lang` é sempre o idioma fixado do PRD (Idioma). `--source` entra uma vez por arquivo de material de discovery em texto no disco, e acusa reformatação (intake.md, Material de discovery). `--reverse` entra sempre que o PRD é reverso, e só nesse caso, e estende o WARN de mecanismo a todas as seções (modes.md, Modo reverse PRD) |
+| `python <skill-dir>/scripts/lint_mermaid.py <arquivo.md \| dir>` | Antes de apresentar PRD com diagrama | Faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue; parser indisponível (exit 3) é bloqueio de ambiente e segue o passo Checar (Workflow). `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão, na ordem fixada em Checar |
 
 ## Exemplo
 

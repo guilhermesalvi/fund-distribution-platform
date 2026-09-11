@@ -131,13 +131,13 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 | Requisitos Funcionais | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (ver IDs e Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências ficam no 0000 |
 | Requisitos Não Funcionais | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual ADR |
-| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, com `→ ID que o modela` após o que o artigo diz (a norma e o artigo abrem a linha; nota curta depois do ID é permitida); artigo não conferido no texto é `[PREMISSA]`; norma não identificada é bullet `[LACUNA]`, sem ID |
+| Considerações Regulatórias | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, com `→ ID que o modela` após o que o artigo diz (a norma e o artigo abrem a linha; depois do ID cabe uma nota de até 20 palavras, contadas por `lint_prd.py` como WARN, e o que não couber nela é regra e vive no FR); artigo não conferido no texto é `[PREMISSA]`; norma não identificada é bullet `[LACUNA]`, sem ID |
 | Não-objetivos | O material recebido ou a conversa cita funcionalidade adjacente que o PRD não cobre | Um bullet por exclusão: o que não faremos |
 | Trade-offs Declarados | Há decisão tomada na conversa ou no material recebido cuja alternativa rejeitada tem custo nomeável | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso | O material recebido ou a conversa nomeia uma métrica ou um número-alvo | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado); e sempre um guardrail (o que não pode degradar; sem ele a métrica vira alvo; o linter o exige), marcado `[PREMISSA]` quando o material não o nomeia. Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
 | Critérios de Aceitação | Há FR cujo resultado depende de mais de um valor numérico ou de ramificação | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
-| Dependências e Riscos | Há dependência ou risco fora do controle do contexto | Tabela: item, tipo, impacto; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
-| Perguntas em Aberto | Há `[PREMISSA]` ou `[LACUNA]` citada por um FR Must ou pela Solução Proposta, divergência entre FR e paráfrase (Uma regra, um lugar) ou intenções concorrentes em reverse PRD | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
+| Dependências e Riscos | Há dependência ou risco fora do controle do contexto, ou o campo do header declara contexto afetado em `; afeta` (SKILL.md, Header) | Tabela: item, tipo, impacto; uma linha por contexto afetado do header, mesmo quando o impacto é só observar; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
+| Perguntas em Aberto | Há premissa que, se falsa, derruba a abordagem do PRD (Tags), `[PREMISSA]` ou `[LACUNA]` citada por um FR Must ou pela Solução Proposta, divergência entre FR e paráfrase (Uma regra, um lugar) ou intenções concorrentes em reverse PRD | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
 | Ponto de Maior Fragilidade | Há decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo) que, se errada, invalida a Solução Proposta ou a métrica primária | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
 | Referências | Há fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
 
@@ -149,7 +149,7 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 
 ### Perguntas em Aberto
 
-- Quando existe premissa que derruba o PRD, ela é a primeira linha, na forma fixada em Tags. `[LACUNA]` que bloqueia decisão também entra.
+- O conteúdo é o que a coluna "Entra quando" da tabela de Seções lista, e nada além: o critério está escrito lá, uma vez. A premissa que derruba o PRD é o primeiro item dessa coluna, e por ele a seção entra; quando existe, ela é a primeira linha, na forma fixada em Tags. Bullet com "se falsa" em outra seção é a mesma premissa declarada fora do lugar, e `lint_prd.py` o acusa como HARD.
 - Decisão tomada não entra: com custo, vive em Trade-offs Declarados; sem custo, vive no FR que a aplica. Decisão arquitetural delegada é candidata a ADR (ver PRD 0000, Decisões delegadas a ADR).
 
 ### Ponto de Maior Fragilidade
@@ -157,7 +157,7 @@ Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, 
 - É distinto das tags. `[PREMISSA]` pode ser falsa (risco factual); `[LACUNA]` é informação que falta (risco de cobertura). Aqui a decisão é sobre fatos, sem lacuna, e ainda assim contestável: corte de escopo, threshold, priorização, usuário-alvo.
 - É exposição, não auto-correção: quem tem contexto para resolver é o autor.
 - Calibre ao custo do erro: a decisão só entra se, estando errada, invalida a Solução Proposta ou a métrica primária. Fraqueza menor nomeada para parecer rigor é auto-crítica cosmética.
-- Com `[LACUNA]` material, aponte a decisão que depende da lacuna e o que a validação mudaria, sem fabricar vetor de ataque.
+- `[LACUNA]` material é a que entra em Perguntas em Aberto pela coluna "Entra quando" da tabela de Seções (ver Seções); lacuna fora desse critério não é material aqui. Com uma delas, aponte a decisão que depende da lacuna e o que a validação mudaria, sem fabricar vetor de ataque.
 
 ## Redação
 

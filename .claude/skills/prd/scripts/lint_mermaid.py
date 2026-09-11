@@ -2,9 +2,10 @@
 """
 lint_mermaid.py - parse obrigatorio de todo bloco ```mermaid de arquivos .md.
 
-    Uso:  python scripts/lint_mermaid.py <arquivo.md | diretorio> [...]
-          python scripts/lint_mermaid.py --self-test
-          python scripts/lint_mermaid.py --setup
+    Uso:  python <skill-dir>/scripts/lint_mermaid.py
+              <arquivo.md | diretorio> [...]
+          python <skill-dir>/scripts/lint_mermaid.py --self-test
+          python <skill-dir>/scripts/lint_mermaid.py --setup
 
 Extrai cada bloco mermaid (sequenceDiagram, stateDiagram-v2, flowchart ou
 qualquer outro tipo) e o submete a mermaid.parse() rodando em Node com jsdom -

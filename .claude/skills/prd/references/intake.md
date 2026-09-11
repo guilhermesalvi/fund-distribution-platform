@@ -1,6 +1,6 @@
 # Avaliação do input e pesquisa
 
-Este arquivo cobre o passo Entender do workflow descrito em SKILL.md: avaliar o escopo do pedido, extrair o que o material de discovery contém, classificar a riqueza do contexto e decidir quando pesquisar. As tags `[PREMISSA]` e `[LACUNA]` usadas aqui são as definidas em writing.md (writing.md, Tags). Quando o pedido é um reverse PRD, ou trata plataforma, infra, SDK e API como produto, aplique também o que muda em modes.md. Toda pergunta desta skill (corte de escopo, pergunta de base, classificação de PRD antigo, contexto originário, riqueza do contexto) sai numa única mensagem: há uma única rodada de perguntas por pedido. Pedido de autorização para `--setup` (SKILL.md, Scripts) não é pergunta de discovery e fica fora dessa rodada.
+Este arquivo cobre o passo Entender do workflow descrito em SKILL.md: avaliar o escopo do pedido, extrair o que o material de discovery contém, classificar a riqueza do contexto e decidir quando pesquisar. As tags `[PREMISSA]` e `[LACUNA]` usadas aqui são as definidas em writing.md (writing.md, Tags). Quando o pedido é um reverse PRD, ou trata plataforma, infra, SDK e API como produto, aplique também o que muda em modes.md. Toda pergunta desta skill que precede a geração (corte de escopo, pergunta de base, classificação de PRD antigo, contexto originário, riqueza do contexto) sai numa única mensagem: há uma única rodada de perguntas antes de gerar. O que se pergunta depois, ao apresentar o PRD pronto (SKILL.md, Apresentar e iterar), não pertence a essa rodada e não a reabre. Pedido de autorização para `--setup` (SKILL.md, Scripts) também fica fora dela.
 
 ## Escopo problemático
 
@@ -20,7 +20,7 @@ Documentos recebidos como input (PDF, docx, decks, atas, briefs e PRDs antigos) 
 
 - **Extraia antes de perguntar.** Levante do material os sinais que o PRD precisa (problema, evidência, usuário-alvo, direção, métricas, restrições) antes de fazer qualquer pergunta ao usuário.
 - **Inferência do discovery é `[PREMISSA]`.** O que você deduz do documento entra como `[PREMISSA]` derivada dele, com a origem entre parênteses ao fim da frase: nome do documento e página ou seção. Texto sem tag é fato, na definição de writing.md, Tags.
-- **Sintetize, não reformate.** Reorganizar o material cosmeticamente produz um PRD bonito e falso. Teste: tome as três frases mais longas do PRD e busque cada uma, literalmente, no material de origem; nenhuma pode aparecer. Material que não permite busca de texto é lido no trecho correspondente.
+- **Sintetize, não reformate.** Reorganizar o material cosmeticamente produz um PRD bonito e falso. Teste: nenhuma das três frases mais longas do PRD aparece no material de origem. Com material em texto no disco, quem seleciona as frases e as busca é o script — `python <skill-dir>/scripts/lint_prd.py <arquivo.md> --source <material>`, uma opção por arquivo de material, e cada frase encontrada sai como WARN (SKILL.md, Scripts); a escolha das frases e a busca não se fazem a olho. Material que não permite busca de texto é lido no trecho correspondente.
 - **PRD antigo pede classificação.** Diante de um PRD antigo, determine qual é o caso: (a) ele serve de reverse PRD para um incremento, (b) ele é o documento a atualizar no lugar, ou (c) ele é só inspiração. O pedido decide: "incremento" ou feature nova sobre ele é (a), "atualize" ou "corrija" é (b), "como referência" ou "parecido com" é (c); pedido sem nenhum desses sinais pede a pergunta antes de gerar.
 - **Fontes conflitantes viram `[LACUNA]`.** Quando duas fontes se contradizem, registre a `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
 
@@ -42,6 +42,8 @@ Conte quais dos seis sinais (problema, evidência, usuário-alvo, direção, mé
 ## Pesquisa
 
 Faça busca web quando o PRD vai citar benchmark, concorrente, comportamento de usuário, tendência, padrão técnico ou norma que não está no material recebido. Cite cada fonte em uma linha: link, trecho relevante e data de leitura.
+
+Sem ferramenta de busca na sessão, o dado não se escreve de memória: marque `[LACUNA]` no trecho que dependia dele, diga no chat qual busca ficou pendente e siga. A falta de busca não bloqueia a geração, nem abre rodada de perguntas.
 
 ### Regulação
 

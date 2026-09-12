@@ -60,7 +60,7 @@ Participantes: [quem decidiu]; [quem foi consultado].
 - Negativas: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
 
 ## Regras derivadas
-- [regra que existe por causa desta ADR] — `AGENTS.md`
+- [regra que existe por causa desta ADR] — `CLAUDE.md`
 ```
 
 As seções da ADR são as do template, e a lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). Em inglês (workflow.md, Idioma) os headings são `Context`, `Decision`, `Alternatives considered`, `Consequences` e `Derived rules`.
@@ -73,8 +73,8 @@ Faça a checagem de forma (validation.md, Checagem de forma); depois percorra a 
 
 - **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
 - **Como superseder.** Crie uma ADR nova com a linha `Substitui: NNNN` abaixo do título. Na ADR antiga, adicione `Substituída por: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
-- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em AGENTS.md ou docs/development) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
-- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `AGENTS.md`, `docs/development/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
+- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em CLAUDE.md ou .claude/rules) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
+- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `CLAUDE.md`, `.claude/rules/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
 
 ### Exemplo didático parcial de reescrita
 

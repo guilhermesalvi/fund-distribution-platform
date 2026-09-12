@@ -14,7 +14,7 @@ Antes de escrever qualquer task, descubra como este repositório testa; não pre
 
 ### Descoberta
 
-1. **Guias:** leia `AGENTS.md`, `CONTRIBUTING.md` e todo arquivo em `docs/` com `test` no nome, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
+1. **Guias:** leia `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` e todo arquivo em `docs/` com `test` no nome, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
 2. **Amostra:** leia 5–10 arquivos de teste existentes e registre camada, nível (unit, integration, e2e), estilo, localização e framework. A amostra é piso, nunca teto: nenhuma task tem menos tipos de teste (unit, integration, e2e) que a amostra na mesma camada; o teto vem da spec.
 3. **Comandos:** extraia os comandos de manifests, config e CI (`*.csproj`/`*.slnx` + `dotnet test`, `package.json`, `Makefile`, `pyproject.toml`, workflows), incluindo lint, format e typecheck, porque o gate Build roda tudo isso.
 
@@ -112,7 +112,7 @@ Exemplo didático completo de formato: as dependências indicadas são pressupos
 <!-- sdd: tasks | spec: ../spec.md | design: ./design.md -->
 # Reserva Parcial — Tasks
 
-Como este repositório testa: `AGENTS.md` manda xUnit em `tests/UnitTests` e `tests/IntegrationTests`; a amostra usa `[Fact]` + FluentAssertions, um arquivo por classe; domínio 1:1 com requisitos. O gate Build executa 212 testes antes desta mudança.
+Como este repositório testa: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `tests/IntegrationTests`; a amostra usa `[Fact]` + FluentAssertions, um arquivo por classe; domínio 1:1 com requisitos. O gate Build executa 212 testes antes desta mudança.
 
 ## Comandos de Gate
 

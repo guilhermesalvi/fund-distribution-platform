@@ -1,3 +1,8 @@
+---
+paths:
+  - "src/**/*.cs"
+---
+
 # Traces e spans
 
 A instrumentação automática do `ServiceDefaults` (ASP.NET Core, HttpClient e, quando houver, EF Core/SqlClient) já cobre requisições, chamadas HTTP de saída e banco. Código de produção não repete o que ela faz.

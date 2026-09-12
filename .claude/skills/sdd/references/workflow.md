@@ -56,7 +56,7 @@ Toda dúvida cai em uma de três categorias:
 
 | Condição | Ação | Bloqueio |
 |---|---|---|
-| 1. Decisão dentro da autonomia delegada por escrito no pedido da sessão ou no AGENTS.md | Decida, registre e siga | Só a apresentação de cada artefato espera |
+| 1. Decisão dentro da autonomia delegada por escrito no pedido da sessão ou no CLAUDE.md | Decida, registre e siga | Só a apresentação de cada artefato espera |
 | 2. Inferência de solution space sem delegação escrita | Marque `[PREMISSA]` com default e racional e avance; a premissa fica revisável | Pergunte nas exceções de Clarify e Design abaixo |
 | 3. Decisão material do usuário: escopo, regra de negócio, trade-off ou efeito externo | Pergunte; sem resposta, não adote default | Bloqueie somente o que depende da resposta |
 
@@ -80,7 +80,7 @@ Sem delegação escrita, escolha de negócio é categoria 3 e escolha de solutio
 - Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
 - Termo sem tradução de mesma força fica em inglês: domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate.
 - Keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem.
-- Termo que o time usa em português (AGENTS.md, glossário do PRD ou código) fica em português mesmo que esteja na lista acima: é a precedência de Tags e dúvidas.
+- Termo que o time usa em português (CLAUDE.md, glossário do PRD ou código) fica em português mesmo que esteja na lista acima: é a precedência de Tags e dúvidas.
 
 ### Redação
 

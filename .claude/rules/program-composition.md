@@ -1,3 +1,10 @@
+---
+paths:
+  - "src/**/Program.cs"
+  - "src/**/*Extensions.cs"
+  - "src/**/*Endpoint.cs"
+---
+
 # Composição do serviço e módulos de feature
 
 ## Program.cs

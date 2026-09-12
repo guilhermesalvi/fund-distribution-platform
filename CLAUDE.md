@@ -1,21 +1,17 @@
-# AGENTS.md
+# CLAUDE.md
 
-Instruções para o Codex trabalhando neste repositório.
+Instruções para o Claude Code trabalhando neste repositório.
 
-## Uso com Codex
+## Uso com Claude Code
 
 Este arquivo é a entrada das convenções do projeto. Todos os caminhos abaixo são relativos à raiz do repositório; execute os comandos de build e validação a partir dela, inclusive quando a tarefa começar em um subdiretório.
 
-Antes de editar ou revisar código, leia as regras da área correspondente:
+As regras por área ficam em `.claude/rules/` e carregam sozinhas quando um arquivo do padrão declarado no frontmatter `paths` de cada uma entra na tarefa; as duas se acumulam quando os padrões coincidem. Ao revisar código sem editá-lo, leia a regra da área antes:
 
-| Arquivos afetados | Documento obrigatório |
-| --- | --- |
-| `src/**/Program.cs`, `src/**/*Extensions.cs`, `src/**/*Endpoint.cs` | [Composição do serviço e módulos de feature](docs/development/program-composition.md) |
-| `src/**/*.cs` | [Traces e spans](docs/development/tracing.md) |
+- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs` e `*Endpoint.cs` em `src/`.
+- [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
 
-As duas regras se acumulam quando os padrões coincidem. Os documentos são a fonte dos detalhes; a tabela preserva seu escopo sem depender de carregamento automático por extensão de arquivo.
-
-As skills do repositório ficam em `.agents/skills/`. Use `prd` para requisitos de produto, `sdd` para especificação, design, execução e verificação técnica, e `ontology-from-transcript` para extrair conceitos de uma transcrição de especialista. Leia o `SKILL.md` correspondente quando a tarefa se enquadrar na descrição da skill; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
+As skills do repositório ficam em `.claude/skills/` e aparecem no menu `/`: `/prd` para requisitos de produto, `/sdd` para especificação, design, execução e verificação técnica, e `/ontology-from-transcript` para extrair conceitos de uma transcrição de especialista. O Claude Code também carrega a skill sozinho quando a tarefa se enquadra na descrição dela; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
 
 Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
 
@@ -73,7 +69,8 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/Offering`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
-- `docs/prd` — PRDs, um por contexto mais o `0000` de visão geral, escritos e revisados com a skill `prd` (`.agents/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.agents/skills/sdd/SKILL.md`) em `docs/specs`.
+- `docs/prd` — PRDs, um por contexto mais o `0000` de visão geral, escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
+- `.claude/rules`, `.claude/skills` — regras por área e skills do Claude Code (Uso com Claude Code).
 
 ### Arquivos no `.slnx`
 
@@ -86,7 +83,7 @@ Todo arquivo versionado entra no `.slnx`, espelhando o layout das pastas em disc
 - Arquivo ignorado pelo git (`bin/`, `obj/`, `.idea/`) não entra.
 - Pastas e arquivos em ordem alfabética, sem distinção de maiúsculas.
 
-Ao criar, mover ou remover um arquivo — inclusive `.md` em `docs/` ou `.agents/` — a mudança no `.slnx` vai no mesmo commit, porque tem o mesmo motivo.
+Ao criar, mover ou remover um arquivo — inclusive `.md` em `docs/` ou `.claude/` — a mudança no `.slnx` vai no mesmo commit, porque tem o mesmo motivo.
 
 ## Build e testes
 

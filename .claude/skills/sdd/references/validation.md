@@ -57,7 +57,7 @@ Antes de criar a pasta de uma mudança ou uma ADR, liste os filhos diretos da pa
 
 ### Forma mantida por pedido ou convenção
 
-Pedido válido para manter um achado de forma nomeia literalmente a seção, o campo ou a forma de onde ele sai, por exemplo "inclua uma seção Plano de Rollout no design". Convenção válida é forma comprovada em pelo menos três artefatos commitados do mesmo tipo, ou escrita no AGENTS.md do repositório. Diga o número de exemplares no chat.
+Pedido válido para manter um achado de forma nomeia literalmente a seção, o campo ou a forma de onde ele sai, por exemplo "inclua uma seção Plano de Rollout no design". Convenção válida é forma comprovada em pelo menos três artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório. Diga o número de exemplares no chat.
 
 Para reconhecer uma convenção por exemplos, use a versão dos arquivos presente em HEAD. Liste os arquivos com `git ls-tree -r --name-only HEAD -- docs/specs` e filtre os Markdown do tipo em análise: `spec.md`, `design.md` ou `tasks.md`, separadamente. Leia cada exemplo com `git show "HEAD:<caminho>"`. A convenção precisa aparecer em pelo menos três desses exemplos. Um arquivo apenas staged ou untracked não conta. Uma alteração local em arquivo já commitado também não altera a convenção de HEAD. Se HEAD não existir, não há convenção comprovada por exemplos; a convenção escrita no guia do repositório continua sendo uma fonte válida. Para ADR, aplique o diretório e a seleção de (adr.md, Arquivo).
 

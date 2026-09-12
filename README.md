@@ -76,28 +76,26 @@ As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md)
 
 ## Desenvolvimento com Claude Code
 
-Abra a pasta do repositório no aplicativo Claude Code ou inicie o [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) na raiz. O projeto usa `CLAUDE.md` para instruções, `.claude/rules/` para as regras por área e `.claude/skills/` para as três skills locais; nada precisa ser copiado para a configuração pessoal. Em uma sessão nova, `/prd`, `/sdd` e `/ontology-from-transcript` aparecem no menu `/`, e o Claude Code também aciona a skill sozinho quando o pedido se enquadra na descrição dela. Consulte a documentação oficial de [CLAUDE.md](https://docs.claude.com/en/docs/claude-code/memory) e [skills](https://docs.claude.com/en/docs/claude-code/skills).
+Abra a pasta do repositório no aplicativo Claude Code ou inicie o [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) na raiz. O projeto usa `CLAUDE.md` para instruções, `.claude/rules/` para as regras por área e `.claude/skills/` para as duas skills locais; nada precisa ser copiado para a configuração pessoal. Em uma sessão nova, `/prd` e `/sdd` aparecem no menu `/`, e o Claude Code também aciona a skill sozinho quando o pedido se enquadra na descrição dela. Consulte a documentação oficial de [CLAUDE.md](https://docs.claude.com/en/docs/claude-code/memory) e [skills](https://docs.claude.com/en/docs/claude-code/skills).
 
 Exemplos de pedidos na conversa:
 
 ```text
 /prd escreva os requisitos de produto para a capability descrita abaixo: ...
 /sdd especifique tecnicamente a capability descrita abaixo: ...
-/ontology-from-transcript extraia os conceitos desta transcrição: ...
 ```
 
 Modelo, autenticação e preferências pessoais ficam na instalação do Claude Code e em `.claude/settings.local.json`, que não é versionado.
 
-Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme as três skills no menu `/` e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`; sem transcrição, a skill de ontologia não deve inventar conceitos.
+Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme as duas skills no menu `/` e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`.
 
 ## Skills
 
-Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método) e `references/` (regras por etapa); a terceira é um método isolado, só com `SKILL.md`.
+Duas skills de agente em `.claude/skills/` cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método) e `references/` (regras por etapa).
 
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
 | [prd](.claude/skills/prd/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
-| [ontology-from-transcript](.claude/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
 | [sdd](.claude/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
 Os `SKILL.md` selecionam a entrada e as referências necessárias. Processo, formato e escrita têm fontes distintas dentro de cada pacote; uma correção localizada lê o trecho afetado, suas dependências e seus citadores. A leitura seletiva mantém as validações exigidas.

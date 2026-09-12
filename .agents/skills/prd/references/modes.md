@@ -4,7 +4,7 @@ Este arquivo é carregado só quando o pedido dispara um dos dois modos abaixo. 
 
 ## Modo reverse PRD
 
-Use este modo quando o pedido for documentar o que já foi construído: "PRD do módulo X", "documente o que construímos". Como o material inclui código e telas, aplique o capability test a todas as seções do PRD (writing.md, Capability test). Neste modo, e só nele, `lint_prd.py` roda com `--reverse`, que varre os termos de mecanismo em toda seção (workflow.md, Scripts).
+Use este modo quando o pedido for documentar o que já foi construído: "PRD do módulo X", "documente o que construímos". Como o material inclui código e telas, aplique o capability test a todas as seções do PRD (writing.md, Capability test). Neste modo, e só nele, a contagem de termos de mecanismo da revisão cobre toda seção do PRD (workflow.md, Revisão antes de apresentar).
 
 - **O que pedir.** Peça comportamento observável, regras aplicadas e decisões que o sistema toma. Aceite o material em qualquer forma: código, docs, bullets, descrição livre.
 - **De onde derivar a intenção.** Derive a intenção a partir dos resultados, isto é, do que o usuário ou o negócio ganha, e não das operações que o sistema executa.

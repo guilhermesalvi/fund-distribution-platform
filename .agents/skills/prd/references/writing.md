@@ -112,18 +112,18 @@ Regras:
 
 - Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte.
 - Ao lado do `stateDiagram-v2` vai a tabela estado, identificador, significado (ver IDs).
-- Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado). Use o nome completo.
-- Todo bloco passa por `lint_mermaid.py` antes de apresentar (workflow.md, Scripts).
+- Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa). Use o nome completo.
+- Todo bloco é lido linha a linha na checagem de forma antes de apresentar (workflow.md, Checar).
 
 ## Seções
 
 Use `#` para o título, `##` para seções e `###` para subseções.
 
-Cinco seções são obrigatórias, e o linter as trata como HARD: Resumo Executivo, Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela em PRD 0000, acima.
+Cinco seções são obrigatórias, e a checagem de forma acusa a ausência (workflow.md, Checar): Resumo Executivo, Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela em PRD 0000, acima.
 
 Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, e nunca por forma: seção vazia, "Nenhuma." ou bullet inventado para completar contagem é defeito, não conformidade. A ordem das seções no PRD é a ordem da tabela. Três seções têm regras de forma que não cabem na célula; elas estão nas subseções depois da tabela.
 
-A tabela é fechada: seção `##` fora dela não tem critério de entrada nem posição, e `lint_prd.py` a acusa como HARD (workflow.md, Scripts). No PRD 0000 a lista fechada é a tabela da seção PRD 0000, acima. Conteúdo que não cabe em nenhuma seção da tabela vai para a seção que o cobre; `###` é subseção e fica livre. Seção que falta à tabela e não vem do pedido da sessão nem da convenção do repositório (SKILL.md, Precedência) muda a tabela primeiro, e com ela o script — o teste de sincronização cobra as duas; vindo de um dos dois, o HARD é mantido pela regra do passo Checar (workflow.md, Workflow) e a tabela não muda.
+A tabela é fechada: seção `##` fora dela não tem critério de entrada nem posição, e a checagem de forma a acusa (workflow.md, Checar). No PRD 0000 a lista fechada é a tabela da seção PRD 0000, acima. Conteúdo que não cabe em nenhuma seção da tabela vai para a seção que o cobre; `###` é subseção e fica livre. Seção que falta à tabela e não vem do pedido da sessão nem da convenção do repositório (SKILL.md, Precedência) muda a tabela primeiro; vindo de um dos dois, o achado é mantido pela regra do passo Checar (workflow.md, Checar) e a tabela não muda.
 
 A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito (conventions.md, Idioma): o nome em português e, entre parênteses, o nome em inglês. O heading usa o nome do idioma fixado para o PRD; seção cujo nome é o mesmo nos dois idiomas aparece uma vez só.
 
@@ -139,10 +139,10 @@ A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito
 | Requisitos Funcionais (Functional Requirements) | Há requisito | Lista por subtítulo temático, cada linha um ID e uma condição (ver IDs e Uma regra, um lugar) |
 | Domain Events | O contexto produz ou consome evento | Um parágrafo: produz X (ID), consome Y (ID); catálogo e sequências ficam no 0000 |
 | Requisitos Não Funcionais (Non-functional Requirements) | Há atributo de qualidade ou restrição pelo qual o design será avaliado | `<PREFIXO>-NFR-nn`; atributo de qualidade e restrição, nunca mecanismo; exigência que uma ADR precisa satisfazer diz qual ADR |
-| Considerações Regulatórias (Regulatory Considerations) | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, com `→ ID que o modela` após o que o artigo diz (a norma e o artigo abrem a linha; depois do ID cabe uma nota de até 20 palavras, contadas por `lint_prd.py` como WARN, e o que não couber nela é regra e vive no FR); artigo não conferido no texto é `[PREMISSA]`; norma não identificada é bullet `[LACUNA]`, sem ID |
+| Considerações Regulatórias (Regulatory Considerations) | Norma identificada e lida | Fonte e data de leitura no topo; uma linha por artigo, com `→ ID que o modela` após o que o artigo diz (a norma e o artigo abrem a linha; depois do ID cabe uma nota de até 20 palavras, e o que não couber nela é regra e vive no FR); artigo não conferido no texto é `[PREMISSA]`; norma não identificada é bullet `[LACUNA]`, sem ID |
 | Não-objetivos (Non-goals) | O material recebido ou a conversa cita funcionalidade adjacente que o PRD não cobre | Um bullet por exclusão: o que não faremos |
 | Trade-offs Declarados (Declared Trade-offs) | Há decisão tomada na conversa ou no material recebido cuja alternativa rejeitada tem custo nomeável | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
-| Métricas de Sucesso (Success Metrics) | O material recebido ou a conversa nomeia uma métrica ou um número-alvo | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado); e sempre um guardrail (o que não pode degradar; sem ele a métrica vira alvo; o linter o exige), marcado `[PREMISSA]` quando o material não o nomeia. Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
+| Métricas de Sucesso (Success Metrics) | O material recebido ou a conversa nomeia uma métrica ou um número-alvo | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado); e sempre um guardrail (o que não pode degradar; sem ele a métrica vira alvo; a checagem de forma o exige), marcado `[PREMISSA]` quando o material não o nomeia. Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
 | Critérios de Aceitação (Acceptance Criteria) | Há FR cujo resultado depende de mais de um valor numérico ou de ramificação | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
 | Dependências e Riscos (Dependencies and Risks) | Há dependência ou risco fora do controle do contexto, ou o campo do header declara contexto afetado em `; afeta` (conventions.md, Header) | Tabela: item, tipo, impacto; uma linha por contexto afetado do header, mesmo quando o impacto é só observar; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
 | Perguntas em Aberto (Open Questions) | Há premissa que, se falsa, derruba a abordagem do PRD (Tags), `[PREMISSA]` ou `[LACUNA]` citada por um FR Must ou pela Solução Proposta, divergência entre FR e paráfrase (Uma regra, um lugar) ou intenções concorrentes em reverse PRD | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
@@ -157,7 +157,7 @@ A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito
 
 ### Perguntas em Aberto
 
-- O conteúdo é o que a coluna "Entra quando" da tabela de Seções lista, e nada além: o critério está escrito lá, uma vez. A premissa que derruba o PRD é o primeiro item dessa coluna, e por ele a seção entra; quando existe, ela é a primeira linha, na forma fixada em Tags. Bullet com "se falsa" em outra seção é a mesma premissa declarada fora do lugar, e `lint_prd.py` o acusa como HARD.
+- O conteúdo é o que a coluna "Entra quando" da tabela de Seções lista, e nada além: o critério está escrito lá, uma vez. A premissa que derruba o PRD é o primeiro item dessa coluna, e por ele a seção entra; quando existe, ela é a primeira linha, na forma fixada em Tags. Bullet com "se falsa" em outra seção é a mesma premissa declarada fora do lugar, e a checagem de forma o acusa (workflow.md, Checar).
 - Decisão tomada não entra: com custo, vive em Trade-offs Declarados; sem custo, vive no FR que a aplica. Decisão arquitetural delegada é candidata a ADR (ver PRD 0000, Decisões delegadas a ADR).
 
 ### Ponto de Maior Fragilidade

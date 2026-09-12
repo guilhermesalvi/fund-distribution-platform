@@ -37,9 +37,9 @@ Redação: [Convenções de escrita](references/prose.md#convenções-de-escrita
 ## Limites
 
 - **Aprovação é o commit.** Árvore suja é trabalho em elaboração; arquivo commitado é a versão válida.
-- **Precedência.** Para layout, seções, idioma e forma, vale primeiro o pedido da sessão, depois a convenção do repositório e por último os defaults desta skill. HARD decorrente dos dois primeiros segue as exceções (workflow.md, Checar).
+- **Precedência.** Para layout, seções, idioma e forma, vale primeiro o pedido da sessão, depois a convenção do repositório e por último os defaults desta skill. Achado de forma decorrente dos dois primeiros é mantido e relatado (workflow.md, Checar).
 - Tags, IDs e fonte única das regras são definidos em (writing.md, Tags), (writing.md, IDs) e (writing.md, Uma regra, um lugar).
-- Resultados de lint, notas de confiança e marcas de validação ficam fora do PRD. Relate a verificação não executada e os achados remanescentes conforme (workflow.md, Checar); não declare aprovação sem evidência.
+- Resultados de checagem, notas de confiança e marcas de validação ficam fora do PRD. Relate a verificação não executada e os achados remanescentes conforme (workflow.md, Checar); não declare aprovação sem evidência.
 
 ## Leitura por etapa
 

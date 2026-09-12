@@ -42,9 +42,9 @@ O resultado da descoberta entra no `tasks.md` de duas formas:
 | Build | `Gate: build` (Campos) | build + lint + todos os testes |
 | Mutação | mutação obrigatória ou pedida (verify.md, Mutação) | comando da ferramenta de mutação |
 
-A tabela dá o comando de cada gate; qual gate cada task recebe é a regra do campo `Gate` (Campos), e é lá que ela vive: a coluna Quando aponta para o campo e não repete a regra. O nome do gate na primeira coluna é um de `quick`, `full`, `build` e `Mutação`; `lint_tasks.py` acusa como HARD qualquer outro nome de linha.
+A tabela dá o comando de cada gate; qual gate cada task recebe é a regra do campo `Gate` (Campos), e é lá que ela vive: a coluna Quando aponta para o campo e não repete a regra. O nome do gate na primeira coluna é um de `quick`, `full`, `build` e `Mutação`; qualquer outro nome de linha é achado da checagem de forma (validation.md, Checagem de forma).
 
-A linha `Mutação` é onde o comando de mutação da mudança fica declarado quando há `tasks.md`; sem ela, a mudança não roda mutação (verify.md, Mutação). Ela não é valor do campo `Gate` de task alguma. É opcional, exceto quando a tabela Riscos e técnicas do design tem linha de um dos três riscos que obrigam mutação (verify.md, Mutação): aí `lint_tasks.py` acusa a ausência como HARD, lendo o design pelo campo `design:` do comentário de máquina ou pela opção `--design <design.md>`.
+A linha `Mutação` é onde o comando de mutação da mudança fica declarado quando há `tasks.md`; sem ela, a mudança não roda mutação (verify.md, Mutação). Ela não é valor do campo `Gate` de task alguma. É opcional, exceto quando a tabela Riscos e técnicas do design tem linha de um dos três riscos que obrigam mutação (verify.md, Mutação): aí a ausência é achado da checagem de forma, que lê o design pelo campo `design:` do comentário de máquina.
 
 ## Task atômica
 
@@ -68,12 +68,12 @@ Toda task tem os campos abaixo:
 |---|---|
 | **O quê** | Uma frase: o entregável exato |
 | **Onde** | Paths reais de todos os arquivos a criar ou modificar, distinguindo cada caso em texto |
-| **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás na ordem do Plano de execução (fase anterior ou task anterior da mesma fase); o linter acusa o contrário |
+| **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás na ordem do Plano de execução (fase anterior ou task anterior da mesma fase); a checagem de forma acusa o contrário |
 | **Requisito** | IDs da spec que a task atende; task de refactor cita os IDs que preserva |
 | **Interfaces** | *Consome* e *Produz*: nomes, parâmetros, tipos de retorno, erros e contratos externos relevantes definidos na spec/design (Interfaces) |
-| **Pronto quando** | Critérios binários ligados a IDs: ao menos um de comportamento, com preparação, ação e resultado da spec quando exigir valores concretos; o comando do gate fica em item separado, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; `lint_tasks.py` acusa como HARD o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
+| **Pronto quando** | Critérios binários ligados a IDs: ao menos um de comportamento, com preparação, ação e resultado da spec quando exigir valores concretos; o comando do gate fica em item separado, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; a checagem de forma acusa o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
 | **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho; os testes descritos na task são escritos e executados nela |
-| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`, na ordem: a última task de cada fase exige `build`, seja qual for o `Tests`; `none` exige `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho exige `quick`. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; `lint_tasks.py` acusa como HARD toda combinação de `Tests` e `Gate` fora desta regra |
+| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`, na ordem: a última task de cada fase exige `build`, seja qual for o `Tests`; `none` exige `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho exige `quick`. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; a checagem de forma acusa toda combinação de `Tests` e `Gate` fora desta regra |
 
 ### Interfaces
 
@@ -93,12 +93,12 @@ Nenhum destes entra numa task:
 
 ## Seções do `tasks.md`
 
-A lista é fechada: `lint_tasks.py` acusa como HARD a seção `##` fora dela. O nome entre parênteses é o heading do `tasks.md` escrito em inglês (workflow.md, Idioma).
+A lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). O nome entre parênteses é o heading do `tasks.md` escrito em inglês (workflow.md, Idioma).
 
 - **Comandos de Gate** (Gate Commands) dá o comando de cada gate (Registro no `tasks.md`).
 - **Plano de execução** (Execution Plan) lista as fases e a ordem das tasks.
 - **Tasks** tem o corpo de cada task.
-- **Rastreabilidade** (Traceability) mapeia cada requisito para as tasks que o atendem; obrigatória, e o linter confere a coerência com os campos `Requisito`.
+- **Rastreabilidade** (Traceability) mapeia cada requisito para as tasks que o atendem; obrigatória, e a checagem de forma confere a coerência com os campos `Requisito`.
 - **Desvios** (Deviations) só é criada no Execute, quando há desvio.
 - **Tasks de correção** (Correction Tasks) recebe as tasks que o Verify gera: IDs `TCn` sob `## Tasks de correção`, fora do Plano de execução.
 
@@ -169,7 +169,7 @@ T1 → T2
 
 ## Antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>` e siga o ciclo de correção de validation.md, Scripts; depois apresente e espere.
+Faça a checagem de forma (validation.md, Checagem de forma) e a revisão da entrada; depois apresente e espere.
 
 ### Exemplo didático parcial de reescrita
 

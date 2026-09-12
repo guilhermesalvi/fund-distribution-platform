@@ -16,7 +16,7 @@
 ### Slugs e numeração
 
 - **Slugs** em inglês e kebab-case, espelhando o nome que o código usa: `PartialReservation` vira `partial-reservation`. Capability é uma área funcional de um bounded context, como `reservation-book/reservation-lifecycle`.
-- **`NNNN`** é um contador dentro da capability. Obtenha o número com `seq.py next <capability-dir> --slug <change-slug>`, nunca lendo a pasta; `seq.py check` acusa duplicata quando dois branches alocam o mesmo número (validation.md, Scripts). A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
+- **`NNNN`** é um contador dentro da capability. Obtenha o número listando a pasta da capability e somando 1 ao maior `NNNN` (validation.md, Numeração). A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
 
 ### Versionamento
 
@@ -34,7 +34,7 @@ Campos condicionais:
 
 - `design:` entra no comentário das tasks só quando o `design.md` existe.
 - `scope: RSV-07, RSV-10` entra no comentário do design e das tasks quando a mudança toca só parte dos requisitos da spec; no design, limita a cobertura de `IF ... THEN` exigida em Tratamento de erros aos IDs listados.
-- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que o linter recalcula); PRD modificado e não commitado pede o commit dele antes de gravar a spec. Se o PRD mudar depois, o linter avisa; esse WARN é sempre corrigido, nunca mantido com razão: re-derive os requisitos que citam os IDs tocados e atualize o hash.
+- `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que a checagem de forma recalcula); PRD modificado e não commitado pede o commit dele antes de gravar a spec. Se o PRD mudar depois, o hash diverge; esse achado é sempre corrigido, nunca mantido com razão: re-derive os requisitos que citam os IDs tocados e atualize o hash.
 
 ### Linha de prefixo
 
@@ -57,10 +57,10 @@ Quando a origem é o PRD, valem seis regras:
 
 1. **Cite o ID, não reescreva a regra.** O requisito EARS cita o ID do PRD ao fim da linha (`[BOOK-04]`) e descreve o comportamento observável que realiza a regra (valor, status, evento, prazo), sem reescrevê-la. Regra escrita em dois lugares diverge. Estado, evento e enumeração usam o identificador que o PRD fixa.
 2. **Regra de negócio se corrige no PRD.** Lacuna ou inconsistência de regra de negócio se corrige no PRD e nunca vira premissa na spec. Premissa nova na spec é só de solution space: formato de erro, prazo técnico, ordem de processamento; premissa herdada do PRD mantém a tag com a origem anotada (Origem).
-3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não compartilha com nenhum deles as duas primeiras letras: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. O linter acusa colisão lendo `/docs/prd`.
+3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não compartilha com nenhum deles as duas primeiras letras: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. Confira a colisão lendo os prefixos declarados em `/docs/prd` (validation.md, Checagem de forma).
 4. **PRD 0000.** Quando existe, o PRD 0000 fornece o mapa de contextos, o catálogo de eventos e as decisões delegadas a ADR. Evento que a capability produz ou consome vira requisito citando o ID que o governa; decisão delegada a ADR entra em Perguntas em Aberto com dono "Design/ADR".
-5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios) e aparece na Rastreabilidade numa linha cuja segunda coluna começa com `Critério de design:` (forma que o linter reconhece).
-6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Ciclo por task). A Rastreabilidade os lista pelo nome do caso quando o PRD os traz em tabela (primeira coluna; o linter exige os que citam FR em escopo) e pelo FR que exercitam quando o PRD os traz em bullets, com os IDs EARS que os cobrem. FR ou cenário de outra capability entra numa linha cuja segunda coluna começa com `Fora desta capability:` e o nome da capability dona (forma que o linter reconhece). Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
+5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios) e aparece na Rastreabilidade numa linha cuja segunda coluna começa com `Critério de design:` (forma fixada).
+6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Ciclo por task). A Rastreabilidade os lista pelo nome do caso quando o PRD os traz em tabela (primeira coluna; os que citam FR em escopo são obrigatórios) e pelo FR que exercitam quando o PRD os traz em bullets, com os IDs EARS que os cobrem. FR ou cenário de outra capability entra numa linha cuja segunda coluna começa com `Fora desta capability:` e o nome da capability dona (forma fixada). Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
 
 ### Leitura prévia
 
@@ -115,14 +115,14 @@ Escreva a condição e a resposta em ordem direta, mantendo o padrão EARS aplic
 
 A spec é editada no lugar; a mudança é o diff.
 
-- **Remover requisito:** apague a linha e acrescente o ID à linha `Aposentados: RSV-05, RSV-09` ao fim da spec; crie a linha na primeira aposentadoria. O linter recusa ID reutilizado e avisa número pulado que não consta dos aposentados.
+- **Remover requisito:** apague a linha e acrescente o ID à linha `Aposentados: RSV-05, RSV-09` ao fim da spec; crie a linha na primeira aposentadoria. ID reutilizado e número pulado fora dos aposentados são achados da checagem de forma (validation.md, Checagem de forma).
 - **Mudar significado:** edite o texto e mantenha o ID.
 - **Substituir conceito:** aposente o ID e crie um novo.
 - **Refactor sem mudança de comportamento** não toca a spec: o design ou as tasks citam os IDs que o refactor preserva, e os testes existentes são a evidência.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: `lint_spec.py` acusa como WARN — e não como HARD, porque spec real pode carregar seção herdada do PRD — a seção `##` fora dela. A coluna Seção (en) traz o heading da spec escrita em inglês (workflow.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
+Cada seção existe quando há o que dizer; obrigatórias são só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: a checagem de forma acusa a seção `##` fora dela, tolerando só a seção herdada do PRD (validation.md, Checagem de forma). A coluna Seção (en) traz o heading da spec escrita em inglês (workflow.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
 
 | Seção | Seção (en) | Conteúdo |
 |---|---|---|
@@ -133,7 +133,7 @@ Cada seção existe quando há o que dizer; o linter exige só Contexto e Requis
 | Requisitos | Requirements | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
 | Domain Events | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
 | Glossário | Glossary | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
-| Rastreabilidade | Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
+| Rastreabilidade | Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; a checagem de forma confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
 | Divergências | Divergences | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
 
 Exemplo didático completo de formato; dados, contratos e decisões abaixo não afirmam adoção pelo projeto.
@@ -192,7 +192,7 @@ Base lida: `src/ReservationBook` tem só a composição do serviço.
 | Terceira reserva acima do máximo rejeitada | RSV-03 |
 ```
 
-Depois de gravar a spec, rode `lint_spec.py <spec.md>` e siga o ciclo de correção de validation.md, Scripts.
+Depois de gravar a spec, faça a checagem de forma (validation.md, Checagem de forma) e a revisão da entrada (validation.md, Revisão por entrada).
 
 ### Exemplo didático parcial de reescrita
 

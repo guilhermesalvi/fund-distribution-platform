@@ -27,9 +27,9 @@ No Contexto, indique o problema e as restrições. Na Decisão, declare a escolh
 
 ## Arquivo
 
-Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` com `seq.py next docs/adr --slug <slug>`, nunca lendo a pasta; `seq.py check docs/adr` acusa duplicata (validation.md, Scripts).
+Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` listando `docs/adr` e somando 1 ao maior número (validation.md, Numeração).
 
-Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em pelo menos três ADRs commitadas ou está escrito no guia do repositório (validation.md, Forma mantida por pedido ou convenção). Os HARD que decorrem dessa forma não se corrigem nem contam rodada.
+Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em pelo menos três ADRs commitadas ou está escrito no guia do repositório (validation.md, Forma mantida por pedido ou convenção). Os achados de forma que decorrem dela se mantêm e são relatados.
 
 Para reconhecer uma convenção por exemplos, use a versão dos arquivos presente em HEAD. Liste os arquivos com `git ls-tree -r --name-only HEAD -- docs/adr` (ou o diretório efetivamente convencionado) e filtre os Markdown que são ADRs. Leia cada exemplo com `git show "HEAD:<caminho>"`. A convenção precisa aparecer em pelo menos três desses exemplos. Um arquivo apenas staged ou untracked não conta. Uma alteração local em arquivo já commitado também não altera a convenção de HEAD. Se HEAD não existir, não há convenção comprovada por exemplos; a convenção escrita no guia do repositório continua sendo uma fonte válida.
 
@@ -63,18 +63,18 @@ Participantes: [quem decidiu]; [quem foi consultado].
 - [regra que existe por causa desta ADR] — `AGENTS.md`
 ```
 
-As seções da ADR são as do template, e a lista é fechada: `lint_adr.py` acusa como HARD a seção `##` fora dela. Em inglês (workflow.md, Idioma) os headings são `Context`, `Decision`, `Alternatives considered`, `Consequences` e `Derived rules`.
+As seções da ADR são as do template, e a lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). Em inglês (workflow.md, Idioma) os headings são `Context`, `Decision`, `Alternatives considered`, `Consequences` e `Derived rules`.
 
 ## Antes de apresentar
 
-Rode `lint_adr.py <adr.md>` e siga o ciclo de correção de validation.md, Scripts; depois percorra a lista fechada da entrada ADR (validation.md, Revisão por entrada) e apresente.
+Faça a checagem de forma (validation.md, Checagem de forma); depois percorra a lista fechada da entrada ADR (validation.md, Revisão por entrada) e apresente.
 
 ## Conformar e superseder
 
 - **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
 - **Como superseder.** Crie uma ADR nova com a linha `Substitui: NNNN` abaixo do título. Na ADR antiga, adicione `Substituída por: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
-- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em AGENTS.md, docs/development ou linter) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
-- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `AGENTS.md`, `docs/development/tracing.md`, o linter. Regra sem path não é localizável e não é seguida; `lint_adr.py` acusa como HARD a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
+- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em AGENTS.md ou docs/development) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
+- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `AGENTS.md`, `docs/development/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
 
 ### Exemplo didático parcial de reescrita
 

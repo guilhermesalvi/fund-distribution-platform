@@ -115,7 +115,7 @@ Decisão que fixa convenção, restrição ou padrão para features futuras vira
 
 ## Seções
 
-Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: `lint_design.py` acusa como HARD a seção `##` fora dela e a seção fora desta ordem. O nome entre parênteses é o heading do design escrito em inglês (workflow.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
+Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: a checagem de forma acusa a seção `##` fora dela e a seção fora desta ordem (validation.md, Checagem de forma). O nome entre parênteses é o heading do design escrito em inglês (workflow.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
 
 1. Contexto de design (Design Context) — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
 2. Critérios de avaliação (Evaluation Criteria).
@@ -192,7 +192,7 @@ Fica em `src/ReservationBook`.
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo
 ```
 
-Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e, quando o design tem diagrama, `lint_mermaid.py <design.md>`; siga o ciclo de correção de validation.md, Scripts; depois apresente o design e espere antes de começar as Tasks.
+Depois de gravar, faça a checagem de forma, inclusive dos diagramas (validation.md, Checagem de forma), e a revisão da entrada; depois apresente o design e espere antes de começar as Tasks.
 
 ### Exemplo didático parcial de reescrita
 

@@ -11,7 +11,7 @@ No passo Entender (workflow.md, Workflow), avalie o escopo, extraia os sinais do
 5. Depois da resposta, reclassifique uma vez e gere, sem segunda rodada.
 6. Se o usuário recusar discovery, gere com as lacunas previstas em Casos de borda, sem nova rodada.
 
-Perguntas ao apresentar o PRD pronto (workflow.md, Apresentar e iterar) e autorização de `--setup` (workflow.md, Scripts) ficam fora da rodada de pré-geração.
+Perguntas ao apresentar o PRD pronto (workflow.md, Apresentar e iterar) ficam fora da rodada de pré-geração.
 
 ## Escopo problemático
 
@@ -31,7 +31,7 @@ Documentos recebidos como input (PDF, docx, decks, atas, briefs e PRDs antigos) 
 
 - **Extraia antes de perguntar.** Levante do material os sinais que o PRD precisa (problema, evidência, usuário-alvo, direção, métricas, restrições) antes de fazer qualquer pergunta ao usuário.
 - **Inferência do discovery é `[PREMISSA]`.** O que você deduz do documento entra como `[PREMISSA]` derivada dele, com a origem entre parênteses ao fim da frase: nome do documento e página ou seção. Texto sem tag é fato, na definição de writing.md, Tags.
-- **Sintetize o material.** Preserve e reorganize a informação relevante. A busca das três frases mais longas do PRD no material identifica possível cópia literal; sua ausência não demonstra boa síntese. Com material em texto no disco, `python <skill-dir>/scripts/lint_prd.py <arquivo.md> --source <material>` seleciona e busca as frases, com uma opção por arquivo; cada frase encontrada sai como WARN (workflow.md, Scripts). Não selecione nem busque essas frases a olho. Para material sem busca textual, leia o trecho correspondente. A revisão de conteúdo verifica a síntese.
+- **Sintetize o material.** Preserve e reorganize a informação relevante. A busca das três frases mais longas do PRD no material identifica possível cópia literal; sua ausência não demonstra boa síntese. Com material em texto no disco, selecione as três frases de prosa mais longas do PRD (12 ou mais palavras, fora de tabela, heading e bloco de código) e busque cada uma no material com `grep -i -F`; frase encontrada é reformatação e se reescreve (workflow.md, Checar). Para material sem busca textual, leia o trecho correspondente. A revisão de conteúdo verifica a síntese.
 - **PRD antigo pede classificação.** Diante de um PRD antigo, determine qual é o caso: (a) ele serve de reverse PRD para um incremento, (b) ele é o documento a atualizar no lugar, ou (c) ele é só inspiração. O pedido decide: "incremento" ou feature nova sobre ele é (a), "atualize" ou "corrija" é (b), "como referência" ou "parecido com" é (c); pedido sem nenhum desses sinais pede a pergunta antes de gerar.
 - **Fontes conflitantes viram `[LACUNA]`.** Quando duas fontes se contradizem, registre a `[LACUNA]` com pedido de reconciliação. Não escolha um lado em silêncio.
 

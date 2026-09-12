@@ -5,9 +5,9 @@
 ### Caminho e numeração
 
 - O path é `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, com slug em kebab-case em inglês e sem prefixo `prd-`.
-- `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número com `seq.py next`, nunca lendo o diretório; a exceção é o PRD 0000, cujo número é fixo e não passa pelo contador.
-- `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000); `lint_prd.py` acusa como HARD a visão geral gravada em qualquer outro número.
-- O contador colide quando dois PRs paralelos alocam o mesmo número; `seq.py check` acusa a duplicata. Renumere o PRD do branch cujo merge acontece depois: mova o arquivo para um nome sem o prefixo `NNNN-` (o `next` recusa alocar enquanto a duplicata existe), rode `seq.py next /docs/prd --slug <domain-slug>-<feature-slug>`, mova o arquivo para o nome devolvido e rode `seq.py check` de novo.
+- `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número listando os `NNNN-*.md` da pasta e somando 1 ao maior; pasta sem PRD começa em 0001. A exceção é o PRD 0000, cujo número é fixo e não passa pelo contador.
+- `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000); visão geral gravada em qualquer outro número é achado da checagem de forma (workflow.md, Checar).
+- O contador colide quando dois PRs paralelos alocam o mesmo número; a checagem de forma acusa a duplicata (workflow.md, Checar). Renumere o PRD do branch cujo merge acontece depois: mova o arquivo para o próximo número livre da pasta, atualize quem o cita e confira a numeração de novo.
 - Sem repositório, use o mesmo layout sob o diretório de trabalho atual e diga no chat o caminho gravado.
 
 ### Edição no lugar
@@ -20,11 +20,11 @@
 O header tem estes elementos, nesta ordem:
 
 1. A primeira linha é `# Título`.
-2. Abaixo, uma tabela de duas colunas com um único campo, `Contexto Originário` (`Originating Context` em PRD em inglês). O valor é o contexto primário, seguido de `; afeta <contextos>` quando houver; o impacto em cada contexto afetado vai a Dependências e Riscos. Se DDD não se aplica, o rótulo é `Módulo` (`Module`) ou `Área` (`Area`); o linter aceita só esses três, e no PRD 0000 só `Escopo` (`Scope`).
-3. Depois, a linha de prefixo dos requisitos (writing.md, IDs). O rótulo é `Prefixo dos requisitos:` em PRD em português e `Requirement prefix:` em PRD em inglês — são essas duas formas que se escrevem, e o linter as reconhece (docstring de `lint_prd.py`).
+2. Abaixo, uma tabela de duas colunas com um único campo, `Contexto Originário` (`Originating Context` em PRD em inglês). O valor é o contexto primário, seguido de `; afeta <contextos>` quando houver; o impacto em cada contexto afetado vai a Dependências e Riscos. Se DDD não se aplica, o rótulo é `Módulo` (`Module`) ou `Área` (`Area`); a lista é fechada nesses três, e no PRD 0000 só `Escopo` (`Scope`).
+3. Depois, a linha de prefixo dos requisitos (writing.md, IDs). O rótulo é `Prefixo dos requisitos:` em PRD em português e `Requirement prefix:` em PRD em inglês — são essas as duas formas aceitas.
 4. Na mesma linha do prefixo, a frase que aponta o PRD 0000, quando ele existe.
 
-O PRD 0000 difere em três pontos: usa `Escopo` no lugar de `Contexto Originário`, não tem linha de prefixo e carrega `<!-- prd: overview -->` na primeira linha, por ser o único PRD que o linter trata de forma diferente. Nenhum outro comentário de máquina entra em PRD algum.
+O PRD 0000 difere em três pontos: usa `Escopo` no lugar de `Contexto Originário`, não tem linha de prefixo e carrega `<!-- prd: overview -->` na primeira linha, por ser o único PRD com forma própria. Nenhum outro comentário de máquina entra em PRD algum.
 
 O rótulo do campo segue o idioma do PRD; o nome do contexto preserva o termo do domínio.
 
@@ -55,4 +55,4 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 - Sem tradução de mesma força, o termo fica em inglês: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off.
 - Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem.
 - Fora das duas listas, traduza o termo só quando a tradução já aparece no material recebido ou no PRD 0000; caso contrário, mantenha o original em inglês.
-- O linter reconhece o par PT/EN de cada heading como alias; qual dos dois vale neste PRD é o `--lang` da tabela de Scripts (workflow.md, Scripts), que acusa o heading do outro idioma como WARN.
+- O par PT/EN de cada heading é alias; qual dos dois vale neste PRD é o idioma fixado, e heading do outro idioma é ocorrência da revisão (workflow.md, Revisão antes de apresentar).

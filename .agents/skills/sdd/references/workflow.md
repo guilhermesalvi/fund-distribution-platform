@@ -68,13 +68,13 @@ Sem delegação escrita, escolha de negócio é categoria 3 e escolha de solutio
   2. Convenção do repositório.
   3. Defaults desta skill.
 
-  A lista fechada de seções de cada artefato é default desta skill, degrau 3: HARD que decorre de um dos dois primeiros degraus é mantido, não corrigido (validation.md, Scripts).
+  A lista fechada de seções de cada artefato é default desta skill, degrau 3: achado de forma que decorre de um dos dois primeiros degraus é mantido, não corrigido (validation.md, Checagem de forma).
 
 ## Idioma e redação
 
 ### Idioma
 
-- **O artefato é escrito em português ou em inglês, nunca em outro idioma.** Os quatro linters casam os headings por igualdade com os aliases PT/EN da lista de seções do artefato, e cada lista traz os dois nomes: spec (specify.md, Seções), design (design.md, Seções), tasks (tasks.md, Seções do `tasks.md`) e ADR (adr.md, Template). Seção fora da lista é HARD em `lint_design.py`, `lint_tasks.py` e `lint_adr.py`; em `lint_spec.py` é WARN, porque spec real pode carregar seção herdada do PRD. Artefato em terceiro idioma sai com um achado por seção — HARD nos três, WARN na spec — e sem correção possível.
+- **O artefato é escrito em português ou em inglês, nunca em outro idioma.** A checagem de forma casa os headings por igualdade com os aliases PT/EN da lista de seções do artefato, e cada lista traz os dois nomes: spec (specify.md, Seções), design (design.md, Seções), tasks (tasks.md, Seções do `tasks.md`) e ADR (adr.md, Template). Seção fora da lista é achado em design, tasks e ADR; na spec, só a seção herdada do PRD é tolerada. Artefato em terceiro idioma sai com um achado por seção e sem correção possível.
 - Qual dos dois: o idioma do PRD; sem PRD, o do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, o do pedido; se o pedido mistura idiomas, português.
 - Quando o idioma que essa regra devolve não é português nem inglês, o artefato fica em inglês e a apresentação diz, em uma linha, qual era o idioma do material e que o artefato saiu em inglês por isso.
 - Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
@@ -84,4 +84,4 @@ Sem delegação escrita, escolha de negócio é categoria 3 e escolha de solutio
 
 ### Redação
 
-Aplique as [Convenções de escrita](prose.md#convenções-de-escrita). As heurísticas de redação e as tags que os linters verificam estão em (validation.md, Scripts).
+Aplique as [Convenções de escrita](prose.md#convenções-de-escrita). As heurísticas de redação e as tags conferidas estão em (validation.md, Checagem de forma).

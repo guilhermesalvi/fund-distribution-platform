@@ -109,7 +109,7 @@ Comece pela cobertura e mantenha a ordem definida para o relatório. Distinga ac
 
 ## Gaps e tasks de correção
 
-Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task `TCn` tem os mesmos campos de uma task (tasks.md, Campos) e entra na Rastreabilidade; rode `lint_tasks.py` de novo; com commit autorizado e conteúdo aprovado, o `tasks.md` alterado entra no commit da primeira `TC` (workflow.md, Aprovação e autorizações). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar; a re-derivação por desvio de comportamento (Desvios, abaixo) conta nessas duas rodadas.
+Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task `TCn` tem os mesmos campos de uma task (tasks.md, Campos) e entra na Rastreabilidade; repita a checagem de forma do `tasks.md` (validation.md, Checagem de forma); com commit autorizado e conteúdo aprovado, o `tasks.md` alterado entra no commit da primeira `TC` (workflow.md, Aprovação e autorizações). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar; a re-derivação por desvio de comportamento (Desvios, abaixo) conta nessas duas rodadas.
 
 ## Desvios
 
@@ -122,7 +122,7 @@ Teste de mutação roda quando o comando de mutação está declarado nesta muda
 
 Declarar o comando é obrigatório em dois casos: quando a tabela Riscos e técnicas do design tem linha de um destes três riscos, e só deles — dinheiro e cálculo financeiro; segurança e dado regulado; concorrência, duplicata e retry (design.md, Do risco à técnica) —, e quando o usuário pede mutação nesta mudança. Design com um desses três riscos e sem o comando declarado é gap do eixo 2: o risco não foi mitigado como o design prometeu. Fora dessas duas obrigações, declarar é opção do usuário.
 
-A obrigação vinda do design não espera o Verify quando há `tasks.md`: `lint_tasks.py` lê a tabela Riscos e técnicas do design e acusa como HARD a tabela Comandos de Gate sem a linha `Mutação` (tasks.md, Registro no `tasks.md`). Sem `tasks.md`, quem confere é você, no plano inline, antes de apresentá-lo.
+A obrigação vinda do design não espera o Verify quando há `tasks.md`: a checagem de forma do `tasks.md` lê a tabela Riscos e técnicas do design e acusa a tabela Comandos de Gate sem a linha `Mutação` (tasks.md, Registro no `tasks.md`). Sem `tasks.md`, quem confere é você, no plano inline, antes de apresentá-lo.
 
 Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap; ferramenta ausente é bloqueio com motivo, como o gate. Esta skill não descreve procedimento próprio de mutação.
 

@@ -1,58 +1,75 @@
 # Validação da SDD
 
-## Scripts
+## Checagem de forma
 
-Os scripts ficam em `scripts/`, no diretório desta skill; `<skill-dir>` é a pasta que contém `SKILL.md`, nunca a pasta `references/`, e rodam com `python3 <skill-dir>/scripts/<nome>.py` (ou `python`, onde `python3` não existir); rodar sem argumentos imprime a docstring completa. O `lint_mermaid.py` exige Node além do Python.
-
-### Ciclo básico
-
-1. Execute o linter no artefato gravado.
-2. Resolva primeiro erro de uso ou bloqueio de ambiente pela tabela abaixo.
-3. Separe HARD de forma mantidos por pedido/convenção dos demais HARD.
-4. Se não restar HARD corrigível, encerre o ciclo básico.
-5. Corrija os HARD corrigíveis e execute novamente: correção 1.
-6. Se ainda houver HARD corrigível, corrija e execute: correção 2.
-7. Se persistirem achados, apresente o artefato e relate cada um com o motivo, sem declarar validação completa.
-8. Trate cada WARN: corrija ou registre uma linha de razão no chat, exceto `prd-rev` desatualizado.
-9. Faça a revisão de conteúdo (Revisão por entrada) e aplique sua revalidação própria.
-
-| Situação | Ação | Consome uma correção do ciclo básico? |
-|---|---|---|
-| HARD de forma explicitamente exigida pelo pedido ou comprovada pela convenção | Mantenha e relate qual HARD e qual origem o mantém, com "mantido por pedido" ou "mantido por convenção" | Não |
-| Python/Node indisponível | Relate bloqueio de ambiente; apresente sem essa verificação e não afirme que validou | Não |
-| Mermaid exit 3 por parser ausente | Peça autorização de `--setup` uma vez, antes de apresentar; autorizada, instale e repita o linter; recusada/sem resposta, apresente sem essa verificação | Não |
-| Exit 2: arquivo ausente, opção desconhecida ou codificação fora de UTF-8 | Corrija a invocação como HARD; a execução inicial identifica o erro | Sim, quando há rodada de correção |
-| WARN `prd-rev` desatualizado | Re-derive os requisitos afetados e atualize o hash (specify.md, Comentário de máquina) | Não pode ser dispensado como WARN comum |
+Antes de apresentar um artefato, leia o arquivo gravado e confira cada item da lista do seu tipo. Todo achado se corrige antes de apresentar, com uma nova leitura do trecho corrigido; achado de forma exigido pelo pedido ou comprovado pela convenção fica como está e é relatado no chat com a origem, usando "mantido por pedido" ou "mantido por convenção" (Forma mantida por pedido ou convenção). Achado que não conseguiu corrigir é relatado ao apresentar, sem declarar validação completa. Depois da checagem, faça a revisão de conteúdo (Revisão por entrada).
 
 Apresentação com achados remanescentes é permitida; não equivale a aprovação nem abre a próxima entrada sem os pré-requisitos (workflow.md, Aprovação e autorizações). O gate do Execute tem protocolo próprio: execução inicial e até duas tentativas de correção, total de três execuções antes de parar (execute.md, Ciclo por task).
 
+### Numeração
+
+Antes de criar a pasta de uma mudança ou uma ADR, liste os filhos diretos da pasta, tome o maior `NNNN` e some 1; pasta sem item começa em 0001. O slug é kebab-case ASCII minúsculo. Antes de apresentar qualquer artefato numerado, confira que nenhum número se repete na pasta; a duplicata nasce quando dois branches alocam o mesmo número. Renumere o item cujo branch entra depois: mova-o para o próximo número livre, atualize quem o cita e confira de novo.
+
+### Spec
+
+- Comentário de máquina na primeira linha não vazia, na forma `<!-- sdd: spec | capability: <domínio>/<capability> [| prd: <path> | prd-rev: git:<hash>] -->` (specify.md, Comentário de máquina).
+- Linha de prefixo logo abaixo do título, na forma `Prefixo dos requisitos: \`RSV\`.` (ou `Requirement prefix:`).
+- `## Contexto` e `## Requisitos` presentes, sem seção duplicada; toda `##` na lista de Seções (specify.md, Seções), com a seção herdada do PRD como única tolerância.
+- Todo requisito com um `SHALL` por linha, num padrão EARS (WHEN, WHILE, WHERE, IF ou `The <system> SHALL`), na forma `- **PFX-NN** — texto`, sem termo vago.
+- Prefixo dos IDs igual ao declarado; ID único; ID aposentado (linha `Aposentados:`) não reutilizado; número pulado só quando consta dos aposentados.
+- Prefixo distinto de todo prefixo declarado em PRD e sem as duas primeiras letras em comum com algum deles.
+- Com `prd:`: o PRD existe; `prd-rev` igual a `git hash-object <prd>`; toda citação `X-nn` ou `X-NFR-nn` resolve para uma definição no PRD; `## Rastreabilidade` presente, com todo FR em escopo e todo cenário da tabela de Critérios de Aceitação que cita FR em escopo, e só IDs EARS que existem na spec; linha só com IDs de PRD que nenhum requisito cita começa com `Critério de design:`.
+- Contexto com 3 a 5 linhas; Requisitos com subtítulos `###` a partir de 8 requisitos e sem eles abaixo disso.
+- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração; todo link Markdown local resolve.
+
+### Design
+
+- Comentário de máquina `<!-- sdd: design | spec: ../spec.md [| scope: ...] -->` cujo `spec:` resolve para arquivo; todo ID em `scope:` existe na spec.
+- Toda `##` na lista de Seções, na ordem dela, sem seção vazia ou reduzida a "Nenhuma." ou "N/A" (design.md, Seções).
+- Sem `## Abordagens`, a última linha de `## Critérios de avaliação` é `Sem alternativa real: <motivo>`; com a seção, essa linha não existe.
+- Todo requisito `IF ... THEN` da spec (no escopo) citado em `## Tratamento de erros`.
+- Seção com mais de dez linhas de corpo só quando o assunto dela aparece em `## Riscos e técnicas`; em `## Componentes`, cada `- **Propósito:**` com uma frase e um propósito.
+- Todo bloco Mermaid lido linha a linha: fence fechado, sintaxe que renderiza, nenhuma palavra reservada como alias.
+- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+
+### Tasks
+
+- Comentário de máquina `<!-- sdd: tasks | spec: ../spec.md [| design: ./design.md] [| scope: ...] -->` cujos destinos resolvem para arquivo.
+- Parágrafo "Como este repositório testa" antes de `## Comandos de Gate`, com a contagem-base de testes do gate Build.
+- `## Comandos de Gate`, `## Plano de execução` e `## Rastreabilidade` presentes; toda `##` na lista de Seções (tasks.md, Seções do `tasks.md`).
+- Tabela Comandos de Gate com linhas só entre `quick`, `full`, `build` e `Mutação`, nenhuma célula de comando vazia; a linha `Mutação` presente quando a tabela Riscos e técnicas do design tem risco que obriga mutação (verify.md, Mutação); todo valor de `Gate` usado tem linha.
+- Cada task `### Tn:` ou `### TCn:` com ID único e os campos O quê, Onde, Depende de, Requisito, Interfaces, Pronto quando, Tests e Gate, uma vez cada e preenchidos (tasks.md, Campos).
+- `Pronto quando` com o comando do gate da task entre crases, copiado da tabela, e ao menos um critério de comportamento; `Tests` e `Gate` na combinação que o campo `Gate` fixa; última task de cada fase com `build`.
+- Todo requisito da spec (no escopo) com task e toda task com ao menos um requisito existente; `## Rastreabilidade` coerente com os campos `Requisito` nos dois sentidos.
+- Dependências só para trás na ordem do plano, sem ciclo e sem `T` dependendo de `TC`; toda task citada no plano com corpo e toda task `T` com corpo citada no plano.
+- `O quê` com um entregável; `Onde` com paths reconhecíveis; `Tests` `none` só quando todo path de `Onde` é config, schema ou migration.
+- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+
+### ADR
+
+- Título `# ADR NNNN: título`; linha `Participantes:` com nome antes da primeira `##`.
+- `## Contexto`, `## Decisão`, `## Alternativas consideradas` e `## Consequências` presentes, nessa ordem, sem seção vazia; nenhuma `##` fora dessas e de `## Regras derivadas`, que quando existe é a última (adr.md, Template).
+- Alternativas consideradas com tabela preenchida: cada linha com alternativa e razão.
+- Consequências com a linha `- Negativas: <texto>`.
+- `## Regras derivadas` com ao menos um bullet, cada um com o path do arquivo onde a regra vive entre crases (adr.md, Conformar e superseder).
+- `Substitui: NNNN` e `Substituída por: NNNN` apontando para ADR existente na pasta, com a linha recíproca na outra ADR.
+- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+
 ### Forma mantida por pedido ou convenção
 
-Pedido válido para manter um HARD nomeia literalmente a seção, o campo ou a forma de onde ele sai, por exemplo "inclua uma seção Plano de Rollout no design". Convenção válida é forma comprovada em pelo menos três artefatos commitados do mesmo tipo, ou escrita no AGENTS.md do repositório. Diga o número de exemplares no chat.
+Pedido válido para manter um achado de forma nomeia literalmente a seção, o campo ou a forma de onde ele sai, por exemplo "inclua uma seção Plano de Rollout no design". Convenção válida é forma comprovada em pelo menos três artefatos commitados do mesmo tipo, ou escrita no AGENTS.md do repositório. Diga o número de exemplares no chat.
 
 Para reconhecer uma convenção por exemplos, use a versão dos arquivos presente em HEAD. Liste os arquivos com `git ls-tree -r --name-only HEAD -- docs/specs` e filtre os Markdown do tipo em análise: `spec.md`, `design.md` ou `tasks.md`, separadamente. Leia cada exemplo com `git show "HEAD:<caminho>"`. A convenção precisa aparecer em pelo menos três desses exemplos. Um arquivo apenas staged ou untracked não conta. Uma alteração local em arquivo já commitado também não altera a convenção de HEAD. Se HEAD não existir, não há convenção comprovada por exemplos; a convenção escrita no guia do repositório continua sendo uma fonte válida. Para ADR, aplique o diretório e a seleção de (adr.md, Arquivo).
 
 ### Heurísticas de redação
 
-Escreva de forma declarativa. `lint_spec.py`, `lint_design.py`, `lint_tasks.py` e `lint_adr.py` acusam hedging, meta-narração e placeholder como WARN, cada um no seu artefato. Tag fora de `[PREMISSA]` e `[LACUNA]` é HARD nos quatro. A revisão aplica (prose.md, Checklist editorial), sem novo linter de estilo.
+Escreva de forma declarativa. Hedging, meta-narração, placeholder e tag fora de `[PREMISSA]` e `[LACUNA]` são achados da checagem de forma nos quatro artefatos. A revisão aplica (prose.md, Checklist editorial), sem novo ciclo de estilo.
 
-Linter verde comprova o esqueleto; a revisão confere o conteúdo.
-
-### Comandos
-
-| Antes de | Comando |
-|---|---|
-| criar a pasta de uma mudança ou uma ADR | `seq.py next <dir> --slug <slug>`: imprime `NNNN-<slug>` com o próximo número da pasta; recusa alocar sobre número duplicado |
-| apresentar qualquer artefato numerado | `seq.py check <dir>`: acusa número duplicado na pasta. Renumere o item cujo branch entra depois: mova-o para um nome sem o prefixo `NNNN-` (o `next` recusa alocar enquanto a duplicata existe), rode `seq.py next <dir> --slug <slug>`, mova-o para o nome devolvido e rode o check de novo |
-| apresentar a spec | `lint_spec.py <spec.md>` |
-| apresentar o design | `lint_design.py <design.md> --spec <spec.md>` |
-| apresentar as tasks | `lint_tasks.py <tasks.md> --spec <spec.md>` |
-| apresentar a ADR | `lint_adr.py <adr.md \| dir>` |
-| apresentar qualquer artefato com diagrama Mermaid | `lint_mermaid.py <arquivo.md \| dir>`: faz o parse de todo bloco Mermaid. Bloco que não passou ou fence sem fechamento é HARD, porque diagrama não validado é diagrama não entregue. `--self-test` prova a extração e o parser; `--setup` instala o parser com `npm ci`, é o único modo com rede e só roda quando o usuário o autorizou na sessão |
+Checagem de forma limpa comprova o esqueleto; a revisão confere o conteúdo.
 
 ## Revisão por entrada
 
-Faça esta revisão antes de apresentar cada artefato, além de rodar o linter. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
+Faça esta revisão antes de apresentar cada artefato, depois da checagem de forma. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
 
 A lista da entrada é fechada. Em Specify, Design, Tasks e ADR:
 
@@ -74,12 +91,12 @@ Em Execute e Verify os itens são binários, atendido ou não: item não atendid
 
 ### Revalidação após revisão
 
-A revisão vem depois do ciclo básico do linter. Se alterou o artefato, rode o linter uma vez mais, fora do teto do ciclo básico; corrija HARD uma vez e execute para conferir. Se persistir, liste no chat. Essa execução extra não reabre indefinidamente a revisão. O checklist editorial (prose.md, Checklist editorial) concretiza a revisão existente, sem nota, seção ou ciclo adicional.
+A revisão vem depois da checagem de forma. Se alterou o artefato, repita a checagem de forma sobre os trechos alterados; corrija o que achar uma vez e releia para conferir. Se persistir, liste no chat. Essa passada extra não reabre indefinidamente a revisão. O checklist editorial (prose.md, Checklist editorial) concretiza a revisão existente, sem nota, seção ou ciclo adicional.
 
 ### Specify
 
-- `SHALL` e ID único já são HARD de `lint_spec.py`, e padrão EARS é WARN dele; aqui: o padrão está correto, o valor de cada requisito é concreto e dá para escrever o teste que o afirma. Se não dá, reescreva o requisito.
-- Cada cenário dos Critérios de Aceitação do PRD aparece na Rastreabilidade com os IDs EARS que o cobrem: a presença é HARD de `lint_spec.py` quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
+- `SHALL`, ID único e padrão EARS já estão na checagem de forma; aqui: o padrão está correto, o valor de cada requisito é concreto e dá para escrever o teste que o afirma. Se não dá, reescreva o requisito.
+- Cada cenário dos Critérios de Aceitação do PRD aparece na Rastreabilidade com os IDs EARS que o cobrem: a presença já está na checagem de forma quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
 - Requisito que vem do PRD cita o ID e não reescreve a regra.
 - Nenhuma regra de negócio foi decidida por premissa nova na spec; premissa herdada do PRD, com origem anotada, não conta.
 - Toda inferência está marcada.
@@ -87,27 +104,27 @@ A revisão vem depois do ciclo básico do linter. Se alterou o artefato, rode o 
 
 ### Design
 
-- Profundidade proporcional ao risco: as linhas de cada seção não se contam a olho, `lint_design.py` acusa como WARN a seção acima de dez linhas de corpo; aqui você decide, para cada seção acusada, se o assunto dela aparece em Riscos e técnicas — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
+- Profundidade proporcional ao risco: a checagem de forma marca a seção acima de dez linhas de corpo; aqui você decide, para cada seção marcada, se o assunto dela aparece em Riscos e técnicas — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
 - Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
 - Nenhum comportamento decidido aqui que devia estar na spec.
-- Interfaces com tipos; a cobertura de todo `IF/THEN` da spec no tratamento de erros já é HARD de `lint_design.py`.
+- Interfaces com tipos; a cobertura de todo `IF/THEN` da spec no tratamento de erros já está na checagem de forma.
 - ADRs conformadas ou supersedidas (adr.md, Conformar e superseder).
 
 ### Tasks
 
-- Cobertura requisito para task e task para requisito já é HARD de `lint_tasks.py`; aqui: nenhuma task cita em `Requisito` um ID que ela não exercita.
+- Cobertura requisito para task e task para requisito já está na checagem de forma; aqui: nenhuma task cita em `Requisito` um ID que ela não exercita.
 - `Consome` e `Produz` consistentes entre as tasks e com o design, suficientes sem ler outra task; o executor também lê os requisitos citados e o trecho pertinente do design (tasks.md, Interfaces).
 - `Tests` coerente com a camada da task, com teste co-locado.
-- `Pronto quando` com critério de comportamento que a spec define; `lint_tasks.py` já exige que o comando entre crases seja o do gate da task e que exista critério além dele, o conteúdo do critério é você quem confere.
+- `Pronto quando` com critério de comportamento que a spec define; a checagem de forma já exige que o comando entre crases seja o do gate da task e que exista critério além dele; o conteúdo do critério é você quem confere.
 
 ### ADR
 
-Quatro itens, os que `lint_adr.py` não alcança porque são conteúdo, não forma:
+Quatro itens, os que a checagem de forma não alcança porque são conteúdo, não forma:
 
 - A decisão fixa convenção, restrição ou padrão que features futuras seguem; decisão local à feature é ocorrência, e o destino dela é o design (adr.md, Quando a decisão é de projeto).
 - Cada linha de Alternativas consideradas é uma alternativa realmente avaliada, derrubada contra os mesmos critérios que sustentam a decisão; alternativa escrita para encher a tabela é ocorrência.
 - A linha `Negativas` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
-- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas; o bullet e o path do arquivo já são HARD de `lint_adr.py` (adr.md, Conformar e superseder), aqui: cada regra listada é mesmo criada ou alterada por esta decisão, e ADR que não cria regra não tem a seção.
+- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas; o bullet e o path do arquivo já estão na checagem de forma (adr.md, Conformar e superseder), aqui: cada regra listada é mesmo criada ou alterada por esta decisão, e ADR que não cria regra não tem a seção.
 
 ### Execute
 

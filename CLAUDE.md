@@ -11,7 +11,7 @@ As regras por área ficam em `.claude/rules/` e carregam sozinhas quando um arqu
 - [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs` e `*Endpoint.cs` em `src/`.
 - [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
 
-As skills do repositório ficam em `.claude/skills/` e aparecem no menu `/`: `/prd` para requisitos de produto, `/sdd` para especificação, design, execução e verificação técnica, e `/ontology-from-transcript` para extrair conceitos de uma transcrição de especialista. O Claude Code também carrega a skill sozinho quando a tarefa se enquadra na descrição dela; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
+As skills do repositório ficam em `.claude/skills/` e aparecem no menu `/`: `/prd` para requisitos de produto, `/sdd` para especificação, design, execução e verificação técnica. O Claude Code também carrega a skill sozinho quando a tarefa se enquadra na descrição dela; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
 
 Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
 

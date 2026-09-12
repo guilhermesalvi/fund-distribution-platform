@@ -5,9 +5,6 @@
     <File Path=".claude/rules/tracing.md" />
   </Folder>
   <Folder Name="/.claude/skills/" />
-  <Folder Name="/.claude/skills/ontology-from-transcript/">
-    <File Path=".claude/skills/ontology-from-transcript/SKILL.md" />
-  </Folder>
   <Folder Name="/.claude/skills/prd/">
     <File Path=".claude/skills/prd/SKILL.md" />
   </Folder>

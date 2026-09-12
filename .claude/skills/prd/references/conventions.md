@@ -40,7 +40,7 @@ Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, cat�
 
 ## Idioma
 
-- **O PRD é escrito em português ou em inglês.** São os dois idiomas que o ferramental cobre: `--lang` aceita `pt` ou `en`, e a tabela de seções dá o nome de cada seção nos dois, o em português e, entre parênteses, o em inglês (writing.md, Seções). A precedência escolhe entre esses dois e não abre um terceiro.
+- **O PRD é escrito em português ou em inglês.** São os dois idiomas que a tabela de seções cobre: ela dá o nome de cada seção nos dois, o em português e, entre parênteses, o em inglês (writing.md, Seções). A precedência escolhe entre esses dois e não abre um terceiro.
 - Entre os dois, o idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem material, o idioma do pedido. Uma vez fixado, pedido explícito de idioma na sessão é precedência e o muda; mensagem em outro idioma sem esse pedido não muda.
 - Material, pedido ou pedido explícito de idioma fora desses dois: o PRD sai em inglês, e a apresentação abre com uma linha dizendo que ele está em inglês porque a skill escreve em português ou inglês. O termo de domínio continua no original nos dois casos (writing.md, Ubiquitous Language).
 - Termo canônico em inglês se traduz quando existe tradução de mesma força e reconhecimento:

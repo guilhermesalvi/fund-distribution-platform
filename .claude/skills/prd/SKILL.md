@@ -1,6 +1,6 @@
 ---
 name: prd
-description: 'Cria e refina PRDs de produto ou feature: problema, usuário, comportamento de negócio, requisitos e métricas. Use para especificação de produto; não para design técnico, tarefas, ADR ou documentação geral.'
+description: 'Cria e refina PRDs de produto ou feature: problema, usuário, comportamento de negócio, requisitos com ID, métricas e trade-offs. Use para "PRD", "product requirements", "especificação de produto", "vamos documentar/especificar essa feature", inclusive PRD do que já existe e pedido enquadrado como tela ou CRUD; não para tech spec, design, tasks, ADR, notas de reunião, documentação geral ou spec de API sem contexto de produto.'
 ---
 
 # PRD Writer

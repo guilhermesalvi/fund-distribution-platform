@@ -8,7 +8,7 @@
 
 ### Checar
 
-Leia o PRD gravado e confira cada item da lista abaixo. Todo achado se corrige antes de apresentar, com uma nova leitura do trecho corrigido; achado de forma exigido pelo pedido ou comprovado pela convenção fica como está e é informado no chat com a fonte, usando "mantido por pedido" ou "mantido por convenção". Achado que você não conseguiu corrigir é relatado ao apresentar, sem declarar validação completa. Depois da checagem, faça a revisão de cinco itens (workflow.md, Revisão antes de apresentar).
+Leia o PRD gravado e confira cada item da lista abaixo. Corrija todo achado e releia o arquivo inteiro; são no máximo duas rodadas de correção. Se a segunda ainda terminar com achado, apresente o PRD e liste no chat cada achado remanescente com o motivo, sem declarar validação completa. Achado de forma exigido pelo pedido ou comprovado pela convenção fica como está, é informado no chat com a fonte, usando "mantido por pedido" ou "mantido por convenção", e não conta como rodada. Depois da checagem, faça a revisão de cinco itens (workflow.md, Revisão antes de apresentar).
 
 1. **Numeração.** O número do arquivo é único na pasta: liste os `NNNN-*.md` sob `/docs/prd` e confira que nenhum outro usa o mesmo número (conventions.md, Caminho e numeração).
 2. **Header.** Título `#`, tabela de um campo com um dos rótulos aceitos, linha de prefixo na forma fixada e, quando existe PRD 0000, a frase que o aponta (conventions.md, Header).
@@ -21,7 +21,7 @@ Leia o PRD gravado e confira cada item da lista abaixo. Todo achado se corrige a
 9. **Tags e placeholders.** Só `[PREMISSA]` e `[LACUNA]` entre colchetes; nenhum TBD, TODO ou `[nome]`; nenhum parágrafo de prosa repetido de outro PRD da pasta.
 10. **Síntese do material.** Com material de discovery em texto, as três frases mais longas do PRD não aparecem literalmente nele (intake.md, Material de discovery).
 
-Pedido válido para manter um achado é o da sessão que nomeia literalmente a seção, o campo ou a forma que o provoca, como "inclua uma seção Plano de Rollout". A precedência é definida na raiz (SKILL.md, Precedência). Convenção se comprova pela regra seguinte.
+Pedido válido para manter um achado é o da sessão que nomeia literalmente a seção, o campo ou a forma que o provoca, como "inclua uma seção Plano de Rollout". A precedência é definida na raiz (SKILL.md, Limites). Convenção se comprova pela regra seguinte.
 
 ### Convenção em HEAD
 

@@ -1,6 +1,6 @@
 ---
 name: sdd
-description: 'Especifica, projeta, planeja, implementa e verifica mudanças com requisitos técnicos rastreáveis. Use para SDD, tech spec, retomada de mudança ou implementação não trivial; não para PRD, discovery, ADR isolada, code review sem spec ou refactor mecânico.'
+description: 'Especifica, projeta, planeja, implementa e verifica mudanças com requisitos técnicos rastreáveis (Specify, Design, Tasks, Execute, Verify). Use para "tech spec", "spec" de comportamento do sistema, "design da solução", "quebre em tasks", "implemente a spec", "verifique a implementação", "retome" uma mudança, "documente a spec do módulo X" e ao implementar feature não trivial mesmo sem citar spec; não para PRD, discovery, ADR isolada, code review sem spec ou refactor mecânico.'
 ---
 
 # Spec-Driven Development

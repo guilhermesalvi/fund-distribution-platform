@@ -12,6 +12,8 @@ import os
 import re
 import unicodedata
 import unittest
+import tempfile
+from unittest import mock
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.dirname(SCRIPTS)
@@ -68,7 +70,7 @@ def script_flags(path):
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
-OWN_FILES = "intake|writing|modes|example|SKILL"
+OWN_FILES = "intake|writing|modes|example|workflow|conventions|prose|SKILL"
 CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 
@@ -157,6 +159,61 @@ class DocsConsistency(unittest.TestCase):
                 self.assertIn(fname, own, f"{md}:{line}: cita {fname} inexistente")
                 self.assertTrue(section_exists(own[fname], title),
                                 f"{md}:{line}: cita '{fname}, {title}' que nao existe em {fname}")
+
+
+
+class DocumentationFixtures(unittest.TestCase):
+    """Exercise production documentation checks on disposable text copies."""
+
+    def check_fixture(self, texts, method):
+        with tempfile.TemporaryDirectory() as folder:
+            os.makedirs(os.path.join(folder, "references"))
+            for name, text in texts.items():
+                target = os.path.join(folder, name)
+                with open(target, "w", encoding="utf-8", newline="\n") as stream:
+                    stream.write(text)
+            with mock.patch.dict(globals(), {"SKILL": folder}):
+                getattr(DocsConsistency(), method)()
+
+    def test_new_reference_headings_resolve(self):
+        for name, heading in (("workflow", "Workflow"), ("conventions", "Gravar"),
+                              ("prose", "Convenções de escrita")):
+            with self.subTest(name=name):
+                texts = {os.path.relpath(path, SKILL): read(path) for path in md_files(SKILL)}
+                texts["references/citation.md"] = f"({name}.md, {heading})"
+                self.check_fixture(texts, "test_own_citations_resolve")
+
+    def test_missing_new_reference_headings_fail(self):
+        for name in ("workflow", "conventions", "prose"):
+            with self.subTest(name=name), self.assertRaisesRegex(AssertionError, "nao existe"):
+                texts = {os.path.relpath(path, SKILL): read(path) for path in md_files(SKILL)}
+                texts["references/citation.md"] = f"({name}.md, Missing heading)"
+                self.check_fixture(texts, "test_own_citations_resolve")
+
+    def test_old_root_headings_fail(self):
+        for heading in ("Workflow", "Scripts", "Gravar", "Idioma"):
+            with self.subTest(heading=heading), self.assertRaisesRegex(AssertionError, "nao existe"):
+                # The real router has dependencies; retain their actual text so
+                # only the deliberately stale citation can fail.
+                texts = {os.path.relpath(path, SKILL): read(path) for path in md_files(SKILL)}
+                texts["references/stale.md"] = f"(SKILL.md, {heading})"
+                self.check_fixture(texts, "test_own_citations_resolve")
+
+    def test_existing_markdown_link_passes(self):
+        self.check_fixture({"SKILL.md": "[Process](references/workflow.md)",
+                            "references/workflow.md": "# Process"}, "test_internal_links_resolve")
+
+    def test_missing_markdown_link_fails(self):
+        with self.assertRaisesRegex(AssertionError, "nao resolve"):
+            self.check_fixture({"SKILL.md": "[Missing](references/missing.md)"},
+                               "test_internal_links_resolve")
+
+    def test_closed_fence_passes(self):
+        self.check_fixture({"SKILL.md": "```text\npartial example\n```\n"}, "test_fences_close")
+
+    def test_open_fence_fails(self):
+        with self.assertRaisesRegex(AssertionError, "fence sem fechamento"):
+            self.check_fixture({"SKILL.md": "```text\npartial example\n"}, "test_fences_close")
 
 
 if __name__ == "__main__":

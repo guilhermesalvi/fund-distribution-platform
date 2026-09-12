@@ -37,12 +37,9 @@ caracteres; fecha com o mesmo caractere e comprimento >= abertura) e
 ignorado. O PRD nunca carrega resultado de lint: a saida e feedback para quem
 escreve, que corrige e roda de novo.
 
-O linter tambem nao julga os dois motivos de manter um HARD (SKILL.md, passo
-Checar): o pedido da sessao, que precisa nomear literalmente a secao, o campo
-ou a forma de onde o HARD sai, e a convencao do repositorio, que precisa
-aparecer em tres ou mais PRDs commitados da pasta - conte os commitados com
-`git ls-files` na pasta, o linter nao distingue arquivo commitado de arquivo em
-elaboracao - ou estar escrita no AGENTS.md do repositorio.
+The linter does not decide form exceptions. The correction cycle and reasons
+for retaining a HARD are defined in references/workflow.md (workflow.md, Checar).
+The evidence for repository conventions is defined in (workflow.md, Convenção em HEAD).
 
 HARD (exit 1):
   - titulo H1 ('# ...') ausente;
@@ -57,7 +54,7 @@ HARD (exit 1):
     substring);
   - PRD com IDs sem a linha `Prefixo dos requisitos: `X`.` entre o titulo e
     a primeira secao (em PRD em ingles, `Requirement prefix: `X`.`; sao essas
-    as duas formas escritas - SKILL.md, Header); definicao
+    as duas formas escritas - conventions.md, Header); definicao
     `- **X-nn (Must)**` / `- **X-NFR-nn**` com prefixo diferente do
     declarado; `FR-nn` / `NFR-nn` sem prefixo;
   - FR definido sem prioridade MoSCoW (`- **X-nn (Must)**`); NFR nao leva
@@ -304,7 +301,7 @@ BULLET = re.compile(r"^\s{0,3}[-*+]\s+")
 # Corpo de secao reduzido a uma dessas linhas conta como secao sem conteudo.
 NO_CONTENT_LINES = frozenset(("nenhuma", "nenhum", "n/a", "nao se aplica"))
 
-# Campo de contexto da tabela do header (SKILL.md, Gravar): lista fechada de
+# Campo de contexto da tabela do header (conventions.md, Gravar): lista fechada de
 # rotulos aceitos, cada um mapeado ao nome usado na mensagem. A visao geral usa
 # outro campo.
 HEADER_FIELD = {
@@ -1117,8 +1114,8 @@ def lint_doc(doc, lang=None, sources=(), reverse=False):
              "a visao geral e o unico PRD que o linter trata diferente.", 1)
     if doc.is_overview and doc.number != 0:
         hard(f"visao geral numerada {doc.number:04d}; o numero da visao geral e "
-             "fixo em 0000 e nao passa pelo contador de `seq.py` (SKILL.md, "
-             "Caminho e numeracao). Renomeie para '0000-<slug>-overview.md'.", 1)
+             "fixo em 0000 e nao passa pelo contador de `seq.py` (conventions.md, "
+             "Caminho e numeração). Renomeie para '0000-<slug>-overview.md'.", 1)
 
     start = doc.body_start()
     body_lines = [raw if doc.visible(start + k) else "" for k, raw in enumerate(lines[start:])]

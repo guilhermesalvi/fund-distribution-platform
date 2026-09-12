@@ -4,7 +4,7 @@
 
 ## Pré-requisito e destino
 
-- **Pré-requisito:** o da tabela de SKILL.md, Abrir uma mudança.
+- **Pré-requisito:** o da tabela de workflow.md, Abrir uma mudança.
 - **Destino:** grave o artefato em `<capability>/NNNN-<change-slug>/tasks.md` (specify.md, Layout).
 - **Sem design:** a estrutura da mudança (arquivos, componentes, o que reusa) vai num parágrafo no topo do `tasks.md`.
 
@@ -50,6 +50,10 @@ A linha `Mutação` é onde o comando de mutação da mudança fica declarado qu
 
 Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas: se o campo `O quê` precisa de "e" para ligar dois entregáveis, são duas tasks; teste e registro do mesmo entregável não contam como segundo entregável.
 
+### Forma de escrita
+
+O título identifica o entregável. O campo Onde distingue criação e modificação de arquivos. Interfaces identifica contratos consumidos e produzidos. Pronto quando descreve resultados que podem ser conferidos e coloca o comando do gate em item próprio. Evite expressões que obriguem o executor a adivinhar a referência, como “o acima”, “o anterior” ou “similar à outra task”. Preserve todos os campos e os IDs. As especificações de comportamento e de interface já existentes continuam sendo a fonte dos valores esperados.
+
 ### Teste co-locado
 
 - Task que cria ou modifica uma camada com tipo de teste exigido inclui escrever esses testes na mesma task. "Testado na task N" é adiamento.
@@ -63,13 +67,17 @@ Toda task tem os campos abaixo:
 | Campo | Conteúdo |
 |---|---|
 | **O quê** | Uma frase: o entregável exato |
-| **Onde** | Paths reais de todos os arquivos que a task cria ou modifica |
+| **Onde** | Paths reais de todos os arquivos a criar ou modificar, distinguindo cada caso em texto |
 | **Depende de** | IDs de task, ou `nenhuma`. A dependência aponta só para trás na ordem do Plano de execução (fase anterior ou task anterior da mesma fase); o linter acusa o contrário |
 | **Requisito** | IDs da spec que a task atende; task de refactor cita os IDs que preserva |
-| **Interfaces** | *Consome:* o que a task usa de tasks anteriores, com assinatura. *Produz:* o que tasks posteriores vão usar: nomes, parâmetros, retornos. O executor só vê a própria task |
-| **Pronto quando** | Critérios binários: ao menos um de comportamento (o resultado que a spec define) e o comando do gate da task, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; `lint_tasks.py` acusa como HARD o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
-| **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho |
+| **Interfaces** | *Consome* e *Produz*: nomes, parâmetros, tipos de retorno, erros e contratos externos relevantes definidos na spec/design (Interfaces) |
+| **Pronto quando** | Critérios binários ligados a IDs: ao menos um de comportamento, com preparação, ação e resultado da spec quando exigir valores concretos; o comando do gate fica em item separado, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Comandos de Gate; `lint_tasks.py` acusa como HARD o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
+| **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho; os testes descritos na task são escritos e executados nela |
 | **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`, na ordem: a última task de cada fase exige `build`, seja qual for o `Tests`; `none` exige `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho exige `quick`. Todo valor usado tem linha na tabela de Comandos de Gate, que dá o comando dele; `lint_tasks.py` acusa como HARD toda combinação de `Tests` e `Gate` fora desta regra |
+
+### Interfaces
+
+A task deve definir as interfaces que consome e produz sem depender da leitura de outras tasks. O executor lê também os requisitos que ela cita e o trecho pertinente do design. Esses documentos continuam sendo a fonte do comportamento e das decisões técnicas. Interface ausente nesses documentos não deve ser inventada.
 
 ### Sem placeholder
 
@@ -85,7 +93,7 @@ Nenhum destes entra numa task:
 
 ## Seções do `tasks.md`
 
-A lista é fechada: `lint_tasks.py` acusa como HARD a seção `##` fora dela. O nome entre parênteses é o heading do `tasks.md` escrito em inglês (SKILL.md, Idioma).
+A lista é fechada: `lint_tasks.py` acusa como HARD a seção `##` fora dela. O nome entre parênteses é o heading do `tasks.md` escrito em inglês (workflow.md, Idioma).
 
 - **Comandos de Gate** (Gate Commands) dá o comando de cada gate (Registro no `tasks.md`).
 - **Plano de execução** (Execution Plan) lista as fases e a ordem das tasks.
@@ -95,6 +103,8 @@ A lista é fechada: `lint_tasks.py` acusa como HARD a seção `##` fora dela. O 
 - **Tasks de correção** (Correction Tasks) recebe as tasks que o Verify gera: IDs `TCn` sob `## Tasks de correção`, fora do Plano de execução.
 
 Fora da lista, no comentário de máquina: mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
+
+Exemplo didático completo de formato: as dependências indicadas são pressupostas somente neste exemplo. Uma task real substitui os contratos ilustrativos pelos verificados na base e na spec aprovada. A contagem-base ilustrativa não é evidência de execução.
 
 ## Template
 
@@ -121,7 +131,7 @@ T1 → T2
 
 ### T1: Criar `PartialReservation` value object
 - **O quê:** value object com a quantidade reservada, validação contra o investimento mínimo (RSV-07) e seus testes unitários
-- **Onde:** `src/ReservationBook/Reservations/PartialReservation.cs`; `tests/UnitTests/Reservations/PartialReservationTests.cs`
+- **Onde:** `src/ReservationBook/Reservations/PartialReservation.cs` — criar; `tests/UnitTests/Reservations/PartialReservationTests.cs` — criar
 - **Depende de:** nenhuma
 - **Requisito:** RSV-07, RSV-08
 - **Interfaces:**
@@ -134,16 +144,45 @@ T1 → T2
 - **Tests:** unit
 - **Gate:** quick
 
-### T2: …
+### T2: Integrar a validação de reserva ao caso de uso
+- **O quê:** integrar a validação de PartialReservation ao caso de uso de reserva e verificar os resultados definidos para investimento mínimo
+- **Onde:** `src/ReservationBook/Reservations/ReservationService.cs` — modificar; `tests/UnitTests/Reservations/ReservationServiceTests.cs` — criar
+- **Depende de:** T1
+- **Requisito:** RSV-07, RSV-08
+- **Interfaces:**
+  - Consome: `PartialReservation.Create(Quantity amount, InvestmentLimits limits): Result<PartialReservation, ReservationError>`
+  - Produz: `ReservationService.Place(PlaceReservation cmd, CancellationToken ct): Task<Result<Reservation, ReservationError>>`
+- **Pronto quando:**
+  - [ ] Com limites de investimento preparados no teste, uma quantidade inferior ao mínimo resulta em ReservationError.MinInvestmentNotMet (RSV-07)
+  - [ ] Com os mesmos limites, uma quantidade válida é aceita e seu valor é preservado na reserva (RSV-08)
+  - [ ] Gate passa: `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx`
+- **Tests:** unit
+- **Gate:** build
 
 ## Rastreabilidade
 
 | Requisito | Tasks |
 |---|---|
-| RSV-07 | T1 |
+| RSV-07 | T1, T2 |
 | RSV-08 | T1, T2 |
 ```
 
 ## Antes de apresentar
 
-Rode `lint_tasks.py <tasks.md> --spec <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts; depois apresente e espere.
+Rode `lint_tasks.py <tasks.md> --spec <spec.md>` e siga o ciclo de correção de validation.md, Scripts; depois apresente e espere.
+
+### Exemplo didático parcial de reescrita
+
+Fragmento de escrita; não é um artefato completo nem evidência de uma execução real.
+
+```text
+Antes: Escrever testes para validar corretamente a rejeição e garantir
+que tudo funciona.
+
+Depois: Preparar limites de investimento no teste e chamar Create com
+quantidade inferior ao mínimo. Conferir o resultado
+ReservationError.MinInvestmentNotMet, conforme RSV-07.
+
+Origem do resultado: o contrato usado no template didático de Tasks.
+Na task real, o valor deve vir da spec efetivamente aprovada.
+```

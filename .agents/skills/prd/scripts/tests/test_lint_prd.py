@@ -683,7 +683,7 @@ class OverviewTests(LintCase):
 
     def test_overview_outside_zero_is_hard(self):
         """O numero da visao geral e fixo em 0000 e nao passa pelo contador
-        (SKILL.md, Caminho e numeracao)."""
+        (conventions.md, Caminho e numeracao)."""
         self.write("0002-onb-x.md", prd(link_0000="0001-platform-overview.md"))
         self.write("0001-platform-overview.md", overview())
         rc, out = self.run_lint()
@@ -1348,7 +1348,7 @@ class SectionTableSyncTest(unittest.TestCase):
                                  f"'{name}' nao casa exatamente um alias de SECTIONS")
 
     def test_every_row_names_the_section_in_both_languages(self):
-        """O PRD e escrito em portugues ou em ingles (SKILL.md, Idioma), entao
+        """O PRD e escrito em portugues ou em ingles (conventions.md, Idioma), entao
         a tabela da o nome nos dois: sem isso o alias en so existiria no codigo
         e o HARD de secao fora da tabela nao teria fonte escrita em ingles."""
         for cell in self.table_sections():

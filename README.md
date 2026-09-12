@@ -115,6 +115,15 @@ Três skills de agente em `.agents/skills/`. Duas cobrem o caminho do problema a
 | [ontology-from-transcript](.agents/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
 | [sdd](.agents/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
+Os `SKILL.md` selecionam a entrada e as referências necessárias. Processo, formato e escrita têm fontes distintas dentro de cada pacote; uma correção localizada lê o trecho afetado, suas dependências e seus citadores. A leitura seletiva mantém as validações exigidas.
+
+| Pacote | Processo e convenções | Escrita e exemplos |
+| --- | --- | --- |
+| PRD | [workflow.md](.agents/skills/prd/references/workflow.md): geração, checagem e revisão; [conventions.md](.agents/skills/prd/references/conventions.md): gravação e idioma | [prose.md](.agents/skills/prd/references/prose.md): política editorial local; [writing.md](.agents/skills/prd/references/writing.md): regras e formas por seção; [example.md](.agents/skills/prd/references/example.md): PRD completo e reescrita didática |
+| SDD | [workflow.md](.agents/skills/sdd/references/workflow.md): pré-requisitos e autorizações; [validation.md](.agents/skills/sdd/references/validation.md): scripts, ciclos e rubricas | [prose.md](.agents/skills/sdd/references/prose.md): política editorial local; cada referência de entrada traz seu perfil de escrita e os exemplos pertinentes |
+
+As políticas editoriais preservam IDs, tags, formatos, modalidades e significado. A revisão usa os ciclos existentes; exemplos parciais em blocos `text` ilustram a redação e não constituem evidência de execução. As referências de escrita dos dois pacotes são independentes.
+
 Pré-requisitos dos scripts: Python 3 (testado com 3.14 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs e dos designs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede). Cada skill é um pacote autocontido e traz o seu parser:
 
 ```bash
@@ -148,6 +157,16 @@ python3 .agents/skills/sdd/scripts/lint_mermaid.py docs/specs
 
 A CI executa o gate em todo push e pull request e, em pull requests, valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [AGENTS.md](AGENTS.md).
 
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; nos dois `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (nenhum dos outros linters chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
+Semântica da saída dos linters: `HARD` retorna exit 1; sua correção, as exceções de forma por pedido/convenção e a apresentação com achados após o teto seguem [Checar da PRD](.agents/skills/prd/references/workflow.md#checar) ou [Scripts da SDD](.agents/skills/sdd/references/validation.md#scripts). Apresentar com achados não comprova validação nem aprovação. Nos dois `lint_mermaid.py`, `HARD INCOMPLETO` indica validação não realizada por parser ausente, nunca sucesso, com exit 3; a autorização de setup e a apresentação sem essa verificação seguem os mesmos ciclos. `WARN` é heurística e não afeta o exit; cada ciclo define seu tratamento. Exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos. O gate do repositório mantém seu limite de zero HARD e bloqueia commit quando algum check falha.
 
 A CI não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.
+
+Testes da reforma das skills, já descobertos pela suíte do gate em `.github/scripts/tests`:
+
+```bash
+python3 -m unittest discover -s .github/scripts/tests -p test_skill_snapshot.py
+python3 -m unittest discover -s .github/scripts/tests -p test_skill_routing.py
+python3 -m unittest discover -s .github/scripts/tests -p test_skill_editorial.py
+```
+
+`test_skill_snapshot.py` reproduz em Git temporário a diferença entre HEAD, índice e árvore de trabalho. `test_skill_routing.py` confere o contrato estrutural das entradas. `test_skill_editorial.py` verifica políticas locais, remissões, perfis e exemplos parciais, mantendo os templates completos sob as suítes dos linters. Os dois últimos não medem a decisão de um modelo nem a qualidade editorial do resultado; essas avaliações precisam de evidência própria.

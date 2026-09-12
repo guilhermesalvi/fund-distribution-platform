@@ -850,7 +850,7 @@ class MutationRisksInSyncWithReferencesTest(unittest.TestCase):
 
 
 class TemplateRegressionTest(LintTasksBase):
-    """O template de references/tasks.md, com a T2 elidida preenchida, linta
+    """O template completo de references/tasks.md, incluindo T2, linta
     sem HARD contra uma spec com os IDs que ele cita."""
 
     def template(self):
@@ -873,8 +873,7 @@ class TemplateRegressionTest(LintTasksBase):
 
     @staticmethod
     def traced(tpl, tid):
-        """Requisitos que a Rastreabilidade do template atribui a `tid`: a T2
-        elidida cita o que a tabela ja diz que ela atende."""
+        """Requisitos que a Rastreabilidade do template atribui a `tid`."""
         out = []
         for l in tpl.splitlines():
             if not l.strip().startswith("|"):
@@ -894,11 +893,10 @@ class TemplateRegressionTest(LintTasksBase):
         self.assertTrue(t2, "Rastreabilidade do template nao atribui requisito a T2")
         build = self.row_command(tpl, "Build")
         self.assertTrue(build, "template sem comando na linha Build de Comandos de Gate")
-        # T2 fecha a Fase 1 do plano do template: Gate build, com o comando que
-        # a linha Build da tabela do proprio template declara.
-        tpl = re.sub(r"### T2: …\n(?:<!--.*?-->\n)?",
-                     task("T2", deps="T1", req=", ".join(t2), tests="unit", gate="build",
-                          gate_cmd=build), tpl)
+        # Validate the actual complete T2; never synthesize a missing task.
+        self.assertNotIn("### T2: …", tpl)
+        self.assertIn("### T2: Integrar a validação de reserva ao caso de uso", tpl)
+        self.assertEqual(t2, ["RSV-07", "RSV-08"])
         code, out = self.run_lint(tpl, spec=spec)
         self.assertNoHard(out)
         self.assertEqual(code, 0)

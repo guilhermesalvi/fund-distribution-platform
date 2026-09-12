@@ -2,7 +2,7 @@
 
 **Objetivo:** definir *como* construir — estrutura, componentes, interfaces e o que reusar — com profundidade proporcional ao **risco** da mudança, não ao seu tamanho. O design não decide comportamento: se uma decisão de comportamento for necessária, volte à spec e resolva lá.
 
-Pré-requisito: o da tabela de SKILL.md, Abrir uma mudança. Grave o design em `<capability>/NNNN-<change-slug>/design.md`; o layout de pastas e o comentário de máquina estão descritos em specify.md (specify.md, Layout).
+Pré-requisito: o da tabela de workflow.md, Abrir uma mudança. Grave o design em `<capability>/NNNN-<change-slug>/design.md`; o layout de pastas e o comentário de máquina estão descritos em specify.md (specify.md, Layout).
 
 ## Carregar contexto
 
@@ -22,7 +22,7 @@ Não leia a base inteira; a spec é o guia de foco.
 1. Identifique os módulos e arquivos ligados ao escopo. Leia a estrutura de diretórios antes de abrir qualquer arquivo.
 2. Leia nesta ordem: interfaces e contratos; entidades de domínio; serviços e casos de uso; infraestrutura. Abra a implementação completa só quando assinatura e nome não bastam.
 3. Declare o que foi lido e o que foi ignorado, na forma: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
-4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto; conte os arquivos da camada com `git ls-files '<glob da camada>'`, o mesmo limite que decide se a mudança pede design (SKILL.md, Quanto artefato a mudança pede).
+4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto; conte os arquivos rastreados da camada com `git ls-files '<glob da camada>'`, o mesmo limite que decide se a mudança pede design (workflow.md, Quanto artefato a mudança pede).
 5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Riscos e técnicas, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[PREMISSA]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
 6. Reuso: cada componente novo referencia o componente existente que ele segue; componente sem reuso justifica por quê.
 
@@ -47,8 +47,16 @@ Não imponha estilo arquitetural: o design fala a língua da base (ports e adapt
 Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois da proposta vira racionalização. A ordem é fixa: critérios, crítica dos critérios e só então abordagens.
 
 1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
-2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space é o usuário quem fixa, aqui no design. Sem delegação escrita para o solution space (SKILL.md, Tags e dúvidas), apresente os critérios e a crítica e espere a resposta antes de propor qualquer abordagem. Quando todos os critérios vêm de NFR do PRD e a crítica não encontrou lacuna, apresente critérios, crítica e a abordagem recomendada juntos, numa única espera; a existência de alternativa real é avaliada depois da resposta. Se essa avaliação encontrar alternativa real, a confirmação da abordagem do item 3 é uma segunda espera, e é a única.
-3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes, salvo delegação escrita para o solution space (SKILL.md, Tags e dúvidas). Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
+2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space segue os ramos abaixo (workflow.md, Tags e dúvidas).
+3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes, salvo delegação escrita para o solution space (workflow.md, Tags e dúvidas). Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
+
+| Situação | Critérios e crítica | Abordagens e espera |
+|---|---|---|
+| Delegação escrita para solution space | Fixe os critérios e critique-os | Decida a abordagem; permanece a apresentação/aprovação do artefato |
+| Sem delegação; todos os critérios vêm de NFR do PRD e a crítica não encontrou lacuna | Apresente critérios, crítica e recomendação juntos, numa única espera | Depois da resposta, avalie alternativa real; se houver, a confirmação da abordagem do item 3 é a segunda e única espera adicional |
+| Demais casos, sem delegação | Apresente critérios e crítica e espere a resposta antes de propor abordagem | A abordagem com alternativa real exige confirmação antes de detalhar componentes, conforme item 3 |
+
+Convenção conflitante deve ser exposta pela precedência (workflow.md, Tags e dúvidas). Não invente alternativas para preencher quantidade; critérios → crítica → abordagens permanece a ordem.
 
 ### As quatro perguntas de uma decisão arquitetural
 
@@ -65,6 +73,10 @@ A quarta é sempre respondida: complexidade (componentes × interconexões) é c
 - **Domain events.** Para cada evento: produtor, consumidores conhecidos, payload semântico, chave de partição ou de ordenação, garantia de entrega e versionamento. At-least-once é a garantia normal; a idempotência do consumidor é o que torna a reentrega segura. Evento mal documentado é acoplamento implícito entre contextos.
 - **Modelo de dados.** Presente quando a feature toca persistência: entidades, relacionamentos, invariantes e migração.
 - **Tratamento de erro.** Uma linha por cenário: cenário (com o ID do requisito), tratamento e impacto. Todo `IF … THEN` da spec aparece aqui, com o mecanismo escolhido para tratá-lo.
+
+### Forma de escrita
+
+Descreva cada escolha com o elemento afetado, a decisão e a restrição que a justifica. Nas tabelas, compare alternativas pelos mesmos critérios. Em componentes, mantenha propósito, localização, interfaces, dependências e reuso. Preserve as assinaturas e os limites já aprovados. Um adjetivo de qualidade precisa apontar para o risco, requisito ou critério que o sustenta. A explicação de uma decisão pode ocupar um parágrafo; não a fragmente em bullets independentes quando as frases formam o mesmo raciocínio.
 
 ## Unidade de deploy e reuso
 
@@ -103,7 +115,7 @@ Decisão que fixa convenção, restrição ou padrão para features futuras vira
 
 ## Seções
 
-Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: `lint_design.py` acusa como HARD a seção `##` fora dela e a seção fora desta ordem. O nome entre parênteses é o heading do design escrito em inglês (SKILL.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
+Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: `lint_design.py` acusa como HARD a seção `##` fora dela e a seção fora desta ordem. O nome entre parênteses é o heading do design escrito em inglês (workflow.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
 
 1. Contexto de design (Design Context) — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
 2. Critérios de avaliação (Evaluation Criteria).
@@ -117,6 +129,8 @@ Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fe
 10. Tratamento de erros (Error handling).
 11. Decisões técnicas (Technical Decisions).
 12. Arquivos a criar ou modificar (Files to Create or Modify) — insumo direto do `tasks.md`.
+
+Exemplo didático completo de formato; dados, contratos e decisões abaixo não afirmam adoção pelo projeto.
 
 ## Template
 
@@ -178,4 +192,19 @@ Fica em `src/ReservationBook`.
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo
 ```
 
-Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e, quando o design tem diagrama, `lint_mermaid.py <design.md>`; siga o ciclo de correção de SKILL.md, Scripts; depois apresente o design e espere antes de começar as Tasks.
+Depois de gravar, rode `lint_design.py <design.md> --spec <spec.md>` e, quando o design tem diagrama, `lint_mermaid.py <design.md>`; siga o ciclo de correção de validation.md, Scripts; depois apresente o design e espere antes de começar as Tasks.
+
+### Exemplo didático parcial de reescrita
+
+Fragmento de escrita; não é um artefato completo nem evidência de uma execução real.
+
+```text
+Antes: Será realizada a atribuição da ordem de registro através de um
+contador por oferta, tendo em vista a necessidade de garantir ordem total
+quando os instantes forem iguais, estabelecida em BOOK-14.
+
+Depois: Um contador por oferta define a ordem de registro. BOOK-14 exige
+uma ordem total mesmo quando os instantes são iguais.
+
+Preservado: mecanismo da decisão e requisito que o justifica.
+```

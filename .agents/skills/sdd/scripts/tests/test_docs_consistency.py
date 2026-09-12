@@ -14,6 +14,7 @@ import os
 import re
 import sys
 import unittest
+from unittest.mock import patch
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.dirname(SCRIPTS)
@@ -30,12 +31,26 @@ def read(p):
         return f.read()
 
 
+def fence_unclosed(lines):
+    """Track fence character and minimum closing length independently."""
+    open_char, open_length = None, 0
+    for line in lines:
+        match = re.match(r"^\s{0,3}(`{3,}|~{3,})(.*)$", line)
+        if open_char is None:
+            if match and not (match.group(1)[0] == "`" and "`" in match.group(2)):
+                open_char, open_length = match.group(1)[0], len(match.group(1))
+        elif (match and match.group(1)[0] == open_char
+              and len(match.group(1)) >= open_length and not match.group(2).strip()):
+            open_char = None
+    return open_char is not None
+
+
 def script_flags(path):
     """Toda flag literal `"--x"` presente no fonte (argparse ou parse manual)."""
     return set(re.findall(r"[\"'](--[a-z][a-z0-9-]*)[\"']", read(path)))
 
 
-OWN_FILES = "specify|design|tasks|execute|verify|adr|SKILL"
+OWN_FILES = "specify|design|tasks|execute|verify|adr|workflow|validation|prose|SKILL"
 CITATION_RE = r"\b(%s)\.md, ([^)\];|]+?)(?=[)\];]|, [A-Z]|\. |$)"
 
 
@@ -91,12 +106,7 @@ class DocsConsistency(unittest.TestCase):
 
     def test_fences_close(self):
         for md in md_files(SKILL):
-            lines = read(md).splitlines()
-            mask = fenced_line_mask(lines)
-            # ultimo fence aberto sem fechamento mascara ate o fim: detecta pela
-            # linha final ainda mascarada sem ser uma linha de fechamento
-            if mask and mask[-1]:
-                self.assertRegex(lines[-1].strip(), r"^(`{3,}|~{3,})\s*$", f"{md}: fence sem fechamento")
+            self.assertFalse(fence_unclosed(read(md).splitlines()), f"{md}: fence sem fechamento")
 
     def test_cited_flags_exist(self):
         """Flag `--x` citada numa linha pertence ao ultimo script nomeado antes
@@ -163,6 +173,56 @@ class DocsConsistency(unittest.TestCase):
         mensagem nem recebem opcao de commit."""
         for py in glob.glob(os.path.join(SCRIPTS, "*.py")):
             self.assertNotRegex(read(py), r"--commit-|check_commit|Conventional Commits", f"{py}: politica de commit no linter")
+
+
+class DocumentationRegressionFixtures(unittest.TestCase):
+    """Positive and negative text fixtures exercise the existing checks."""
+
+    def test_new_reference_citations_resolve(self):
+        cases = (("workflow", "Aprovação e autorizações"),
+                 ("validation", "Scripts"),
+                 ("prose", "Convenções de escrita"))
+        for name, heading in cases:
+            with self.subTest(reference=name):
+                text = read(os.path.join(SKILL, "references", name + ".md"))
+                citations = cited_sections(f"({name}.md, {heading})", OWN_FILES)
+                self.assertEqual(citations, [(name + ".md", heading, 1)])
+                self.assertTrue(section_exists(text, heading))
+                self.assertFalse(section_exists(text, "Heading inexistente de fixture"))
+
+    def test_removed_root_headings_fail(self):
+        root = read(os.path.join(SKILL, "SKILL.md"))
+        for heading in ("Abrir uma mudança", "Scripts", "Revisão por entrada", "Idioma"):
+            with self.subTest(heading=heading):
+                self.assertFalse(section_exists(root, heading))
+
+    def run_document_check(self, method, text):
+        fixture = os.path.join(SKILL, "fixture.md")
+        with patch(__name__ + ".md_files", return_value=[fixture]), \
+                patch(__name__ + ".read", return_value=text):
+            getattr(DocsConsistency(method), method)()
+
+    def test_existing_markdown_link_passes(self):
+        self.run_document_check("test_internal_links_resolve",
+                                "[Escrita](references/prose.md)")
+
+    def test_missing_markdown_link_fails(self):
+        with self.assertRaises(AssertionError):
+            self.run_document_check("test_internal_links_resolve",
+                                    "[Escrita](references/absent-fixture.md)")
+
+    def test_closed_fence_passes(self):
+        for opening, closing in (("```text", "```"), ("````text", "`````"),
+                                 ("~~~text", "~~~"), ("~~~~text", "~~~~~")):
+            with self.subTest(opening=opening, closing=closing):
+                self.run_document_check("test_fences_close", f"{opening}\nexample\n{closing}\n")
+
+    def test_open_fence_fails(self):
+        for text in ("```text\nexample\n", "````text\nexample\n```\n",
+                     "```text\nexample\n~~~\n", "~~~text\nexample\n```\n",
+                     "```\n", "~~~~\n"):
+            with self.subTest(text=text), self.assertRaisesRegex(AssertionError, "fence sem fechamento"):
+                self.run_document_check("test_fences_close", text)
 
 
 if __name__ == "__main__":

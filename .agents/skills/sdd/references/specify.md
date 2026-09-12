@@ -16,11 +16,11 @@
 ### Slugs e numeração
 
 - **Slugs** em inglês e kebab-case, espelhando o nome que o código usa: `PartialReservation` vira `partial-reservation`. Capability é uma área funcional de um bounded context, como `reservation-book/reservation-lifecycle`.
-- **`NNNN`** é um contador dentro da capability. Obtenha o número com `seq.py next <capability-dir> --slug <change-slug>`, nunca lendo a pasta; `seq.py check` acusa duplicata quando dois branches alocam o mesmo número (SKILL.md, Scripts). A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
+- **`NNNN`** é um contador dentro da capability. Obtenha o número com `seq.py next <capability-dir> --slug <change-slug>`, nunca lendo a pasta; `seq.py check` acusa duplicata quando dois branches alocam o mesmo número (validation.md, Scripts). A pasta da mudança só existe quando há `design.md` ou `tasks.md`; nunca scaffolde artefato vazio.
 
 ### Versionamento
 
-Git é o controle de versão: o diff é o delta e o log é o histórico; a aprovação é o commit (SKILL.md, Aprovação e autorizações). Nenhum artefato carrega campo de status, autor, data ou aprovação.
+Git é o controle de versão: o diff é o delta e o log é o histórico; a aprovação é o commit (workflow.md, Aprovação e autorizações). Nenhum artefato carrega campo de status, autor, data ou aprovação.
 
 ### Comentário de máquina
 
@@ -70,7 +70,7 @@ Em qualquer origem, leia antes de escrever: a `spec.md` viva da capability, se e
 
 - **Varra a base antes de perguntar:** o módulo que a capability toca, os padrões que ele usa e ao menos uma feature irmã já implementada. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
 - **Você é par técnico, não entrevistador.** Desafie vagueza ("rápido" é quanto? "usuários" são quem?) e torne o abstrato concreto ("me conduz por um uso disso").
-- **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (é a exceção de SKILL.md, Tags e dúvidas; com delegação escrita para o solution space, não se pergunta). O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
+- **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (é a exceção de workflow.md, Tags e dúvidas; com delegação escrita para o solution space, não se pergunta). O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
 - **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada. Teto: cinco perguntas por spec; da sexta em diante, a decisão vai direto para Perguntas em Aberto, com dono e o que bloqueia.
 - **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Perguntas em Aberto, bloqueia só o que depende dela e nunca vira default.
 - **A fronteira da mudança é fixa:** clarify esclarece *como* algo se comporta, nunca *se* uma capability nova entra.
@@ -107,6 +107,10 @@ Percorra as dez dimensões abaixo, uma a uma, ao fechar o entendimento. Só o qu
 - **Domain event relevante a outro contexto é requisito,** não detalhe de implementação. Edge case é requisito Unwanted-behavior, com ID como os outros.
 - **IDs `<PREFIXO>-nn` desde o rascunho,** com dois ou mais dígitos e nunca reciclados. ID removido morre.
 
+### Forma de escrita
+
+Escreva a condição e a resposta em ordem direta, mantendo o padrão EARS aplicável. Nomeie o resultado definido pela fonte. Preserve IDs, referências ao PRD, keywords, valores e nomes de erro. Um requisito precisa de resultado observável; uma medida ausente exige a resolução prevista para lacunas, não um número escolhido para completar a frase. Uma edição de estilo não autoriza transformar registro de violação em rejeição de operação, nem acrescentar HTTP status, persistência ou evento.
+
 ## Spec viva
 
 A spec é editada no lugar; a mudança é o diff.
@@ -118,7 +122,7 @@ A spec é editada no lugar; a mudança é o diff.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: `lint_spec.py` acusa como WARN — e não como HARD, porque spec real pode carregar seção herdada do PRD — a seção `##` fora dela. A coluna Seção (en) traz o heading da spec escrita em inglês (SKILL.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
+Cada seção existe quando há o que dizer; o linter exige só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: `lint_spec.py` acusa como WARN — e não como HARD, porque spec real pode carregar seção herdada do PRD — a seção `##` fora dela. A coluna Seção (en) traz o heading da spec escrita em inglês (workflow.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
 
 | Seção | Seção (en) | Conteúdo |
 |---|---|---|
@@ -131,6 +135,8 @@ Cada seção existe quando há o que dizer; o linter exige só Contexto e Requis
 | Glossário | Glossary | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
 | Rastreabilidade | Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; o linter confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
 | Divergências | Divergences | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
+
+Exemplo didático completo de formato; dados, contratos e decisões abaixo não afirmam adoção pelo projeto.
 
 ## Template
 
@@ -186,4 +192,20 @@ Base lida: `src/ReservationBook` tem só a composição do serviço.
 | Terceira reserva acima do máximo rejeitada | RSV-03 |
 ```
 
-Depois de gravar a spec, rode `lint_spec.py <spec.md>` e siga o ciclo de correção de SKILL.md, Scripts.
+Depois de gravar a spec, rode `lint_spec.py <spec.md>` e siga o ciclo de correção de validation.md, Scripts.
+
+### Exemplo didático parcial de reescrita
+
+Fragmento de escrita; não é um artefato completo nem evidência de uma execução real.
+
+```text
+Antes: IF a posição do investidor com a nova reserva excede o investimento
+máximo THEN the system SHALL proceder ao registro da violação
+POSITION_ABOVE_MAXIMUM [BOOK-04]
+
+Depois: IF a posição do investidor com a nova reserva excede o investimento
+máximo THEN the system SHALL registrar a violação POSITION_ABOVE_MAXIMUM
+[BOOK-04]
+
+Preservado: condição, resposta, identificador e referência ao PRD.
+```

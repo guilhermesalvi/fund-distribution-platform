@@ -10,9 +10,12 @@
     <File Path=".agents/skills/prd/SKILL.md" />
   </Folder>
   <Folder Name="/.agents/skills/prd/references/">
+    <File Path=".agents/skills/prd/references/conventions.md" />
     <File Path=".agents/skills/prd/references/example.md" />
     <File Path=".agents/skills/prd/references/intake.md" />
     <File Path=".agents/skills/prd/references/modes.md" />
+    <File Path=".agents/skills/prd/references/prose.md" />
+    <File Path=".agents/skills/prd/references/workflow.md" />
     <File Path=".agents/skills/prd/references/writing.md" />
   </Folder>
   <Folder Name="/.agents/skills/prd/scripts/">
@@ -39,9 +42,12 @@
     <File Path=".agents/skills/sdd/references/adr.md" />
     <File Path=".agents/skills/sdd/references/design.md" />
     <File Path=".agents/skills/sdd/references/execute.md" />
+    <File Path=".agents/skills/sdd/references/prose.md" />
     <File Path=".agents/skills/sdd/references/specify.md" />
     <File Path=".agents/skills/sdd/references/tasks.md" />
+    <File Path=".agents/skills/sdd/references/validation.md" />
     <File Path=".agents/skills/sdd/references/verify.md" />
+    <File Path=".agents/skills/sdd/references/workflow.md" />
   </Folder>
   <Folder Name="/.agents/skills/sdd/scripts/">
     <File Path=".agents/skills/sdd/scripts/_common.py" />
@@ -75,6 +81,9 @@
   <Folder Name="/.github/scripts/tests/">
     <File Path=".github/scripts/tests/__init__.py" />
     <File Path=".github/scripts/tests/test_check_commit.py" />
+    <File Path=".github/scripts/tests/test_skill_editorial.py" />
+    <File Path=".github/scripts/tests/test_skill_routing.py" />
+    <File Path=".github/scripts/tests/test_skill_snapshot.py" />
     <File Path=".github/scripts/tests/test_skills_gate.py" />
   </Folder>
   <Folder Name="/.github/workflows/">

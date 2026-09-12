@@ -427,7 +427,7 @@ class UnknownSectionTest(LintAdrBase):
         self.assertNoHard(out)
 
     def test_spanish_heading_is_hard(self):
-        """Terceiro idioma nao tem alias: cada secao vira HARD (SKILL.md, Idioma)."""
+        """Terceiro idioma nao tem alias: cada secao vira HARD (workflow.md, Idioma)."""
         spanish = [("Contexto", CONTEXTO), ("Decisión", DECISAO),
                    ("Alternativas consideradas", ALTERNATIVAS),
                    ("Consecuencias", CONSEQUENCIAS), ("Reglas derivadas", REGRAS)]

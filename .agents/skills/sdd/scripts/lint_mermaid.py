@@ -45,7 +45,7 @@ diagrama renderiza?".
 Resultado por bloco: HARD com arquivo, indice do bloco (1-based), linha de
 abertura e a mensagem do parser. Parser indisponivel nao e diagrama invalido:
 sai com exit 3, bloqueio de ambiente que o ciclo de correcao da skill trata
-(SKILL.md, Scripts).
+(validation.md, Scripts).
 
 --self-test prova (a) a extracao de fences em Python puro, sem parser, e (b) o
 parser com casos fixos, entre eles um sequenceDiagram com `participant OFF as

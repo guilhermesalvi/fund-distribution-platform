@@ -1,6 +1,6 @@
 # Redação do PRD
 
-Regras do passo Escrever do workflow (SKILL.md, Workflow): o que entra no PRD, em que forma e por quê. Onde o arquivo é gravado e como é o header estão em SKILL.md, Gravar. O que muda no modo reverse PRD e no modo plataforma, infra, SDK ou API como produto está em modes.md.
+Regras do passo Escrever do workflow (workflow.md, Workflow): o que entra no PRD, em que forma e por quê. Onde o arquivo é gravado e como é o header estão em conventions.md, Gravar. O que muda no modo reverse PRD e no modo plataforma, infra, SDK ou API como produto está em modes.md.
 
 ## Tags
 
@@ -16,7 +16,7 @@ Regras de uso:
 
 ## Capability test
 
-O PRD vive no problem space: diz o que precisa acontecer no negócio, não como o software é construído.
+Descreva a capacidade pelo comportamento observável no negócio. As categorias abaixo delimitam o que pertence à implementação.
 
 Aplique o teste à Solução Proposta, à frase de solução do Resumo Executivo e a cada FR. O texto passa quando não nomeia:
 
@@ -57,7 +57,7 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 ### Bounded Context como âncora de escopo
 
 - A fronteira se revela pelo vocabulário: dois especialistas usando termos diferentes para a mesma coisa, ou o mesmo termo para coisas diferentes, são indício de contextos distintos, não prova. A fronteira se confirma quando regras e motivos de mudança também divergem.
-- A feature tem um contexto originário, nomeado no header (SKILL.md, Gravar).
+- A feature tem um contexto originário, nomeado no header (conventions.md, Gravar).
 - Quando vários contextos são tocados, o originário é dono da decisão; os outros entram em Dependências e Riscos, com o impacto na autonomia deles declarado.
 - Escopo que cruza contextos sem origem clara é risco: pergunte qual contexto é o originário antes de redigir; se o usuário não souber ou recusar responder, o campo Contexto Originário do header recebe `[LACUNA]` e o PRD sai assim.
 - Mais de um contexto com PRD próprio exige o PRD 0000 (ver PRD 0000, abaixo).
@@ -78,14 +78,14 @@ Aplique esta lente quando o time opera em DDD ou tem vocabulário de domínio ex
 
 ## IDs
 
-- **Formato.** `<PREFIXO>-nn` para FR e `<PREFIXO>-NFR-nn` para NFR, com prefixo por contexto (`OFF-12`, `BOOK-18`, `OFF-NFR-03`). O prefixo existe porque `FR-14`, numerado localmente em cada PRD, significava coisas diferentes em documentos que se citam. O prefixo é declarado na linha logo após a tabela do header (SKILL.md, Gravar) e na tabela de contextos do PRD 0000.
+- **Formato.** `<PREFIXO>-nn` para FR e `<PREFIXO>-NFR-nn` para NFR, com prefixo por contexto (`OFF-12`, `BOOK-18`, `OFF-NFR-03`). O prefixo existe porque `FR-14`, numerado localmente em cada PRD, significava coisas diferentes em documentos que se citam. O prefixo é declarado na linha logo após a tabela do header (conventions.md, Gravar) e na tabela de contextos do PRD 0000.
 - **Definição.** `- **OFF-01 (Must)** condição.` A prioridade MoSCoW (Must, Should, Could, Won't) vai dentro dos parênteses; NFR não leva MoSCoW. Toda citação de ID resolve para uma definição em algum PRD da pasta.
 - **Remoção.** ID removido morre e não é reciclado, porque citação para ID reaproveitado muda de significado em silêncio. Antes de alterar ou remover um FR, procure quem cita o ID fora deste PRD com `git grep -n <ID>` na raiz do repositório e liste esses citadores ao apresentar: a citação continua apontando para o ID, mas o texto atrás dele mudou.
 - **Enumerações.** Estado, motivo de resultado, categoria e toda enumeração que o código vai carregar têm coluna Identificador na tabela que os define (ao lado do diagrama, junto do FR ou no Glossário), porque o código carrega esse nome, e nome inventado fora do PRD é decisão de linguagem tomada fora dele.
 
 ## PRD 0000
 
-Quando há mais de um contexto com PRD próprio, o PRD 0000 concentra o que é compartilhado entre eles. O arquivo é `0000-<slug>-overview.md`, com `<!-- prd: overview -->` na primeira linha (SKILL.md, Gravar). Ele não contém regra de negócio: toda regra vive no PRD dono e é citada pelo ID.
+Quando há mais de um contexto com PRD próprio, o PRD 0000 concentra o que é compartilhado entre eles. O arquivo é `0000-<slug>-overview.md`, com `<!-- prd: overview -->` na primeira linha (conventions.md, Gravar). Ele não contém regra de negócio: toda regra vive no PRD dono e é citada pelo ID.
 
 A primeira coluna traz o par de nomes na forma da tabela de Seções (ver Seções).
 
@@ -113,17 +113,19 @@ Regras:
 - Rótulo de transição, aresta ou mensagem cita o ID do requisito e não reescreve a condição, porque o diagrama é índice, não segunda fonte.
 - Ao lado do `stateDiagram-v2` vai a tabela estado, identificador, significado (ver IDs).
 - Palavra reservada do Mermaid não serve de alias de participante nem de nó: `off` e `end` falham no parse mesmo em maiúsculas (`participant OFF as Offering` quebra; `on` passa no parser pinado). Use o nome completo.
-- Todo bloco passa por `lint_mermaid.py` antes de apresentar (SKILL.md, Scripts).
+- Todo bloco passa por `lint_mermaid.py` antes de apresentar (workflow.md, Scripts).
 
 ## Seções
+
+Use `#` para o título, `##` para seções e `###` para subseções.
 
 Cinco seções são obrigatórias, e o linter as trata como HARD: Resumo Executivo, Contexto e Problema, Usuário-alvo, Solução Proposta e, quando o PRD define IDs, Requisitos Funcionais. O PRD 0000 tem as seções da tabela em PRD 0000, acima.
 
 Toda outra seção entra quando o critério da coluna "Entra quando" se cumpre, e nunca por forma: seção vazia, "Nenhuma." ou bullet inventado para completar contagem é defeito, não conformidade. A ordem das seções no PRD é a ordem da tabela. Três seções têm regras de forma que não cabem na célula; elas estão nas subseções depois da tabela.
 
-A tabela é fechada: seção `##` fora dela não tem critério de entrada nem posição, e `lint_prd.py` a acusa como HARD (SKILL.md, Scripts). No PRD 0000 a lista fechada é a tabela da seção PRD 0000, acima. Conteúdo que não cabe em nenhuma seção da tabela vai para a seção que o cobre; `###` é subseção e fica livre. Seção que falta à tabela e não vem do pedido da sessão nem da convenção do repositório (SKILL.md, Precedência) muda a tabela primeiro, e com ela o script — o teste de sincronização cobra as duas; vindo de um dos dois, o HARD é mantido pela regra do passo Checar (SKILL.md, Workflow) e a tabela não muda.
+A tabela é fechada: seção `##` fora dela não tem critério de entrada nem posição, e `lint_prd.py` a acusa como HARD (workflow.md, Scripts). No PRD 0000 a lista fechada é a tabela da seção PRD 0000, acima. Conteúdo que não cabe em nenhuma seção da tabela vai para a seção que o cobre; `###` é subseção e fica livre. Seção que falta à tabela e não vem do pedido da sessão nem da convenção do repositório (SKILL.md, Precedência) muda a tabela primeiro, e com ela o script — o teste de sincronização cobra as duas; vindo de um dos dois, o HARD é mantido pela regra do passo Checar (workflow.md, Workflow) e a tabela não muda.
 
-A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito (SKILL.md, Idioma): o nome em português e, entre parênteses, o nome em inglês. O heading usa o nome do idioma fixado para o PRD; seção cujo nome é o mesmo nos dois idiomas aparece uma vez só.
+A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito (conventions.md, Idioma): o nome em português e, entre parênteses, o nome em inglês. O heading usa o nome do idioma fixado para o PRD; seção cujo nome é o mesmo nos dois idiomas aparece uma vez só.
 
 | Seção (pt / en) | Entra quando | Forma |
 |---|---|---|
@@ -142,7 +144,7 @@ A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito
 | Trade-offs Declarados (Declared Trade-offs) | Há decisão tomada na conversa ou no material recebido cuja alternativa rejeitada tem custo nomeável | `**Decisão.** *Custo:* … *Razão:* …`, até duas linhas; Custo e Razão são obrigatórios porque evitam re-litígio. Diferente de Não-objetivos (não faremos) e de Perguntas em Aberto (não decidido) |
 | Métricas de Sucesso (Success Metrics) | O material recebido ou a conversa nomeia uma métrica ou um número-alvo | Uma linha por tipo que existe: leading (proxy, agora), lagging (resultado); e sempre um guardrail (o que não pode degradar; sem ele a métrica vira alvo; o linter o exige), marcado `[PREMISSA]` quando o material não o nomeia. Plataforma e infra: ver modes.md, Modo plataforma, infra, SDK ou API como produto |
 | Critérios de Aceitação (Acceptance Criteria) | Há FR cujo resultado depende de mais de um valor numérico ou de ramificação | Cenário numérico em tabela (caso, entrada, valores intermediários, ramo, resultado); Dado/Quando/Então só para o que a tabela não expressa. Regras em Critérios de Aceitação, abaixo |
-| Dependências e Riscos (Dependencies and Risks) | Há dependência ou risco fora do controle do contexto, ou o campo do header declara contexto afetado em `; afeta` (SKILL.md, Header) | Tabela: item, tipo, impacto; uma linha por contexto afetado do header, mesmo quando o impacto é só observar; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
+| Dependências e Riscos (Dependencies and Risks) | Há dependência ou risco fora do controle do contexto, ou o campo do header declara contexto afetado em `; afeta` (conventions.md, Header) | Tabela: item, tipo, impacto; uma linha por contexto afetado do header, mesmo quando o impacto é só observar; acoplamento entre contextos cita o 0000, e só o lado dono o descreve |
 | Perguntas em Aberto (Open Questions) | Há premissa que, se falsa, derruba a abordagem do PRD (Tags), `[PREMISSA]` ou `[LACUNA]` citada por um FR Must ou pela Solução Proposta, divergência entre FR e paráfrase (Uma regra, um lugar) ou intenções concorrentes em reverse PRD | Uma linha por pergunta: a pergunta, o impacto, o dono e o critério que a resolve, quando conhecidos. Regras em Perguntas em Aberto, abaixo |
 | Ponto de Maior Fragilidade (Weakest Point) | Há decisão de julgamento sobre fatos conhecidos (corte de escopo, threshold, priorização ou usuário-alvo) que, se errada, invalida a Solução Proposta ou a métrica primária | Última seção de conteúdo, só Referências depois: a decisão, o vetor de ataque concreto e o convite ao autor para desafiá-la antes de aprovar. Regras em Ponto de Maior Fragilidade, abaixo |
 | Referências (References) | Há fonte usada | Link, artigos lidos, data de leitura, PRDs citados |
@@ -167,12 +169,21 @@ A primeira coluna dá o nome da seção nos dois idiomas em que o PRD é escrito
 
 ## Redação
 
-Tom direto, preciso, orientado a decisão. Sem linguagem genérica ("melhorar experiência") que não tenha âncora em métrica ou comportamento. O texto é lido por humanos e por LLMs downstream; por isso:
+Aplique (prose.md, Convenções de escrita) e o checklist editorial na revisão existente. As regras de conteúdo, tags, IDs e unidade comportamental continuam nos headings próprios; obrigações independentes vão em FRs separados e condição conjunta com efeito indivisível permanece no mesmo FR (writing.md, Uma regra, um lugar).
 
-- **Voz declarativa e ativa.** "O sistema bloqueia a ativação", não "seria bloqueado".
-- **Sem hedging.** A lista de palavras é a de `lint_prd.py`, que as acusa como WARN; não há segunda lista.
-- **Sem meta-narração.** Nada de "este PRD descreve", "vamos discutir", "é importante notar": o título já diz o que o documento é.
-- **Sem qualificador redundante nem filler.** "De modo a" vira "para"; "devido ao fato de que" vira "porque"; "com zero X necessário" vira "sem X".
-- **Um conceito por parágrafo.** Dois parágrafos adjacentes sobre o mesmo ponto se fundem. Regra dita duas vezes ou FR com mais de uma condição é o que faz o PRD crescer sem informação (ver Uma regra, um lugar).
-- **Preserve o contexto de decisão.** A Razão do trade-off, o racional do guardrail e o "se falsa" da premissa que derruba o PRD carregam sinal.
-- **Hierarquia.** `#` título, `##` seções, `###` subseções; lista para requisitos e critérios; tabela para comparação, dependência e cenário numérico.
+### Formas por seção
+
+Esta tabela orienta a escrita dentro das seções existentes; não acrescenta seções ao PRD.
+
+| Seção do PRD | Como redigir | Como conferir |
+|---|---|---|
+| Resumo Executivo | Dentro da forma já exigida, apresentar problema, capacidade proposta e métrica conhecida. Usar a origem existente para números e afirmações. | O leitor identifica os três elementos ou a ausência de informação, sem pressupor uma meta inventada. |
+| Contexto e Problema | Relacionar situação observada, impacto e evidência. Separar fatos de hipóteses pelas tags existentes. | O texto não antecipa componentes e não transforma descoberta em certeza. |
+| Usuário-alvo / JTBD | Manter o bullet por ator e formular o trabalho ou resultado que ele precisa alcançar. | Cada item tem um ator identificado ou uma lacuna explícita; não é apenas o nome de uma tela. |
+| Solução Proposta | Explicar a capacidade e suas relações; apontar os FRs que definem condições. | A prosa permite entender o objetivo sem criar uma segunda definição normativa. |
+| Requisitos Funcionais | Identificar ator ou sistema, condição e comportamento observável conforme a fonte. Preservar ID, prioridade e unidade comportamental. | Duas obrigações independentes não estão fundidas; condições conjuntas indivisíveis não foram separadas artificialmente. |
+| Requisitos Não Funcionais | Apresentar atributo ou restrição, limite e unidade conhecidos. | Qualificadores não substituem medidas; ausência de limite segue as tags existentes. |
+| Trade-offs Declarados | Conservar Decisão, Custo e Razão. Nomear a consequência aceita, sem elogios genéricos. | A revisão não altera a escolha nem omite seu custo. |
+| Métricas e aceitação | Preservar nomes, números, unidades, cenários e campos exigidos. | Clareza não foi obtida inventando baseline, meta ou resultado. |
+| Perguntas em Aberto | Formular a decisão pendente e seu impacto; manter dono e critério de resolução quando conhecidos. | Pergunta já respondida não foi reaberta e uma premissa não foi tratada como fato. |
+| Ponto de Maior Fragilidade | Expor a decisão contestável e a condição concreta que pode invalidá-la, quando a seção é exigida. | O texto não fabrica fragilidade para preencher forma nem usa apenas autocrítica genérica. |

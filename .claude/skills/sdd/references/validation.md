@@ -2,9 +2,9 @@
 
 ## Checagem de forma
 
-Antes de apresentar um artefato, leia o arquivo gravado e confira cada item da lista do seu tipo. Todo achado se corrige antes de apresentar, com uma nova leitura do trecho corrigido; achado de forma exigido pelo pedido ou comprovado pela convenção fica como está e é relatado no chat com a origem, usando "mantido por pedido" ou "mantido por convenção" (Forma mantida por pedido ou convenção). Achado que não conseguiu corrigir é relatado ao apresentar, sem declarar validação completa. Depois da checagem, faça a revisão de conteúdo (Revisão por entrada).
+Antes de apresentar um artefato, leia o arquivo gravado e confira cada item da lista do seu tipo. Corrija todo achado e releia o arquivo inteiro; são no máximo duas rodadas de correção. Se a segunda ainda terminar com achado, apresente o artefato e liste no chat cada achado remanescente com o motivo, sem declarar validação completa. Achado de forma exigido pelo pedido ou comprovado pela convenção fica como está, é relatado no chat com a origem, usando "mantido por pedido" ou "mantido por convenção" (Forma mantida por pedido ou convenção), e não conta como rodada. Depois da checagem, faça a revisão de conteúdo (Revisão por entrada).
 
-Apresentação com achados remanescentes é permitida; não equivale a aprovação nem abre a próxima entrada sem os pré-requisitos (workflow.md, Aprovação e autorizações). O gate do Execute tem protocolo próprio: execução inicial e até duas tentativas de correção, total de três execuções antes de parar (execute.md, Ciclo por task).
+Artefato apresentado com achado remanescente listado não está aprovado nem abre a próxima entrada sem os pré-requisitos (workflow.md, Aprovação e autorizações). O gate do Execute tem protocolo próprio: execução inicial e até duas tentativas de correção, total de três execuções antes de parar (execute.md, Ciclo por task).
 
 ### Numeração
 

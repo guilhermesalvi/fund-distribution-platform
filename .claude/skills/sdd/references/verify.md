@@ -4,7 +4,7 @@
 
 ## Olhos frescos
 
-Re-derive a cobertura a partir da spec e dos testes da mudança. Use um revisor independente quando o ambiente permitir, conforme os modos abaixo. Faça essa re-derivação sem partir da tabela de evidência do Execute (na passada do próprio autor, a tabela só é aberta no fim, para comparar), e declare no relatório qual foi o grau de independência da verificação:
+Re-derive a cobertura a partir da spec e dos testes da mudança. Use o modo de maior independência que o ambiente oferece, conforme os modos abaixo. Faça essa re-derivação sem partir da tabela de evidência do Execute (na passada do próprio autor, a tabela só é aberta no fim, para comparar), e declare no relatório qual foi o grau de independência da verificação:
 
 - **Sub-agente fresco:** verificação independente, feita por quem não escreveu o código. É o modo obrigatório quando a ferramenta de sub-agente existe no ambiente.
 - **Passada do próprio autor:** independência parcial, só quando não há ferramenta de sub-agente; diga isso explicitamente.

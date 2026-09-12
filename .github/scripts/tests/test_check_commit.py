@@ -51,7 +51,7 @@ class CheckCommitTest(unittest.TestCase):
             code = check_commit.main(["check_commit.py", "--message", "feat: add thing", "--max-len", "60", "--no-scope"])
         self.assertEqual(code, 0)
 
-    # --- perfil estrito (CLAUDE.md deste repositorio): 60 chars, sem escopo,
+    # --- perfil estrito (AGENTS.md deste repositorio): 60 chars, sem escopo,
     # sem `!`, uma linha, minuscula inicial ---------------------------------
     STRICT = dict(max_len=60, no_scope=True, no_bang=True, single_line=True, lowercase=True)
 

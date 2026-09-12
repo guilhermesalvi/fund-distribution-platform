@@ -34,7 +34,7 @@ ALTERNATIVAS = """\
 CONSEQUENCIAS = """\
 - Positivas: entrega ao menos uma vez sem transacao distribuida.
 - Negativas: a latencia de publicacao sobe ate o intervalo do worker."""
-REGRAS = "- Outbox obrigatorio para evento de dominio (ADR 0007) — `CLAUDE.md`"
+REGRAS = "- Outbox obrigatorio para evento de dominio (ADR 0007) — `AGENTS.md`"
 
 SECTIONS = [("Contexto", CONTEXTO), ("Decisão", DECISAO),
             ("Alternativas consideradas", ALTERNATIVAS), ("Consequências", CONSEQUENCIAS)]
@@ -187,7 +187,7 @@ class DerivedRulesPathTest(LintAdrBase):
 
     def test_path_on_the_wrapped_line_of_the_bullet_passes(self):
         code, out = self.run_lint(self.rules("- Outbox obrigatorio para evento de dominio,\n"
-                                             "  escrito em `CLAUDE.md`"))
+                                             "  escrito em `AGENTS.md`"))
         self.assertNoHard(out)
 
     def test_bullet_without_path_is_hard(self):
@@ -200,7 +200,7 @@ class DerivedRulesPathTest(LintAdrBase):
         self.assertHard(out, "regra sem o path do arquivo onde ela vive")
 
     def test_prose_without_bullet_is_hard(self):
-        code, out = self.run_lint(self.rules("Outbox obrigatorio, escrito em `CLAUDE.md`."))
+        code, out = self.run_lint(self.rules("Outbox obrigatorio, escrito em `AGENTS.md`."))
         self.assertHard(out, "sem bullet")
 
     def test_section_absent_is_not_checked(self):

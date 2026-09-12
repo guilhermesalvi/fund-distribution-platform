@@ -1,6 +1,6 @@
 # Gate das skills
 
-Toda mudança em `.claude/skills/**` passa por este gate antes do commit. Ele tem duas etapas: a determinística, que
+Toda mudança em `.agents/skills/**` passa por este gate antes do commit. Ele tem duas etapas: a determinística, que
 um script roda, e a revisão cética, que um agente LLM roda com nota mínima. A primeira é obrigatória sempre; a segunda,
 quando a mudança toca regra (critério abaixo). O gate nasceu do ciclo de endurecimento das skills `prd` e `sdd`
 (setembro de 2026) e carrega o que aquele ciclo aprendeu: nota por fórmula fechada, defeito só com reprodução,

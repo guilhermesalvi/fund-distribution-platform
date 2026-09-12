@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-skills_gate.py - gate deterministico das skills de agente (.claude/skills).
+skills_gate.py - gate deterministico das skills de agente (.agents/skills).
 
     Uso:  python3 .github/scripts/skills_gate.py            # roda todos os checks
           python3 .github/scripts/skills_gate.py --list     # imprime a lista de checks e limites
@@ -8,7 +8,7 @@ skills_gate.py - gate deterministico das skills de agente (.claude/skills).
 
 Roda a partir da raiz do repositorio, em qualquer sistema. E a mesma lista que a
 CI (.github/workflows/skills.yml) executa; o que o gate nao cobre - a revisao
-cetica por LLM com nota minima - esta escrito em .claude/skills/GATE.md, que
+cetica por LLM com nota minima - esta escrito em .agents/skills/GATE.md, que
 aponta para este script como fonte da parte deterministica.
 
 Cada check tem um identificador, uma descricao e um limite (threshold)
@@ -75,7 +75,7 @@ INDEPENDENCE = (
      "prd", r"skills/prd\b", set(), {"mermaid-parser"}),
 )
 # Politica de commit e do repositorio: os scripts da sdd nao a conhecem.
-COMMIT_WORD_DIR = Path(".claude/skills/sdd/scripts")
+COMMIT_WORD_DIR = Path(".agents/skills/sdd/scripts")
 
 
 @dataclass(frozen=True)
@@ -146,7 +146,7 @@ def check_suite(tests_dir: str) -> Result:
 def check_mermaid_selftest() -> Result:
     details = []
     for skill in SKILLS:
-        proc = python(f".claude/skills/{skill}/scripts/lint_mermaid.py", "--self-test")
+        proc = python(f".agents/skills/{skill}/scripts/lint_mermaid.py", "--self-test")
         if proc.returncode != 0:
             details.append(f"{skill}: exit {proc.returncode}")
             details.extend((proc.stdout + proc.stderr).strip().splitlines()[-5:])
@@ -186,9 +186,9 @@ def check_lint_prd() -> Result:
     if not (ROOT / "docs/prd").is_dir():
         return Result(True, "sem docs/prd")
     return lint_group([
-        [".claude/skills/prd/scripts/seq.py", "check", "docs/prd"],
-        [".claude/skills/prd/scripts/lint_prd.py", "docs/prd"],
-        [".claude/skills/prd/scripts/lint_mermaid.py", "docs/prd"],
+        [".agents/skills/prd/scripts/seq.py", "check", "docs/prd"],
+        [".agents/skills/prd/scripts/lint_prd.py", "docs/prd"],
+        [".agents/skills/prd/scripts/lint_mermaid.py", "docs/prd"],
     ])
 
 
@@ -198,8 +198,8 @@ def check_lint_specs() -> Result:
         return Result(True, "sem docs/specs")
     commands: list[list[str]] = []
     for spec in found:
-        commands.append([".claude/skills/sdd/scripts/seq.py", "check", rel(spec.parent)])
-        commands.append([".claude/skills/sdd/scripts/lint_spec.py", rel(spec)])
+        commands.append([".agents/skills/sdd/scripts/seq.py", "check", rel(spec.parent)])
+        commands.append([".agents/skills/sdd/scripts/lint_spec.py", rel(spec)])
     return lint_group(commands)
 
 
@@ -207,9 +207,9 @@ def check_lint_changes() -> Result:
     commands: list[list[str]] = []
     for spec in specs():
         for design in sorted(spec.parent.glob("*/design.md")):
-            commands.append([".claude/skills/sdd/scripts/lint_design.py", rel(design), "--spec", rel(spec)])
+            commands.append([".agents/skills/sdd/scripts/lint_design.py", rel(design), "--spec", rel(spec)])
         for tasks in sorted(spec.parent.glob("*/tasks.md")):
-            commands.append([".claude/skills/sdd/scripts/lint_tasks.py", rel(tasks), "--spec", rel(spec)])
+            commands.append([".agents/skills/sdd/scripts/lint_tasks.py", rel(tasks), "--spec", rel(spec)])
     if not commands:
         return Result(True, "sem design.md ou tasks.md em docs/specs")
     return lint_group(commands)
@@ -219,15 +219,15 @@ def check_lint_adr() -> Result:
     if not (ROOT / "docs/adr").is_dir():
         return Result(True, "sem docs/adr")
     return lint_group([
-        [".claude/skills/sdd/scripts/seq.py", "check", "docs/adr"],
-        [".claude/skills/sdd/scripts/lint_adr.py", "docs/adr"],
+        [".agents/skills/sdd/scripts/seq.py", "check", "docs/adr"],
+        [".agents/skills/sdd/scripts/lint_adr.py", "docs/adr"],
     ])
 
 
 def check_mermaid_specs() -> Result:
     if not (ROOT / "docs/specs").is_dir():
         return Result(True, "sem docs/specs")
-    return lint_group([[".claude/skills/sdd/scripts/lint_mermaid.py", "docs/specs"]])
+    return lint_group([[".agents/skills/sdd/scripts/lint_mermaid.py", "docs/specs"]])
 
 
 def iter_files(base: Path, skip_dirs: set[str] = frozenset(), skip_files: set[str] = frozenset()):
@@ -259,7 +259,7 @@ def grep(base: Path, pattern: str, skip_files: set[str] = frozenset(),
 def check_independence() -> Result:
     details = []
     for label, skill, pattern, skip_files, skip_dirs in INDEPENDENCE:
-        hits = grep(Path(".claude/skills") / skill, pattern, skip_files, skip_dirs)
+        hits = grep(Path(".agents/skills") / skill, pattern, skip_files, skip_dirs)
         if hits:
             details.append(f"{label}:")
             details.extend(hits)
@@ -274,14 +274,14 @@ def check_independence() -> Result:
 def check_entities() -> Result:
     offenders = []
     for skill in SKILLS:
-        for path in iter_files(ROOT / ".claude/skills" / skill):
+        for path in iter_files(ROOT / ".agents/skills" / skill):
             if path.suffix in (".md", ".py") and ENTITY.search(read_text(path)):
                 offenders.append(rel(path))
     return Result(not offenders, f"{len(offenders)} arquivo(s)", tuple(offenders))
 
 
 def check_eol() -> Result:
-    proc = run_cmd(["git", "ls-files", "--eol", "--", ".claude/skills"])
+    proc = run_cmd(["git", "ls-files", "--eol", "--", ".agents/skills"])
     offenders = []
     for line in proc.stdout.splitlines():
         parts = line.split()
@@ -324,7 +324,7 @@ def check_readme_scripts() -> Result:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     scripts = []
     for skill in SKILLS:
-        for path in sorted((ROOT / ".claude/skills" / skill / "scripts").glob("*.py")):
+        for path in sorted((ROOT / ".agents/skills" / skill / "scripts").glob("*.py")):
             if not path.name.startswith("_"):
                 scripts.append(rel(path))
     missing = scripts_without_readme_command(readme, scripts)
@@ -335,9 +335,9 @@ CHECKS: tuple[Check, ...] = (
     Check("mermaid-selftest", "parser Mermaid de cada skill passa no --self-test", "exit 0 nos 2",
           check_mermaid_selftest),
     Check("suite-prd", "suite da prd: falhas, erros e skips", "0 / 0 / 0",
-          lambda: check_suite(".claude/skills/prd/scripts/tests")),
+          lambda: check_suite(".agents/skills/prd/scripts/tests")),
     Check("suite-sdd", "suite da sdd: falhas, erros e skips", "0 / 0 / 0",
-          lambda: check_suite(".claude/skills/sdd/scripts/tests")),
+          lambda: check_suite(".agents/skills/sdd/scripts/tests")),
     Check("suite-github", "suite de .github/scripts: falhas, erros e skips", "0 / 0 / 0",
           lambda: check_suite(".github/scripts/tests")),
     Check("lint-prd", "seq check + lint_prd + lint_mermaid em docs/prd", "0 HARD", check_lint_prd),
@@ -360,7 +360,7 @@ def list_checks() -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Gate deterministico das skills (.claude/skills).")
+    parser = argparse.ArgumentParser(description="Gate deterministico das skills (.agents/skills).")
     parser.add_argument("--list", action="store_true", help="imprime os checks e limites, sem rodar")
     parser.add_argument("--only", action="append", default=[], metavar="ID",
                         help="roda so o check ID (repetivel)")

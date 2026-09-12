@@ -56,17 +56,17 @@ class SlnxMissingTest(unittest.TestCase):
 
 class ReadmeScriptsTest(unittest.TestCase):
     def test_missing_script_is_reported(self):
-        readme = "python3 .claude/skills/prd/scripts/seq.py check docs/prd\n"
-        scripts = [".claude/skills/prd/scripts/seq.py", ".claude/skills/prd/scripts/lint_prd.py"]
+        readme = "python3 .agents/skills/prd/scripts/seq.py check docs/prd\n"
+        scripts = [".agents/skills/prd/scripts/seq.py", ".agents/skills/prd/scripts/lint_prd.py"]
         self.assertEqual(skills_gate.scripts_without_readme_command(readme, scripts),
-                         [".claude/skills/prd/scripts/lint_prd.py"])
+                         [".agents/skills/prd/scripts/lint_prd.py"])
 
 
 class ChecksDocumentationTest(unittest.TestCase):
     """A tabela de GATE.md, a docstring e a lista CHECKS descrevem os mesmos checks com os mesmos limites."""
 
     def test_gate_md_table_matches_checks(self):
-        text = (ROOT / ".claude/skills/GATE.md").read_text(encoding="utf-8")
+        text = (ROOT / ".agents/skills/GATE.md").read_text(encoding="utf-8")
         rows = re.findall(r"^\| `([a-z-]+)` \| .+? \| (.+?) \|$", text, re.MULTILINE)
         self.assertEqual([(c.id, c.threshold) for c in skills_gate.CHECKS], rows)
 

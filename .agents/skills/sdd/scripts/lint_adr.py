@@ -25,7 +25,7 @@ HARD (exit 1):
   'Nenhuma.', 'Nenhum.', 'N/A' e 'Nao se aplica.';
 - `## Regras derivadas`, quando presente, nao e a ultima secao;
 - `## Regras derivadas` sem bullet algum, ou com bullet sem o path do arquivo
-  onde a regra vive entre crases (`CLAUDE.md`, `.claude/rules/x.md`,
+  onde a regra vive entre crases (`AGENTS.md`, `docs/development/x.md`,
   `docs/adr`): regra sem path e seguida cegamente ou ignorada
   (references/adr.md, Conformar e superseder). O path pode estar em qualquer
   linha do bullet;
@@ -83,7 +83,7 @@ NEGATIVE = re.compile(r"^\s*[-*]\s*\**\s*(?:Negativas?|Negatives?)\s*\**\s*:\s*(
 NUMBER = re.compile(r"\b(\d{4})\b")
 BULLET = re.compile(r"^\s*[-*]\s+(\S.*)$")
 # Conteudo de code span que e path: tem separador de diretorio, ou nome com
-# extensao (`CLAUDE.md`), ou dotfile (`.editorconfig`).
+# extensao (`AGENTS.md`), ou dotfile (`.editorconfig`).
 PATH_SPAN = re.compile(r"^(?:[^\s`]*[/\\][^\s`]*|[\w.\-]+\.[A-Za-z0-9]{1,10}|\.[\w\-]+)$")
 # Valor so com pontuacao ou reticencias: o rotulo esta escrito, o conteudo nao.
 NO_TEXT = re.compile(r"^[\s.…\-–—*_]*$")
@@ -215,8 +215,8 @@ def bullet_items(lines, start, end, mask):
 
 
 def has_path_span(text):
-    """Trecho entre crases que e um path: `CLAUDE.md`, `docs/adr`,
-    `.claude/rules/tracing.md`."""
+    """Trecho entre crases que e um path: `AGENTS.md`, `docs/adr`,
+    `docs/development/tracing.md`."""
     return any(PATH_SPAN.match(m.group(1).strip()) for m in re.finditer(r"`([^`]+)`", text))
 
 

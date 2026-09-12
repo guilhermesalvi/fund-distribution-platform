@@ -42,7 +42,7 @@ Checar): o pedido da sessao, que precisa nomear literalmente a secao, o campo
 ou a forma de onde o HARD sai, e a convencao do repositorio, que precisa
 aparecer em tres ou mais PRDs commitados da pasta - conte os commitados com
 `git ls-files` na pasta, o linter nao distingue arquivo commitado de arquivo em
-elaboracao - ou estar escrita no CLAUDE.md do repositorio.
+elaboracao - ou estar escrita no AGENTS.md do repositorio.
 
 HARD (exit 1):
   - titulo H1 ('# ...') ausente;

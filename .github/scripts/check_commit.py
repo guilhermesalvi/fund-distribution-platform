@@ -13,8 +13,8 @@ Opcoes (regra mais estrita do repositorio, por cima do default):
     --lowercase     exige descricao iniciada em minuscula (`feat: add`, nao `feat: Add`)
 
 O default e o Conventional Commits generico: escopo, `!`, corpo e rodape sao
-aceitos. O perfil deste repositorio (as opcoes que o CLAUDE.md exige) fica
-escrito no CLAUDE.md e no job de CI que valida os commits de um pull request;
+aceitos. O perfil deste repositorio (as opcoes que o AGENTS.md exige) fica
+escrito no AGENTS.md e no job de CI que valida os commits de um pull request;
 o script nunca o infere.
 
 Como hook git (sem dependencia de agente):

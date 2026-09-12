@@ -1,9 +1,9 @@
-# Validates the agent skills (.claude/skills) and the artifacts they produce
+# Validates the agent skills (.agents/skills) and the artifacts they produce
 # (docs/prd, docs/specs, docs/adr) through the deterministic skills gate
 # (.github/scripts/skills_gate.py: test suites, Mermaid self-tests, linters,
 # independence between skills, encoding, .slnx and README registration), plus the
 # commit-message policy of pull requests. Everything runs from the repository
-# root. The LLM review stage of the gate is described in .claude/skills/GATE.md.
+# root. The LLM review stage of the gate is described in .agents/skills/GATE.md.
 name: skills
 
 on:
@@ -31,8 +31,8 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: |
-            .claude/skills/prd/scripts/mermaid-parser/package-lock.json
-            .claude/skills/sdd/scripts/mermaid-parser/package-lock.json
+            .agents/skills/prd/scripts/mermaid-parser/package-lock.json
+            .agents/skills/sdd/scripts/mermaid-parser/package-lock.json
 
       - name: Print tool versions
         run: |
@@ -42,13 +42,13 @@ jobs:
 
       - name: Install the pinned Mermaid parser of each skill (npm ci)
         run: |
-          python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
-          python3 .claude/skills/sdd/scripts/lint_mermaid.py --setup
+          python3 .agents/skills/prd/scripts/lint_mermaid.py --setup
+          python3 .agents/skills/sdd/scripts/lint_mermaid.py --setup
 
-      - name: Skills gate (.github/scripts/skills_gate.py, the same list as .claude/skills/GATE.md)
+      - name: Skills gate (.github/scripts/skills_gate.py, the same list as .agents/skills/GATE.md)
         run: python3 .github/scripts/skills_gate.py
 
-      - name: Commit messages follow CLAUDE.md (pull requests only)
+      - name: Commit messages follow AGENTS.md (pull requests only)
         if: github.event_name == 'pull_request'
         env:
           BASE: ${{ github.event.pull_request.base.sha }}

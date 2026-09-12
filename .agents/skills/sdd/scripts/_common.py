@@ -40,7 +40,7 @@ PLACEHOLDER_HARD = [
 HEDGING = ["provavelmente", "talvez", "na verdade", "probably", "perhaps", "maybe"]
 # Placeholder de template: colchetes com texto livre comecando por letra, ate
 # 200 caracteres - `[nome]`, `[Uma frase: o que faremos.]`, `[Regra em
-# CLAUDE.md ... com o path.]`. Link Markdown fica fora pelo `(` seguinte; tag
+# AGENTS.md ... com o path.]`. Link Markdown fica fora pelo `(` seguinte; tag
 # ([PREMISSA], [BOOK-04]) fica fora por TAG_LIKE.
 TEMPLATE_PLACEHOLDER = re.compile(r"\[([A-Za-zÀ-Úà-ú][^\[\]]{2,199})\](?!\()")
 # Valor reduzido a reticencias - `- Positivas: …`, `| Racional | ... |`:

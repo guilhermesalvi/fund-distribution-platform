@@ -24,7 +24,7 @@ A oferta é a emissão de cotas de fundo fechado vendida como um único conjunto
 
 ## Solução Proposta
 
-O operador prepara e publica a definição da oferta (OFF-01 a OFF-05), depois acompanha e conduz as transições de OFF-06 a OFF-14. Formada e não formada são desfecho do livro, de posse do Allocation, e não estados da oferta (OFF-30). A semântica das opções pertence a OFF-26 a OFF-29. O diagrama indexa os requisitos de cada transição.
+O operador prepara e publica a definição da oferta (OFF-01 a OFF-05), depois acompanha e conduz as transições de OFF-06 a OFF-14. Formada e não formada são desfecho do livro, de posse do Allocation; a oferta os consome como evento para terminar o ciclo, sem os manter como estado (OFF-30 a OFF-33). A semântica das opções pertence a OFF-26 a OFF-29. O diagrama indexa os requisitos de cada transição.
 
 ```mermaid
 stateDiagram-v2
@@ -34,6 +34,8 @@ stateDiagram-v2
     Open --> Closed: fechar (OFF-07)
     Open --> Revoked: revogar (OFF-12)
     Closed --> Revoked: revogar (OFF-12)
+    Closed --> Closed: BookProcessed formada (OFF-32)
+    Closed --> Completed: BookProcessed não formada (OFF-31)
     Closed --> Completed: encerrar (OFF-13)
 ```
 
@@ -41,9 +43,9 @@ stateDiagram-v2
 |---|---|---|
 | Draft | `Draft` | Minuta em elaboração (OFF-01, OFF-02, OFF-14) |
 | Aberta | `Open` | Oferta publicada ainda não fechada; elegibilidade temporal em OFF-08 e BOOK-01 |
-| Fechada | `Closed` | Livro fechado (OFF-07); o desfecho do livro é leitura do Allocation e não muda este estado (OFF-30) |
+| Fechada | `Closed` | Livro fechado (OFF-07); com desfecho formada, aguarda o encerramento pelo operador (OFF-32) |
 | Revogada | `Revoked` | Terminal por revogação (OFF-12) |
-| Encerrada | `Completed` | Fim da liquidação externa registrado pelo operador; terminal (OFF-13) |
+| Encerrada | `Completed` | Terminal: fim da liquidação registrado pelo operador (OFF-13) ou oferta não formada (OFF-31) |
 
 Os atributos publicados são identificados em OFF-15 a OFF-25. Persistência, exposição e experiência de edição são downstream.
 
@@ -60,7 +62,7 @@ Reserva e investidor pertencem ao [PRD 0002](0002-reservation-book-reservation-l
 | Draft | Definição em elaboração (OFF-01, OFF-02, OFF-14). |
 | Oferta publicada | Definição comprometida pela publicação (OFF-03, OFF-05). |
 | Revogada | Oferta tornada ineficaz (OFF-12); efeitos no livro em BOOK-18. |
-| Encerrada | Terminal que registra a conclusão externa da liquidação (OFF-13). |
+| Encerrada | Terminal alcançado pelo fim da liquidação (OFF-13) ou pela não formação (OFF-31). |
 | Preço por cota | Valor unitário da emissão (OFF-17). |
 | Quantidade base | Número de cotas inicialmente ofertado (OFF-18). |
 | Montante mínimo | Limiar de formação expresso em cotas (OFF-19). |
@@ -91,9 +93,12 @@ Cada requisito é uma condição verificável.
 - **OFF-07 (Must)** Fechar é ação explícita do operador sobre oferta Aberta, permitida a qualquer instante maior ou igual ao início do período de reserva, o que admite encerramento antecipado.
 - **OFF-08 (Must)** Oferta Aberta cujo período de reserva terminou não aceita reservas, mesmo antes de o operador fechá-la. A recusa é BOOK-01; a condição é definida aqui.
 - **OFF-12 (Must)** Revogar é ação explícita do operador, permitida em Aberta e Fechada. Draft é descartado, não revogado; terminais não são revogados. Revogar uma oferta Fechada com desfecho já emitido torna sem efeito a alocação já aplicada (BOOK-18); o resultado emitido pelo Allocation não é alterado.
-- **OFF-13 (Must)** Encerrar é ação explícita do operador sobre oferta Fechada cujo desfecho consultado no Allocation é formada (ALLOC-27), registrando o fim da liquidação, que ocorre fora da plataforma; o registro do operador é o único gatilho. Sem desfecho ou com desfecho não formada, encerrar é rejeitado informando o motivo.
+- **OFF-13 (Must)** Encerrar é ação explícita do operador sobre oferta Fechada que já recebeu desfecho formada (OFF-32), registrando o fim da liquidação, que ocorre fora da plataforma; o registro do operador é o único gatilho. Antes do desfecho, encerrar é rejeitado informando o motivo.
 - **OFF-14 (Must)** Somente ofertas fora de Draft são apresentadas aos demais contextos, sempre com o estado corrente.
-- **OFF-30 (Must)** O desfecho do livro não altera o estado da oferta: ela permanece Fechada após o processamento, formada ou não, até ser encerrada ou revogada. Formada e não formada são consultadas no Allocation (ALLOC-27), nunca mantidas aqui.
+- **OFF-30 (Must)** A oferta não mantém formada ou não formada como estado; o desfecho é do Allocation (ALLOC-09, ALLOC-10) e determina apenas se a oferta aguarda liquidação (OFF-32) ou encerra (OFF-31).
+- **OFF-31 (Must)** Oferta Fechada que recebe o desfecho não formada passa a Encerrada: não há liquidação, e a restituição ocorre fora da plataforma.
+- **OFF-32 (Must)** Oferta Fechada que recebe o desfecho formada permanece Fechada, com o recebimento registrado, e passa a admitir o encerramento pelo operador (OFF-13).
+- **OFF-33 (Must)** O desfecho só é aceito em Fechada e uma vez por oferta. Recebido em qualquer outro estado, inclusive Revogada, ou repetido, é ignorado sem alterar a oferta e registrado como descartado.
 
 ### Atributos e validação na publicação
 
@@ -120,12 +125,12 @@ Definidas aqui, aplicadas em ALLOC-11 a ALLOC-13. O ramo de insuficiência é de
 
 ## Domain Events
 
-Produz `OfferPublished` (OFF-03, com a definição completa), `OfferClosed` (OFF-07) e `OfferRevoked` (OFF-12). Não consome evento: o desfecho do livro é consultado no Allocation quando o operador encerra (OFF-13, ALLOC-27) e não muda o estado da oferta (OFF-30). Encerrada não gera evento na v1. O [PRD 0000](0000-platform-overview.md) concentra conteúdo compartilhado, consumidores e sequências.
+Produz `OfferPublished` (OFF-03, com a definição completa), `OfferClosed` (OFF-07) e `OfferRevoked` (OFF-12). Consome `BookProcessed` (OFF-31 a OFF-33) para terminar o ciclo sem manter o desfecho como estado (OFF-30). Encerrada não gera evento na v1. O [PRD 0000](0000-platform-overview.md) concentra conteúdo compartilhado, consumidores e sequências.
 
 ## Requisitos Não Funcionais
 
 - **OFF-NFR-01** Validação de publicação e cada transição de estado são atômicas.
-- **OFF-NFR-02** Toda transição registra quem a disparou e quando; a tentativa de encerrar rejeitada por OFF-13 também.
+- **OFF-NFR-02** Toda transição registra quem ou qual contexto a disparou e quando; o desfecho recebido (OFF-32) e o descartado (OFF-33) também.
 - **OFF-NFR-03** Definição e estado corrente são os mesmos para todos os consumidores em qualquer instante; não há versão intermediária visível. É a exigência do ADR de transporte de eventos.
 - **OFF-NFR-04** Preço e cálculo proporcional são exatos, sem arredondamento binário.
 
@@ -158,7 +163,7 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 - **Publicação com período já em curso (OFF-23).** *Custo:* a demanda do trecho anterior não existe no livro. *Razão:* a oferta vai a mercado pelos documentos; rejeitar não protege invariante.
 - **Conjunto de opções com dois valores obrigatórios (OFF-25).** *Custo:* estrutura de conjunto para um grau de liberdade. *Razão:* preserva "opção pertence ao conjunto aceito" (OFF-29) e prepara o art. 75.
 - **Revogada como estado da oferta e não formada como desfecho do Allocation, sem campo de motivo.** *Custo:* dois insucessos com o mesmo efeito downstream, em contextos diferentes. *Razão:* bases regulatórias diferentes, art. 68 e art. 73, § 3º, e donos diferentes.
-- **Desfecho fora da máquina de estados (OFF-30).** *Custo:* quem precisa do quadro completo compõe estado da oferta e desfecho do Allocation em duas leituras, e encerrar depende de consulta (ALLOC-27). *Razão:* o Offering é upstream e não reage a evento de quem o consome; o desfecho tem um único dono. Ver Ponto de Maior Fragilidade.
+- **Desfecho consumido como evento, sem virar estado (OFF-30 a OFF-33).** *Custo:* ciclo de eventos com o Allocation, contido por OFF-33, e um fato recebido que a oferta precisa lembrar para encerrar. *Razão:* a formação tem um único dono, mas sem o evento a oferta não formada ficaria Fechada para sempre. Ver Ponto de Maior Fragilidade.
 - **Fechamento explícito, não derivado do fim do período (OFF-07).** *Custo:* a oferta fica Aberta até o operador agir, o que exige OFF-08. *Razão:* o fechamento antecipado (art. 76, II) exige ação explícita.
 - **Encerrada por ação do operador, sem liquidação modelada (OFF-13).** *Custo:* depende de informação externa. *Razão:* a liquidação fica fora; o ciclo precisa de terminal de sucesso.
 - **Montante mínimo em cotas (OFF-19).** *Custo:* os documentos usam reais. *Razão:* o art. 73 admite as duas formas; com preço fixo são equivalentes e cotas eliminam arredondamento.
@@ -166,7 +171,7 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 
 ## Métricas de Sucesso
 
-- Leading: toda combinação inválida de OFF-15 a OFF-25 é rejeitada com todas as violações, com um caso por regra e um combinando duas; toda transição fora do diagrama é rejeitada; nenhum desfecho altera o estado da oferta; nenhuma alteração após a publicação.
+- Leading: toda combinação inválida de OFF-15 a OFF-25 é rejeitada com todas as violações, com um caso por regra e um combinando duas; toda transição fora do diagrama é rejeitada; todo desfecho fora de Fechada ou repetido é descartado; nenhuma alteração após a publicação.
 - Lagging: nenhum consumidor precisa de atributo ou estado ausente; séries entram sem reinterpretar ofertas da v1.
 - Guardrails: Draft continua aceitando definição incompleta (OFF-02); o Allocation não reinterpreta OFF-26 a OFF-28; nenhum consumidor mantém estado próprio da oferta (OFF-NFR-03).
 
@@ -188,9 +193,11 @@ Base válida: identificação completa, nome preenchido, preço 100, base 1000, 
 
 - **Dada** uma oferta publicada, **quando** se tenta editar um atributo, **então** a definição permanece idêntica e a alteração é rejeitada (OFF-05).
 - **Dado** um Draft, **quando** um consumidor consulta ofertas, **então** ele não aparece (OFF-14).
-- **Dada** uma oferta Fechada, **quando** o Allocation emite o desfecho, formada ou não, **então** ela permanece Fechada (OFF-30).
-- **Dadas** duas ofertas Fechadas com desfecho formada, **quando** o operador revoga a primeira e encerra a segunda, **então** terminam respectivamente Revogada e Encerrada (OFF-12, OFF-13).
-- **Dada** uma oferta Fechada sem desfecho ou com desfecho não formada, **quando** o operador tenta encerrar, **então** a tentativa é rejeitada com o motivo (OFF-13).
+- **Dada** uma oferta Fechada, **quando** recebe o desfecho não formada, **então** passa a Encerrada (OFF-31).
+- **Dada** uma oferta Fechada, **quando** recebe o desfecho formada, **então** permanece Fechada com o recebimento registrado (OFF-32).
+- **Dadas** duas ofertas Fechadas com desfecho formada recebido, **quando** o operador revoga a primeira e encerra a segunda, **então** terminam respectivamente Revogada e Encerrada (OFF-12, OFF-13).
+- **Dada** uma oferta Fechada sem desfecho recebido, **quando** o operador tenta encerrar, **então** a tentativa é rejeitada com o motivo (OFF-13).
+- **Dada** uma oferta Revogada ou já com desfecho recebido, **quando** chega um desfecho, **então** ele é descartado e registrado (OFF-33).
 - **Dada** uma oferta terminal, **quando** se solicita uma transição, **então** a rejeição informa estado e tentativa; o mesmo vale para fechar ou revogar Draft (OFF-06).
 
 ## Dependências e Riscos
@@ -200,8 +207,8 @@ As relações compartilhadas estão no [PRD 0000](0000-platform-overview.md).
 | Item | Tipo | Impacto |
 |---|---|---|
 | ReservationBook | Consumidor | BOOK-01, BOOK-03, BOOK-04 e BOOK-08 dependem da definição publicada; mudança de limites afeta a aceitação de reservas. |
-| Allocation | Contrato semântico | Aplica OFF-26 a OFF-28; interpretação divergente muda a alocação. Encerrar depende do desfecho consultável (ALLOC-27), descrito no PRD 0003. |
-| Revogação durante processamento | Consistência | A convergência depende de ALLOC-03 e BOOK-18. |
+| Allocation | Contrato semântico | Aplica OFF-26 a OFF-28; interpretação divergente muda a alocação. O ciclo termina com o desfecho de ALLOC-26, consumido por OFF-31 a OFF-33. |
+| Revogação durante processamento | Consistência | A convergência depende de OFF-33, ALLOC-03 e BOOK-18. |
 | Identificação sem cadastro | Dados | Não detecta erro de digitação nem oferta duplicada. |
 | Transporte de eventos | ADR pendente | Precisa satisfazer OFF-NFR-03. |
 
@@ -211,11 +218,11 @@ As relações compartilhadas estão no [PRD 0000](0000-platform-overview.md).
 
 ## Ponto de Maior Fragilidade
 
-A decisão de **manter o desfecho do livro fora da máquina de estados da oferta** (OFF-30): a oferta termina Fechada tanto quando se forma quanto quando não se forma, e o Offering não consome `BookProcessed`.
+A decisão de **encerrar a oferta não formada automaticamente pelo evento (OFF-31), enquanto a formada espera o operador (OFF-13)**, com um único terminal de sucesso, Encerrada, para os dois casos.
 
-*Vetor de ataque:* "Fechada" passa a cobrir três situações distintas, aguardando processamento, formada em liquidação e não formada em definitivo, e a oferta não formada nunca alcança um estado terminal no Offering. Quem responde "em que pé está a oferta" precisa compor o estado daqui com o desfecho do Allocation, e encerrar (OFF-13) só funciona se a consulta ao Allocation (ALLOC-27) estiver disponível no momento da ação do operador. A alternativa rejeitada, Offering consumindo o desfecho e mantendo Formada e Não formada, dava ponto de leitura único ao custo de um ciclo entre os dois contextos e de um segundo lugar para o mesmo fato.
+*Vetor de ataque:* Encerrada agrega dois fatos distintos, oferta liquidada e oferta que nunca se formou, sem os distinguir no estado; quem precisa saber se houve liquidação compõe o estado da oferta com o desfecho do Allocation. O Offering, raiz de dependência, reage a um evento do contexto que o consome, e o ciclo só é contido porque OFF-33 descarta desfecho fora de Fechada ou repetido. A alternativa rejeitada, estados Formada e Não formada na oferta, dava ponto de leitura único ao custo de manter a formação em dois donos.
 
-*Desafie antes de aprovar:* uma oferta não formada que fica Fechada para sempre é aceitável para o operador, ou o Offering precisa de um terminal próprio para esse caso? Se precisar, o terminal reintroduz a dependência do desfecho que esta decisão removeu, e é melhor decidir agora do que depois de o ReservationBook e o Allocation dependerem do contrato atual.
+*Desafie antes de aprovar:* Encerrada única basta para o operador, ou a oferta não formada precisa de terminal próprio? Um terminal próprio reintroduz a formação como estado da oferta, que é o que esta decisão evita; se for necessário, é mais barato decidir agora do que depois de o ReservationBook e o Allocation dependerem do contrato atual.
 
 ## Referências
 

@@ -20,11 +20,11 @@ O Allocation é o contexto core: é nele que as regras da CVM 160 sobre parcial,
 
 - Operador da corretora: fechar a oferta e ter um desfecho correto, explicável reserva a reserva e reprodutível, sem intervenção manual.
 - Investidor, indireto via livro: saber quantas cotas recebeu e por quê.
-- Consumidores: ReservationBook aplica o resultado por reserva; Offering consulta o desfecho para encerrar a oferta (OFF-13) e não muda de estado com ele (OFF-30).
+- Consumidores: ReservationBook aplica o resultado por reserva; Offering consome o desfecho para terminar o ciclo da oferta (OFF-31 a OFF-33) sem mantê-lo como estado (OFF-30).
 
 ## Solução Proposta
 
-O operador obtém o desfecho e os resultados por reserva a partir do livro fechado (ALLOC-01 a ALLOC-04, ALLOC-25 a ALLOC-27). Formada e não formada são fatos deste contexto: a oferta não os carrega como estado (OFF-30). O diagrama indexa as decisões e a sequência de cálculo.
+O operador obtém o desfecho e os resultados por reserva a partir do livro fechado (ALLOC-01 a ALLOC-04, ALLOC-25, ALLOC-26). Formada e não formada são fatos deste contexto: a oferta não os carrega como estado (OFF-30). O diagrama indexa as decisões e a sequência de cálculo.
 
 Notação usada em todo o documento: `B` quantidade base, `M` montante mínimo, `D` demanda total, `Dn` demanda das não vinculadas, `D'` demanda efetiva, `E` cotas efetivamente distribuídas, `q` quantidade reservada, `R` quantidade rateada, `Dr` demanda rateada.
 
@@ -127,7 +127,6 @@ Cada requisito é uma condição verificável. Notação na Solução Proposta.
 - **ALLOC-24 (Must)** Investimento mínimo por reserva e máximo por posição valem no registro (BOOK-03, BOOK-04), não na alocação: rateio e proporcional podem alocar abaixo do mínimo, inclusive zero. O motivo é a regra aplicada, não a quantidade.
 - **ALLOC-25 (Must)** O resultado por reserva carrega quantidade alocada e um motivo entre: atendida integralmente, atendida parcialmente por proporcional, atendida parcialmente por rateio, não atendida por condicionamento, excluída por vinculação, oferta não formada.
 - **ALLOC-26 (Must)** O desfecho carrega `D`, `Dn`, `D'`, `E`, o ramo aplicado (inclusive colocação limitada) e a lista identificável de resultados por reserva. Informa o desfecho de ALLOC-09 ou ALLOC-10 e é emitido como `BookProcessed`, sujeito a ALLOC-02. `E` só é apurado no caso de ALLOC-10; na não formação é não aplicável.
-- **ALLOC-27 (Must)** O desfecho emitido é consultável por oferta pelos demais contextos, com o mesmo conteúdo de ALLOC-26. Oferta sem `BookProcessed` emitido responde que não há desfecho; a consulta nunca dispara processamento.
 
 | Desfecho (ALLOC-09, ALLOC-10) | Identificador |
 |---|---|
@@ -155,7 +154,7 @@ Os identificadores dos ramos e dos motivos compostos são nomes descritivos do m
 
 ## Domain Events
 
-Produz `BookProcessed` (ALLOC-26), consumido pelo ReservationBook; o Offering lê o desfecho por consulta (ALLOC-27), não por evento. Consome `OfferPublished` (definição para ALLOC-01), `OfferClosed` (ALLOC-01) e `OfferRevoked` (ALLOC-03). O contrato de entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e as decisões delegadas a ADR.
+Produz `BookProcessed` (ALLOC-26), consumido pelo Offering e pelo ReservationBook. Consome `OfferPublished` (definição para ALLOC-01), `OfferClosed` (ALLOC-01) e `OfferRevoked` (ALLOC-03). O contrato de entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e as decisões delegadas a ADR.
 
 ## Requisitos Não Funcionais
 
@@ -193,13 +192,12 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 - **Vedação antes da formação (ALLOC-06 a ALLOC-09).** *Custo:* nenhum sobre o resultado, porque a exceção do § 1º, III, impede que a exclusão leve `D'` abaixo de `B`; o cálculo passa a distinguir exclusão de colocação limitada. *Razão:* é a ordem da norma e evita excluir reservas de uma oferta que não vai se formar.
 - **`ScaledBack` como identificador do rateio (ALLOC-25).** *Custo:* o livro mapeia proporcional e rateio no mesmo `PartiallyFilled` (BOOK-17); vocabulários distintos. *Razão:* termo dos prospectos ("scale-back of oversubscriptions on a pro rata basis", comunicado da Euro Manganese); `ProRata` colidiria com a opção 3.
 - **Identificadores `Unconditional` e `Lapsed` para o desfecho (ALLOC-26).** *Custo:* `Unconditional` convive com as opções de condicionamento da reserva. *Razão:* par usado pela comunidade anglófona (UK Takeover Code, Rule 31.2; prospectos HKEX, "Structure of the Global Offering"); `Formed` e `NotFormed` seriam tradução literal.
-- **Desfecho consultável em vez de estado no Offering (ALLOC-27).** *Custo:* este contexto responde consultas depois de processar, e o Offering depende dele para encerrar. *Razão:* formação é fato apurado aqui; mantê-la também como estado da oferta criava ciclo entre os dois contextos (OFF-30).
 - **Colocação limitada como sub-ramo do excesso (ALLOC-21).** *Custo:* o rateio ganha dois parâmetros, `R` e o conjunto rateado. *Razão:* em limitada `D' = D > B`, excesso por definição; reutiliza ALLOC-16 a ALLOC-18 e mantém ALLOC-19 como único invariante.
 
 ## Métricas de Sucesso
 
 - Leading: todo cenário dos Critérios de Aceitação é reproduzido por teste com igualdade exata; em livros aleatórios, processar duas vezes dá resultado idêntico e ALLOC-18, ALLOC-19, ALLOC-22 e ALLOC-23 nunca são violados; em colocação limitada toda não vinculada recebe `q`.
-- Lagging: o ReservationBook aplica `BookProcessed` e o Offering consulta o desfecho usando somente ALLOC-25 a ALLOC-27.
+- Lagging: Offering e ReservationBook aplicam `BookProcessed` usando somente ALLOC-25 e ALLOC-26.
 - Guardrails: ninguém recebe mais do que reservou (ALLOC-18); nada fracionário (ALLOC-22); o contexto não altera o livro nem a definição.
 
 ## Critérios de Aceitação
@@ -234,7 +232,7 @@ As relações compartilhadas e a decisão sobre a leitura da entrada estão no [
 
 | Item | Tipo | Impacto |
 |---|---|---|
-| Offering | Consulta o desfecho | ALLOC-27 responde a OFF-13; a oferta não muda de estado com o desfecho (OFF-30). |
+| Offering | Consumidor do desfecho | ALLOC-26 alimenta OFF-31 a OFF-33; a formação não vira estado da oferta (OFF-30). |
 | ReservationBook | Consumidor dos resultados | ALLOC-25 fornece motivos e quantidades para BOOK-17; a reserva precisa ser identificável. |
 | Critério do resto | Desenho | Pode divergir do plano de distribuição de uma oferta real. |
 | Ausência de revisão | Operação | Uma declaração errada no livro pode exigir revogar a oferta inteira. |

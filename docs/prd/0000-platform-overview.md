@@ -13,11 +13,11 @@ A plataforma demonstra um recorte executável da distribuição de cotas de clas
 
 | Contexto | Responsabilidade | PRD | Prefixo de ID | Posição |
 |---|---|---|---|---|
-| Offering | Definição imutável da oferta e sua máquina de estados (OFF-01 a OFF-29) | [0001](0001-offering-offer-lifecycle.md) | `OFF` | Upstream: os demais consomem a definição e não a alteram; não consome evento. |
+| Offering | Definição imutável da oferta e sua máquina de estados (OFF-01 a OFF-29) | [0001](0001-offering-offer-lifecycle.md) | `OFF` | Upstream: os demais consomem a definição e não a alteram; consome o desfecho só para terminar o ciclo. |
 | ReservationBook | Reservas contra oferta Aberta, livro congelado no fechamento e status por reserva (BOOK-01 a BOOK-21) | [0002](0002-reservation-book-reservation-lifecycle.md) | `BOOK` | Consome Offering e fornece a entrada para Allocation. |
-| Allocation | Processamento único do livro fechado: vedação a vinculadas, formação, condicionamento e rateio (ALLOC-01 a ALLOC-27) | [0003](0003-allocation-book-processing.md) | `ALLOC` | Contexto core; consome os outros dois, devolve o resultado ao ReservationBook e expõe o desfecho por consulta. |
+| Allocation | Processamento único do livro fechado: vedação a vinculadas, formação, condicionamento e rateio (ALLOC-01 a ALLOC-26) | [0003](0003-allocation-book-processing.md) | `ALLOC` | Contexto core; consome os outros dois e devolve o desfecho e os resultados. |
 
-Cada contexto mantém sua persistência; as relações usam eventos ou consulta ao dono. Offering permanece upstream para mudanças incompatíveis de contrato. O desfecho do livro, formada ou não formada, pertence ao Allocation e não altera o estado da oferta (OFF-30); o Offering o consulta para encerrar (OFF-13, ALLOC-27).
+Cada contexto mantém sua persistência; as relações usam eventos ou consulta ao dono. Offering permanece upstream para mudanças incompatíveis de contrato. O desfecho do livro, formada ou não formada, pertence ao Allocation (OFF-30); o Offering o consome para encerrar o ciclo (OFF-31 a OFF-33).
 
 Os requisitos são citados pelo prefixo e número; sua definição ocorre somente no PRD dono. Identificadores de domínio seguem os glossários desses documentos.
 
@@ -28,9 +28,9 @@ Os requisitos são citados pelo prefixo e número; sua definição ocorre soment
 | `OfferPublished` | Offering | ReservationBook, Allocation | Publicação; inclui a definição completa | OFF-03, BOOK-01, ALLOC-01 |
 | `OfferClosed` | Offering | ReservationBook, Allocation | Fechamento pelo operador | OFF-07, BOOK-15, ALLOC-01 |
 | `OfferRevoked` | Offering | ReservationBook, Allocation | Revogação pelo operador em Aberta ou Fechada | OFF-12, BOOK-18, ALLOC-03 |
-| `BookProcessed` | Allocation | ReservationBook | Conclusão do processamento; carrega desfecho, `D`, `Dn`, `D'`, `E`, ramo e resultado por reserva | ALLOC-26, BOOK-17 |
+| `BookProcessed` | Allocation | Offering, ReservationBook | Conclusão do processamento; carrega desfecho, `D`, `Dn`, `D'`, `E`, ramo e resultado por reserva | ALLOC-26, OFF-31 a OFF-33, BOOK-17 |
 
-Todo evento identifica a oferta, o estado resultante da operação e seu instante. Em `BookProcessed`, o estado comunicado é o desfecho do processamento, que não altera o estado da oferta (OFF-30). A definição completa acompanha `OfferPublished`; a informação do processamento segue ALLOC-26. Encerrada não tem evento próprio na v1 porque não há consumidor; a formação viaja em `BookProcessed` e é consultável no Allocation (ALLOC-27).
+Todo evento identifica a oferta, o estado resultante da operação e seu instante. Em `BookProcessed`, o estado comunicado é o desfecho do processamento; a aceitação no Offering segue OFF-33. A definição completa acompanha `OfferPublished`; a informação do processamento segue ALLOC-26. Encerrada não tem evento próprio na v1 porque não há consumidor; a formação viaja em `BookProcessed` e não vira estado da oferta (OFF-30).
 
 São candidatos futuros, condicionados à existência de consumidores: `OfferBecameUnconditional`, `OfferLapsed`, `OfferCompleted`, `ReservationPlaced`, `ReservationChanged` e `ReservationWithdrawn`. O livro fechado é obtido por consulta (BOOK-16), e não por um evento adicional.
 
@@ -56,15 +56,14 @@ sequenceDiagram
     Offering-->>Allocation: OfferClosed (ALLOC-01)
     Allocation->>ReservationBook: consultar livro fechado (BOOK-16)
     ReservationBook-->>Allocation: entrada congelada (BOOK-16, BOOK-NFR-02)
+    Allocation-->>Offering: BookProcessed (ALLOC-26)
     Allocation-->>ReservationBook: BookProcessed (ALLOC-26)
     ReservationBook->>ReservationBook: aplicar resultados (BOOK-17)
     alt formada (ALLOC-10)
+        Offering->>Offering: registrar desfecho (OFF-32)
         Operador->>Offering: encerrar (OFF-13)
-        Offering->>Allocation: consultar desfecho (ALLOC-27)
-        Allocation-->>Offering: formada (ALLOC-27)
-        Offering->>Offering: Encerrada (OFF-13)
     else não formada (ALLOC-09)
-        Offering->>Offering: permanece Fechada (OFF-30)
+        Offering->>Offering: Encerrada (OFF-31)
     end
 ```
 
@@ -81,7 +80,8 @@ sequenceDiagram
     alt processamento em curso (ALLOC-03)
         Allocation->>Allocation: interromper (ALLOC-03)
     else resultado já emitido (ALLOC-03)
-        Allocation->>Allocation: manter o resultado emitido (ALLOC-03)
+        Allocation-->>Offering: BookProcessed tardio (ALLOC-26)
+        Offering->>Offering: descartar e registrar (OFF-33)
     end
     alt resultado chegou antes ao livro (BOOK-17)
         Allocation-->>ReservationBook: BookProcessed previamente emitido (ALLOC-26)

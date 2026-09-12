@@ -17,7 +17,7 @@ As duas regras se acumulam quando os padrões coincidem. Os documentos são a fo
 
 As skills do repositório ficam em `.agents/skills/`. Use `prd` para requisitos de produto, `sdd` para especificação, design, execução e verificação técnica, e `ontology-from-transcript` para extrair conceitos de uma transcrição de especialista. Leia o `SKILL.md` correspondente quando a tarefa se enquadrar na descrição da skill; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
 
-Ao alterar skills, siga [.agents/skills/GATE.md](.agents/skills/GATE.md), incluindo as instâncias separadas de correção e revisão quando exigidas. Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
+Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
 
 ## Idioma
 
@@ -43,13 +43,7 @@ Regras:
 
 Tipos: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 
-Validação determinística da forma, com o perfil que aplica estas regras (o script sozinho é Conventional Commits genérico):
-
-```
-python3 .github/scripts/check_commit.py --message "<msg>" --max-len 60 --no-scope --no-bang --single-line --lowercase
-```
-
-O mesmo perfil vale para o job de CI que valida os commits de um pull request.
+Confira a mensagem contra estas regras antes de commitar; não há validação automática.
 
 Exemplos:
 
@@ -102,8 +96,6 @@ dotnet test FundDistributionPlatform.slnx
 ```
 
 Valide os dois antes de encerrar qualquer mudança em código.
-
-Mudança em `.agents/skills/**` ou nos artefatos que as skills produzem (`docs/prd`, `docs/specs`, `docs/adr`) passa pelo gate das skills antes do commit: `python3 .github/scripts/skills_gate.py` (etapa determinística, com limite por check). Mudança que toca regra de skill passa também pela revisão cética com nota mínima descrita em `.agents/skills/GATE.md`. *Princípio:* processo repetível vira script; o que o script não mede tem limite escrito.
 
 ## Convenções de projeto
 

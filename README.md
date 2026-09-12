@@ -40,13 +40,7 @@ Cada API expõe, apenas em ambiente `Development`:
 
 ## Build e testes
 
-```bash
-dotnet build FundDistributionPlatform.slnx
-```
-
-```bash
-dotnet test FundDistributionPlatform.slnx
-```
+Os comandos de build e teste, e o momento de rodá-los, estão em [AGENTS.md](AGENTS.md), seção Build e testes.
 
 ## Estrutura do repositório
 
@@ -54,9 +48,6 @@ dotnet test FundDistributionPlatform.slnx
 .
 ├── .agents/
 │   └── skills/                       # skills locais do Codex (ver Skills)
-├── .github/
-│   ├── scripts/                      # check_commit.py (política de commit) e skills_gate.py (gate das skills)
-│   └── workflows/                    # CI: skills.yml roda o gate das skills e valida commits de PR
 ├── docs/
 │   ├── development/                  # regras por área: composição do Program.cs, tracing
 │   └── prd/                          # PRDs (prd), um por contexto + 0000 overview
@@ -103,11 +94,11 @@ $ontology-from-transcript extraia os conceitos desta transcrição: ...
 
 Modelo, autenticação e preferências pessoais ficam na instalação do Codex. Este repositório não precisa de `.codex/config.toml` para carregar suas instruções e skills.
 
-Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme a descoberta das três skills e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`; sem transcrição, a skill de ontologia não deve inventar conceitos. Essa verificação comportamental complementa o gate determinístico.
+Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme a descoberta das três skills e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`; sem transcrição, a skill de ontologia não deve inventar conceitos.
 
 ## Skills
 
-Três skills de agente em `.agents/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método), `references/` (regras por etapa) e `scripts/` (linters e testes); a terceira é um método isolado, só com `SKILL.md`.
+Três skills de agente em `.agents/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método) e `references/` (regras por etapa); a terceira é um método isolado, só com `SKILL.md`.
 
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
@@ -120,53 +111,8 @@ Os `SKILL.md` selecionam a entrada e as referências necessárias. Processo, for
 | Pacote | Processo e convenções | Escrita e exemplos |
 | --- | --- | --- |
 | PRD | [workflow.md](.agents/skills/prd/references/workflow.md): geração, checagem e revisão; [conventions.md](.agents/skills/prd/references/conventions.md): gravação e idioma | [prose.md](.agents/skills/prd/references/prose.md): política editorial local; [writing.md](.agents/skills/prd/references/writing.md): regras e formas por seção; [example.md](.agents/skills/prd/references/example.md): PRD completo e reescrita didática |
-| SDD | [workflow.md](.agents/skills/sdd/references/workflow.md): pré-requisitos e autorizações; [validation.md](.agents/skills/sdd/references/validation.md): scripts, ciclos e rubricas | [prose.md](.agents/skills/sdd/references/prose.md): política editorial local; cada referência de entrada traz seu perfil de escrita e os exemplos pertinentes |
+| SDD | [workflow.md](.agents/skills/sdd/references/workflow.md): pré-requisitos e autorizações; [validation.md](.agents/skills/sdd/references/validation.md): checagem de forma, ciclos e rubricas | [prose.md](.agents/skills/sdd/references/prose.md): política editorial local; cada referência de entrada traz seu perfil de escrita e os exemplos pertinentes |
 
 As políticas editoriais preservam IDs, tags, formatos, modalidades e significado. A revisão usa os ciclos existentes; exemplos parciais em blocos `text` ilustram a redação e não constituem evidência de execução. As referências de escrita dos dois pacotes são independentes.
 
-Pré-requisitos dos scripts: Python 3 (testado com 3.14 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs e dos designs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede). Cada skill é um pacote autocontido e traz o seu parser:
-
-```bash
-python3 .agents/skills/prd/scripts/lint_mermaid.py --setup
-python3 .agents/skills/sdd/scripts/lint_mermaid.py --setup
-```
-
-Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`): o gate determinístico das skills, que roda suítes, self-test dos parsers, linters sobre `docs/`, independência entre skills, codificação e registro no `.slnx` e neste README, cada check com limite explícito. Toda mudança em `.agents/skills/**` passa por ele antes do commit; [GATE.md](.agents/skills/GATE.md) lista os checks e descreve a segunda etapa, a revisão cética com nota mínima, que o script não roda.
-
-```bash
-python3 .github/scripts/skills_gate.py
-```
-
-Scripts individuais, para validar um artefato durante o trabalho:
-
-```bash
-python3 .agents/skills/prd/scripts/lint_mermaid.py --self-test
-python3 .agents/skills/sdd/scripts/lint_mermaid.py --self-test
-python3 -m unittest discover -s .agents/skills/prd/scripts/tests
-python3 -m unittest discover -s .agents/skills/sdd/scripts/tests
-python3 .agents/skills/prd/scripts/seq.py check docs/prd
-python3 .agents/skills/prd/scripts/lint_prd.py docs/prd
-python3 .agents/skills/prd/scripts/lint_mermaid.py docs/prd
-python3 .agents/skills/sdd/scripts/seq.py check docs/specs/<contexto>/<capability>
-python3 .agents/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
-python3 .agents/skills/sdd/scripts/lint_design.py docs/specs/<contexto>/<capability>/<NNNN-slug>/design.md --spec docs/specs/<contexto>/<capability>/spec.md
-python3 .agents/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
-python3 .agents/skills/sdd/scripts/lint_adr.py docs/adr
-python3 .agents/skills/sdd/scripts/lint_mermaid.py docs/specs
-```
-
-A CI executa o gate em todo push e pull request e, em pull requests, valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [AGENTS.md](AGENTS.md).
-
-Semântica da saída dos linters: `HARD` retorna exit 1; sua correção, as exceções de forma por pedido/convenção e a apresentação com achados após o teto seguem [Checar da PRD](.agents/skills/prd/references/workflow.md#checar) ou [Scripts da SDD](.agents/skills/sdd/references/validation.md#scripts). Apresentar com achados não comprova validação nem aprovação. Nos dois `lint_mermaid.py`, `HARD INCOMPLETO` indica validação não realizada por parser ausente, nunca sucesso, com exit 3; a autorização de setup e a apresentação sem essa verificação seguem os mesmos ciclos. `WARN` é heurística e não afeta o exit; cada ciclo define seu tratamento. Exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos. O gate do repositório mantém seu limite de zero HARD e bloqueia commit quando algum check falha.
-
-A CI não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.
-
-Testes da reforma das skills, já descobertos pela suíte do gate em `.github/scripts/tests`:
-
-```bash
-python3 -m unittest discover -s .github/scripts/tests -p test_skill_snapshot.py
-python3 -m unittest discover -s .github/scripts/tests -p test_skill_routing.py
-python3 -m unittest discover -s .github/scripts/tests -p test_skill_editorial.py
-```
-
-`test_skill_snapshot.py` reproduz em Git temporário a diferença entre HEAD, índice e árvore de trabalho. `test_skill_routing.py` confere o contrato estrutural das entradas. `test_skill_editorial.py` verifica políticas locais, remissões, perfis e exemplos parciais, mantendo os templates completos sob as suítes dos linters. Os dois últimos não medem a decisão de um modelo nem a qualidade editorial do resultado; essas avaliações precisam de evidência própria.
+As skills não trazem scripts: toda checagem de forma é feita lendo o artefato, item a item, conforme a referência de validação de cada pacote. Scripts voltam a entrar quando uma verificação repetível justificar o custo de mantê-los.

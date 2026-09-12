@@ -1,8 +1,6 @@
 <Solution>
   <Folder Name="/.agents/" />
-  <Folder Name="/.agents/skills/">
-    <File Path=".agents/skills/GATE.md" />
-  </Folder>
+  <Folder Name="/.agents/skills/" />
   <Folder Name="/.agents/skills/ontology-from-transcript/">
     <File Path=".agents/skills/ontology-from-transcript/SKILL.md" />
   </Folder>
@@ -18,23 +16,6 @@
     <File Path=".agents/skills/prd/references/workflow.md" />
     <File Path=".agents/skills/prd/references/writing.md" />
   </Folder>
-  <Folder Name="/.agents/skills/prd/scripts/">
-    <File Path=".agents/skills/prd/scripts/lint_mermaid.py" />
-    <File Path=".agents/skills/prd/scripts/lint_prd.py" />
-    <File Path=".agents/skills/prd/scripts/seq.py" />
-  </Folder>
-  <Folder Name="/.agents/skills/prd/scripts/mermaid-parser/">
-    <File Path=".agents/skills/prd/scripts/mermaid-parser/package-lock.json" />
-    <File Path=".agents/skills/prd/scripts/mermaid-parser/package.json" />
-    <File Path=".agents/skills/prd/scripts/mermaid-parser/parse.mjs" />
-  </Folder>
-  <Folder Name="/.agents/skills/prd/scripts/tests/">
-    <File Path=".agents/skills/prd/scripts/tests/__init__.py" />
-    <File Path=".agents/skills/prd/scripts/tests/test_docs_consistency.py" />
-    <File Path=".agents/skills/prd/scripts/tests/test_lint_mermaid.py" />
-    <File Path=".agents/skills/prd/scripts/tests/test_lint_prd.py" />
-    <File Path=".agents/skills/prd/scripts/tests/test_seq.py" />
-  </Folder>
   <Folder Name="/.agents/skills/sdd/">
     <File Path=".agents/skills/sdd/SKILL.md" />
   </Folder>
@@ -48,46 +29,6 @@
     <File Path=".agents/skills/sdd/references/validation.md" />
     <File Path=".agents/skills/sdd/references/verify.md" />
     <File Path=".agents/skills/sdd/references/workflow.md" />
-  </Folder>
-  <Folder Name="/.agents/skills/sdd/scripts/">
-    <File Path=".agents/skills/sdd/scripts/_common.py" />
-    <File Path=".agents/skills/sdd/scripts/lint_adr.py" />
-    <File Path=".agents/skills/sdd/scripts/lint_design.py" />
-    <File Path=".agents/skills/sdd/scripts/lint_mermaid.py" />
-    <File Path=".agents/skills/sdd/scripts/lint_spec.py" />
-    <File Path=".agents/skills/sdd/scripts/lint_tasks.py" />
-    <File Path=".agents/skills/sdd/scripts/seq.py" />
-  </Folder>
-  <Folder Name="/.agents/skills/sdd/scripts/mermaid-parser/">
-    <File Path=".agents/skills/sdd/scripts/mermaid-parser/package-lock.json" />
-    <File Path=".agents/skills/sdd/scripts/mermaid-parser/package.json" />
-    <File Path=".agents/skills/sdd/scripts/mermaid-parser/parse.mjs" />
-  </Folder>
-  <Folder Name="/.agents/skills/sdd/scripts/tests/">
-    <File Path=".agents/skills/sdd/scripts/tests/__init__.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_docs_consistency.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_lint_adr.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_lint_design.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_lint_mermaid.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_lint_spec.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_lint_tasks.py" />
-    <File Path=".agents/skills/sdd/scripts/tests/test_seq.py" />
-  </Folder>
-  <Folder Name="/.github/" />
-  <Folder Name="/.github/scripts/">
-    <File Path=".github/scripts/check_commit.py" />
-    <File Path=".github/scripts/skills_gate.py" />
-  </Folder>
-  <Folder Name="/.github/scripts/tests/">
-    <File Path=".github/scripts/tests/__init__.py" />
-    <File Path=".github/scripts/tests/test_check_commit.py" />
-    <File Path=".github/scripts/tests/test_skill_editorial.py" />
-    <File Path=".github/scripts/tests/test_skill_routing.py" />
-    <File Path=".github/scripts/tests/test_skill_snapshot.py" />
-    <File Path=".github/scripts/tests/test_skills_gate.py" />
-  </Folder>
-  <Folder Name="/.github/workflows/">
-    <File Path=".github/workflows/skills.yml" />
   </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/development/">

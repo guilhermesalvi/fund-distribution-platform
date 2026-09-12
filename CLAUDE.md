@@ -1,6 +1,19 @@
 # CLAUDE.md
 
-Instruções para agentes trabalhando neste repositório.
+Instruções para o Claude Code trabalhando neste repositório.
+
+## Uso com Claude Code
+
+Este arquivo é a entrada das convenções do projeto. Todos os caminhos abaixo são relativos à raiz do repositório; execute os comandos de build e validação a partir dela, inclusive quando a tarefa começar em um subdiretório.
+
+As regras por área ficam em `.claude/rules/` e carregam sozinhas quando um arquivo do padrão declarado no frontmatter `paths` de cada uma entra na tarefa; as duas se acumulam quando os padrões coincidem. Ao revisar código sem editá-lo, leia a regra da área antes:
+
+- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs` e `*Endpoint.cs` em `src/`.
+- [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
+
+As skills do repositório ficam em `.claude/skills/` e aparecem no menu `/`: `/prd` para requisitos de produto, `/sdd` para especificação, design, execução e verificação técnica, e `/ontology-from-transcript` para extrair conceitos de uma transcrição de especialista. O Claude Code também carrega a skill sozinho quando a tarefa se enquadra na descrição dela; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
+
+Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
 
 ## Idioma
 
@@ -26,13 +39,7 @@ Regras:
 
 Tipos: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 
-Validação determinística da forma, com o perfil que aplica estas regras (o script sozinho é Conventional Commits genérico):
-
-```
-python3 .github/scripts/check_commit.py --message "<msg>" --max-len 60 --no-scope --no-bang --single-line --lowercase
-```
-
-O mesmo perfil vale para o job de CI que valida os commits de um pull request.
+Confira a mensagem contra estas regras antes de commitar; não há validação automática.
 
 Exemplos:
 
@@ -63,6 +70,7 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
 - `docs/prd` — PRDs, um por contexto mais o `0000` de visão geral, escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
+- `.claude/rules`, `.claude/skills` — regras por área e skills do Claude Code (Uso com Claude Code).
 
 ### Arquivos no `.slnx`
 
@@ -85,8 +93,6 @@ dotnet test FundDistributionPlatform.slnx
 ```
 
 Valide os dois antes de encerrar qualquer mudança em código.
-
-Mudança em `.claude/skills/**` ou nos artefatos que as skills produzem (`docs/prd`, `docs/specs`, `docs/adr`) passa pelo gate das skills antes do commit: `python3 .github/scripts/skills_gate.py` (etapa determinística, com limite por check). Mudança que toca regra de skill passa também pela revisão cética com nota mínima descrita em `.claude/skills/GATE.md`. *Princípio:* processo repetível vira script; o que o script não mede tem limite escrito.
 
 ## Convenções de projeto
 

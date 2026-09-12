@@ -40,13 +40,7 @@ Cada API expõe, apenas em ambiente `Development`:
 
 ## Build e testes
 
-```bash
-dotnet build FundDistributionPlatform.slnx
-```
-
-```bash
-dotnet test FundDistributionPlatform.slnx
-```
+Os comandos de build e teste, e o momento de rodá-los, estão em [CLAUDE.md](CLAUDE.md), seção Build e testes.
 
 ## Estrutura do repositório
 
@@ -54,10 +48,7 @@ dotnet test FundDistributionPlatform.slnx
 .
 ├── .claude/
 │   ├── rules/                        # regras por área: composição do Program.cs, tracing
-│   └── skills/                       # skills de agente (ver Skills)
-├── .github/
-│   ├── scripts/                      # check_commit.py (política de commit) e skills_gate.py (gate das skills)
-│   └── workflows/                    # CI: skills.yml roda o gate das skills e valida commits de PR
+│   └── skills/                       # skills do Claude Code (ver Skills)
 ├── docs/
 │   └── prd/                          # PRDs (prd), um por contexto + 0000 overview
 ├── src/
@@ -71,7 +62,7 @@ dotnet test FundDistributionPlatform.slnx
 ├── tests/
 │   ├── UnitTests/                    # xUnit
 │   └── IntegrationTests/             # xUnit
-├── CLAUDE.md                         # convenções do repositório
+├── CLAUDE.md                         # entrada das instruções do Claude Code e convenções do repositório
 ├── Directory.Build.props             # propriedades comuns a todos os projetos
 ├── Directory.Packages.props          # versões de pacote (Central Package Management)
 └── FundDistributionPlatform.slnx
@@ -81,11 +72,27 @@ Os serviços de API compilam com Native AOT (`PublishAot=true`) e globalização
 
 ## Convenções
 
-As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). Regras específicas por área (composição do `Program.cs`, módulos de feature, tracing) estão em [.claude/rules](.claude/rules).
+As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). Regras específicas por área (composição do `Program.cs`, módulos de feature, tracing) estão em [.claude/rules](.claude/rules) e carregam sozinhas quando um arquivo do padrão delas entra na tarefa.
+
+## Desenvolvimento com Claude Code
+
+Abra a pasta do repositório no aplicativo Claude Code ou inicie o [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) na raiz. O projeto usa `CLAUDE.md` para instruções, `.claude/rules/` para as regras por área e `.claude/skills/` para as três skills locais; nada precisa ser copiado para a configuração pessoal. Em uma sessão nova, `/prd`, `/sdd` e `/ontology-from-transcript` aparecem no menu `/`, e o Claude Code também aciona a skill sozinho quando o pedido se enquadra na descrição dela. Consulte a documentação oficial de [CLAUDE.md](https://docs.claude.com/en/docs/claude-code/memory) e [skills](https://docs.claude.com/en/docs/claude-code/skills).
+
+Exemplos de pedidos na conversa:
+
+```text
+/prd escreva os requisitos de produto para a capability descrita abaixo: ...
+/sdd especifique tecnicamente a capability descrita abaixo: ...
+/ontology-from-transcript extraia os conceitos desta transcrição: ...
+```
+
+Modelo, autenticação e preferências pessoais ficam na instalação do Claude Code e em `.claude/settings.local.json`, que não é versionado.
+
+Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme as três skills no menu `/` e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`; sem transcrição, a skill de ontologia não deve inventar conceitos.
 
 ## Skills
 
-Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método), `references/` (regras por etapa) e `scripts/` (linters e testes); a terceira é um método isolado, só com `SKILL.md`.
+Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método) e `references/` (regras por etapa); a terceira é um método isolado, só com `SKILL.md`.
 
 | Skill | Quando usar | Produz |
 | --- | --- | --- |
@@ -93,39 +100,13 @@ Três skills de agente em `.claude/skills/`. Duas cobrem o caminho do problema a
 | [ontology-from-transcript](.claude/skills/ontology-from-transcript/SKILL.md) | Transcrição de reunião com especialista de domínio: conceitos, relações, termos, atributos e restrições em oito passadas | Uma tabela por passada, como hipóteses a validar com o especialista |
 | [sdd](.claude/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
 
-Pré-requisitos dos scripts: Python 3 (testado com 3.14 localmente e 3.12 na CI) e, para validar os diagramas Mermaid dos PRDs e dos designs, Node 22 com o parser instalado uma vez por clone (único passo com acesso à rede). Cada skill é um pacote autocontido e traz o seu parser:
+Os `SKILL.md` selecionam a entrada e as referências necessárias. Processo, formato e escrita têm fontes distintas dentro de cada pacote; uma correção localizada lê o trecho afetado, suas dependências e seus citadores. A leitura seletiva mantém as validações exigidas.
 
-```bash
-python3 .claude/skills/prd/scripts/lint_mermaid.py --setup
-python3 .claude/skills/sdd/scripts/lint_mermaid.py --setup
-```
+| Pacote | Processo e convenções | Escrita e exemplos |
+| --- | --- | --- |
+| PRD | [workflow.md](.claude/skills/prd/references/workflow.md): geração, checagem e revisão; [conventions.md](.claude/skills/prd/references/conventions.md): gravação e idioma | [prose.md](.claude/skills/prd/references/prose.md): política editorial local; [writing.md](.claude/skills/prd/references/writing.md): regras e formas por seção; [example.md](.claude/skills/prd/references/example.md): PRD completo e reescrita didática |
+| SDD | [workflow.md](.claude/skills/sdd/references/workflow.md): pré-requisitos e autorizações; [validation.md](.claude/skills/sdd/references/validation.md): checagem de forma, ciclos e rubricas | [prose.md](.claude/skills/sdd/references/prose.md): política editorial local; cada referência de entrada traz seu perfil de escrita e os exemplos pertinentes |
 
-Validação completa, a mesma que a CI executa (`.github/workflows/skills.yml`): o gate determinístico das skills, que roda suítes, self-test dos parsers, linters sobre `docs/`, independência entre skills, codificação e registro no `.slnx` e neste README, cada check com limite explícito. Toda mudança em `.claude/skills/**` passa por ele antes do commit; [GATE.md](.claude/skills/GATE.md) lista os checks e descreve a segunda etapa, a revisão cética com nota mínima, que o script não roda.
+As políticas editoriais preservam IDs, tags, formatos, modalidades e significado. A revisão usa os ciclos existentes; exemplos parciais em blocos `text` ilustram a redação e não constituem evidência de execução. As referências de escrita dos dois pacotes são independentes.
 
-```bash
-python3 .github/scripts/skills_gate.py
-```
-
-Scripts individuais, para validar um artefato durante o trabalho:
-
-```bash
-python3 .claude/skills/prd/scripts/lint_mermaid.py --self-test
-python3 .claude/skills/sdd/scripts/lint_mermaid.py --self-test
-python3 -m unittest discover -s .claude/skills/prd/scripts/tests
-python3 -m unittest discover -s .claude/skills/sdd/scripts/tests
-python3 .claude/skills/prd/scripts/seq.py check docs/prd
-python3 .claude/skills/prd/scripts/lint_prd.py docs/prd
-python3 .claude/skills/prd/scripts/lint_mermaid.py docs/prd
-python3 .claude/skills/sdd/scripts/seq.py check docs/specs/<contexto>/<capability>
-python3 .claude/skills/sdd/scripts/lint_spec.py docs/specs/<contexto>/<capability>/spec.md
-python3 .claude/skills/sdd/scripts/lint_design.py docs/specs/<contexto>/<capability>/<NNNN-slug>/design.md --spec docs/specs/<contexto>/<capability>/spec.md
-python3 .claude/skills/sdd/scripts/lint_tasks.py docs/specs/<contexto>/<capability>/<NNNN-slug>/tasks.md --spec docs/specs/<contexto>/<capability>/spec.md
-python3 .claude/skills/sdd/scripts/lint_adr.py docs/adr
-python3 .claude/skills/sdd/scripts/lint_mermaid.py docs/specs
-```
-
-A CI executa o gate em todo push e pull request e, em pull requests, valida cada mensagem de commit com `.github/scripts/check_commit.py` e o perfil de [CLAUDE.md](CLAUDE.md).
-
-Semântica da saída dos linters: `HARD` bloqueia (exit 1) e precisa de correção antes de o artefato ser apresentado; nos dois `lint_mermaid.py`, `HARD INCOMPLETO` é validação que não pôde ser feita (parser Mermaid ausente), nunca sucesso, com exit 3 (nenhum dos outros linters chama o parser); `WARN` é heurística para julgamento e não afeta o exit; exit 2 é erro de uso (opção ou arquivo inválido). Cada script imprime o que checa quando chamado sem argumentos.
-
-A CI não executa avaliação comportamental do agente (se a skill certa é acionada, se as autorizações são respeitadas): isso exige cenários com o modelo e ainda não está automatizado.
+As skills não trazem scripts: toda checagem de forma é feita lendo o artefato, item a item, conforme a referência de validação de cada pacote. Scripts voltam a entrar quando uma verificação repetível justificar o custo de mantê-los.

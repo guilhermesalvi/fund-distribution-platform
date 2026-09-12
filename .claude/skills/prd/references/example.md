@@ -1,6 +1,6 @@
 # Exemplo de PRD no formato-alvo
 
-PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[PREMISSA]` porque o artigo não foi conferido no texto.
+Exemplo completo de PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[PREMISSA]` porque o artigo não foi conferido no texto.
 
 ````markdown
 # Verificação Assíncrona de Documentos para Onboarding
@@ -75,7 +75,7 @@ Cada requisito é uma condição verificável.
 - **ONB-01 (Must)** Todo caso nasce em Aguardando documentos a partir de um convite ativo; não há criação em outro estado.
 - **ONB-02 (Must)** Na v1 o operador de onboarding submete os documentos em nome do cliente, a qualquer momento enquanto o convite está ativo, independentemente da disponibilidade de compliance.
 - **ONB-03 (Must)** O caso passa a Em análise no instante em que todo item do checklist tem documento anexado.
-- **ONB-04 (Must)** Submissão de item fora do padrão (formato ou tamanho fora do checklist) é rejeitada no ato, informando o critério violado.
+- **ONB-04 (Must)** O sistema rejeita no ato o item cujo formato ou tamanho não atende ao checklist e informa o critério violado.
 
 ### Validação
 
@@ -167,3 +167,21 @@ A decisão de **modelar o checklist a partir do processo atual sem revisitar o m
 - [Circular BCB 3.978/2020](https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Circular&numero=3978), art. 2º. Lida em 2026-09-05.
 - [Lei 13.709/2018 (LGPD)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm), arts. 15 e 16. Lida em 2026-09-05.
 ````
+
+## Exemplo parcial de redação
+
+O fragmento didático a seguir demonstra estilo e não entra no PRD gerado.
+
+```text
+Exemplo didático de reescrita; as duas frases exprimem o mesmo comportamento.
+
+Antes: Se for realizada a submissão de um item cujo formato ou tamanho não
+atenda ao checklist, deverá ser feita a rejeição no ato e a informação do
+critério que foi violado.
+
+Depois: O sistema rejeita no ato o item cujo formato ou tamanho não atende
+ao checklist e informa o critério violado.
+
+Preservado: condição de rejeição, momento da resposta e informação devolvida.
+A definição normativa do exemplo completo continua sendo ONB-04.
+```

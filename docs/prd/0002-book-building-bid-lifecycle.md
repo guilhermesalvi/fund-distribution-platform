@@ -8,7 +8,7 @@ Requirement prefix: `BOOK`. Propósito da plataforma, mapa de contextos, catálo
 
 ## Executive Summary
 
-Pedidos incompatíveis com a oferta e mudanças tardias no livro comprometem a alocação. O BookBuilding permite registrar a intenção do investidor, acompanhar sua evolução, fechar o livro e consultar o resultado por reserva, conforme BOOK-01 a BOOK-18 e BOOK-20 a BOOK-22; o processamento do livro fechado é o [PRD 0003](0003-book-building-book-processing.md). A métrica primária é a ausência de reservas inválidas e de mudanças no pedido após o fechamento nos cenários de verificação.
+Pedidos incompatíveis com a oferta e mudanças tardias no livro comprometem a alocação. O BookBuilding permite registrar a intenção do investidor, acompanhar sua evolução, fechar o livro e consultar o resultado por reserva; o processamento do livro fechado é o [PRD 0003](0003-book-building-book-processing.md). A métrica primária é a ausência de reservas inválidas e de mudanças no pedido após o fechamento nos cenários de verificação.
 
 ## Context and Problem
 

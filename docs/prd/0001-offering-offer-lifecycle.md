@@ -8,7 +8,7 @@ Requirement prefix: `OFF`. Propósito da plataforma, mapa de contextos, catálog
 
 ## Executive Summary
 
-Reservas e alocações dependem de parâmetros confiáveis e de uma indicação inequívoca da situação da oferta. O Offering permite ao operador preparar a definição, publicá-la e conduzir seu ciclo de vida, conforme OFF-01 a OFF-06, OFF-08, OFF-12, OFF-14 e OFF-31 a OFF-33. A métrica primária é a ausência de publicações inválidas, mutações da definição publicada e transições indevidas nos cenários de verificação.
+Reservas e alocações dependem de parâmetros confiáveis e de uma indicação inequívoca da situação da oferta. O Offering permite ao operador preparar a definição, publicá-la e conduzir seu ciclo de vida. A métrica primária é a ausência de publicações inválidas, mutações da definição publicada e transições indevidas nos cenários de verificação.
 
 ## Context and Problem
 

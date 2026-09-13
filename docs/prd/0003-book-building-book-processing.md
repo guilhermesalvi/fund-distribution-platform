@@ -8,7 +8,7 @@ Requirement prefix: `ALLOC`. Propósito da plataforma, mapa de contextos, catál
 
 ## Executive Summary
 
-O fechamento do livro precisa produzir um resultado que o operador consiga explicar e os consumidores possam aplicar sem interpretações concorrentes. O processamento do livro consolida a demanda e aplica as etapas de vedação, formação e alocação, conforme ALLOC-01 a ALLOC-26. A métrica primária é a reprodução exata dos cenários, preservando os limites quantitativos em todos os ramos.
+O fechamento do livro precisa produzir um resultado que o operador consiga explicar e os consumidores possam aplicar sem interpretações concorrentes. O processamento do livro consolida a demanda e aplica as etapas de vedação, formação e alocação. A métrica primária é a reprodução exata dos cenários, preservando os limites quantitativos em todos os ramos.
 
 ## Context and Problem
 

@@ -13,8 +13,8 @@ A plataforma demonstra um recorte executável da distribuição de cotas de clas
 
 | Contexto | Responsabilidade | PRD | Prefixo de ID | Posição |
 |---|---|---|---|---|
-| Offering | Definição imutável da oferta e sua máquina de estados (OFF-01 a OFF-06, OFF-08, OFF-12, OFF-14 a OFF-29 e OFF-31 a OFF-33) | [0001](0001-offering-offer-lifecycle.md) | `OFF` | Upstream: o BookBuilding consome a definição e o estado e não os altera; o Offering assume o desfecho como estado final. |
-| BookBuilding | Reservas contra oferta Aberta, fechamento do livro pelo operador, livro congelado no fechamento, processamento único do livro fechado (vedação a vinculadas, formação, condicionamento e rateio) e status por reserva (BOOK-01 a BOOK-18, BOOK-20 a BOOK-22, ALLOC-01 a ALLOC-26) | [0002](0002-book-building-bid-lifecycle.md) ciclo de vida da reserva; [0003](0003-book-building-book-processing.md) processamento do livro | `BOOK`, `ALLOC` | Contexto core: consome o Offering, fecha e processa o livro e devolve o desfecho. |
+| Offering | Definição imutável da oferta e sua máquina de estados | [0001](0001-offering-offer-lifecycle.md) | `OFF` | Upstream: o BookBuilding consome a definição e o estado e não os altera; o Offering assume o desfecho como estado final. |
+| BookBuilding | Reservas contra oferta Aberta, fechamento do livro pelo operador, livro congelado no fechamento, processamento único do livro fechado (vedação a vinculadas, formação, condicionamento e rateio) e status por reserva | [0002](0002-book-building-bid-lifecycle.md) ciclo de vida da reserva; [0003](0003-book-building-book-processing.md) processamento do livro | `BOOK`, `ALLOC` | Contexto core: consome o Offering, fecha e processa o livro e devolve o desfecho. |
 
 Cada contexto mantém sua persistência; as relações usam eventos. O Offering permanece upstream para mudanças incompatíveis de contrato. O BookBuilding tem um PRD por capability, cada um com seu prefixo; o desfecho do livro, formada ou não formada, é apurado por ele (ALLOC-09, ALLOC-10), e o Offering o assume como estado final (OFF-31 a OFF-33). O fechamento do livro é ação do operador no BookBuilding (BOOK-22) e não passa pelo Offering.
 
@@ -44,12 +44,12 @@ sequenceDiagram
     Operador->>Offering: publicar (OFF-03)
     Offering-->>BookBuilding: OfferPublished (OFF-03)
     loop período de reserva (BOOK-01)
-        Operador->>BookBuilding: registrar (BOOK-01 a BOOK-09)
+        Operador->>BookBuilding: registrar (BOOK-01)
         Operador->>BookBuilding: alterar ou cancelar (BOOK-10, BOOK-11)
     end
     Operador->>BookBuilding: fechar o livro (BOOK-22)
     BookBuilding->>BookBuilding: congelar o livro (BOOK-15)
-    BookBuilding->>BookBuilding: processar o livro fechado (ALLOC-01 a ALLOC-26)
+    BookBuilding->>BookBuilding: processar o livro fechado (ALLOC-01)
     BookBuilding->>BookBuilding: aplicar status e quantidade (BOOK-17)
     BookBuilding-->>Offering: BookProcessed (ALLOC-26)
     alt formada (ALLOC-10)

@@ -83,7 +83,7 @@ Todo arquivo versionado entra no `.slnx`, espelhando o layout das pastas em disc
 - Arquivo ignorado pelo git (`bin/`, `obj/`, `.idea/`) não entra.
 - Pastas e arquivos em ordem alfabética, sem distinção de maiúsculas.
 
-Ao criar, mover ou remover um arquivo — inclusive `.md` em `docs/` ou `.claude/` — a mudança no `.slnx` vai no mesmo commit, porque tem o mesmo motivo.
+Ao criar, mover ou remover um arquivo — inclusive `.md` em `docs/` ou `.claude/` — a mudança no `.slnx` vai no mesmo commit, porque tem o mesmo motivo. Antes de commitar, compare `git ls-files` com as entradas do `.slnx`: todo arquivo rastreado fora de um diretório de projeto tem seu `<File Path>` na pasta que espelha o diretório, todo `.csproj` tem seu `<Project Path>`, e nenhuma entrada aponta para arquivo não rastreado.
 
 ## Build e testes
 
@@ -93,6 +93,8 @@ dotnet test FundDistributionPlatform.slnx
 ```
 
 Valide os dois antes de encerrar qualquer mudança em código.
+
+A tabela de Critérios de Aceitação do PRD 0003 é a fonte dos casos de teste do Allocation: cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
 ## Convenções de projeto
 

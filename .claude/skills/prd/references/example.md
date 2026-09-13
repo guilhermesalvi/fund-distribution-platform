@@ -145,8 +145,8 @@ Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úte
 | Item | Tipo | Impacto |
 |---|---|---|
 | Definição do checklist por tipo de cliente | Dependência de negócio | Bloqueante: sem checklist não há caso |
-| Account Activation lê a elegibilidade | Acoplamento entre contextos | ONB-11 é o contrato; mudança de estado sem aviso quebra a ativação |
-| Compliance Review recebe o caso em pendência | Acoplamento entre contextos | A revisão parte do estado que este contexto publica; sem ele, a fila de compliance não abre |
+| Account Activation | Acoplamento entre contextos | Lê a elegibilidade; ONB-11 é o contrato, e mudança de estado sem aviso quebra a ativação |
+| Compliance Review | Acoplamento entre contextos | Recebe o caso em pendência; a revisão parte do estado que este contexto publica, e sem ele a fila de compliance não abre |
 | Migração de clientes em onboarding | Risco | Casos em curso precisam de estado inicial equivalente |
 
 ## Open Questions

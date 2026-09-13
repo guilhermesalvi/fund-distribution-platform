@@ -174,8 +174,8 @@ def check(folder):
         if metrics and "Guardrail" not in metrics:
             findings.append(f"{name}: Success Metrics without a guardrail line")
         for line in section(text, "Regulatory Considerations").splitlines():
-            if not line.startswith("- "):
-                continue
+            if not line.startswith("- ") or line.startswith("- [GAP]"):
+                continue  # a norm not identified is a [GAP] bullet without id
             if "→" not in line:
                 findings.append(f"{name}: regulatory line without → id: {line[2:50]}")
                 continue

@@ -11,7 +11,7 @@ Uma decisão é **de projeto** quando fixa convenção, restrição ou padrão q
 - forma de persistência compartilhada;
 - política de versionamento.
 
-Decisão local à feature não vira ADR; quem fixa o destino dela é o design (design.md, Decisões técnicas).
+Decisão local à feature não vira ADR; quem fixa o destino dela é o design (design.md, Technical Decisions).
 
 Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
 
@@ -42,28 +42,28 @@ Template completo com campos substituíveis: preencha-os com a decisão real. Pa
 ```markdown
 # ADR 0007: Eventos de domínio saem por outbox transacional
 
-Participantes: [quem decidiu]; [quem foi consultado].
+Participants: [quem decidiu]; [quem foi consultado].
 
-## Contexto
+## Context
 [Situação e restrições que forçaram a decisão; o que estava em jogo.]
 
-## Decisão
+## Decision
 [Uma frase: o que faremos.]
 
-## Alternativas consideradas
+## Alternatives considered
 | Alternativa | Por que rejeitada |
 |---|---|
 | [alternativa avaliada] | [o que a derrubou, contra os mesmos critérios] |
 
-## Consequências
-- Positivas: [o que a decisão compra]
-- Negativas: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
+## Consequences
+- Positive: [o que a decisão compra]
+- Negative: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
 
-## Regras derivadas
+## Derived rules
 - [regra que existe por causa desta ADR] — `CLAUDE.md`
 ```
 
-As seções da ADR são as do template, e a lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). Em inglês (workflow.md, Idioma) os headings são `Context`, `Decision`, `Alternatives considered`, `Consequences` e `Derived rules`.
+As seções da ADR são as do template, e a lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). Os headings são fixos em inglês seja qual for o idioma da prosa (workflow.md, Idioma).
 
 ## Antes de apresentar
 
@@ -72,9 +72,9 @@ Faça a checagem de forma (validation.md, Checagem de forma); depois percorra a 
 ## Conformar e superseder
 
 - **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
-- **Como superseder.** Crie uma ADR nova com a linha `Substitui: NNNN` abaixo do título. Na ADR antiga, adicione `Substituída por: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
+- **Como superseder.** Crie uma ADR nova com a linha `Supersedes: NNNN` abaixo do título. Na ADR antiga, adicione `Superseded by: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
 - **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em CLAUDE.md ou .claude/rules) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
-- **Regra derivada tem path.** Cada regra da seção `## Regras derivadas` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `CLAUDE.md`, `.claude/rules/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
+- **Regra derivada tem path.** Cada regra da seção `## Derived rules` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `CLAUDE.md`, `.claude/rules/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
 
 ### Exemplo didático parcial de reescrita
 

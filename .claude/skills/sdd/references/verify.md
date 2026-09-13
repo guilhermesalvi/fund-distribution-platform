@@ -13,11 +13,11 @@ O grau de independência não muda o resto: cada requisito tem evidência ou con
 
 ## Escopo
 
-O objeto da verificação é o diff da mudança, `git diff <base>`, mais os arquivos staged, unstaged e untracked listados nos campos `Onde` das tasks (ou no plano inline).
+O objeto da verificação é o diff da mudança, `git diff <base>`, mais os arquivos staged, unstaged e untracked listados nos campos `Where` das tasks (ou no plano inline).
 
 `<base>` é o resultado da primeira destas regras que devolve um hash, nesta ordem:
 
-1. a base registrada antes da primeira task: o hash da linha `Base: <hash>` do parágrafo "Como este repositório testa" do `tasks.md`, ou do slot `; base: <hash>` da linha `Gate` do plano inline (execute.md, Antes da primeira task);
+1. a base registrada antes da primeira task: o hash da linha `Base: <hash>` do parágrafo "How this repository tests" do `tasks.md`, ou do slot `; base: <hash>` da linha `Gate` do plano inline (execute.md, Antes da primeira task);
 2. com branch próprio: `git merge-base HEAD <branch principal>`;
 3. `git log --diff-filter=A --format=%H --reverse -- <capability-dir>/NNNN-<change-slug> | head -n 1`, o primeiro commit que adicionou arquivo na pasta da mudança, isto é, o que criou a pasta; a base é `<hash>^`. O `--reverse` com `head -n 1` é o que devolve o primeiro: `-1` devolveria o commit mais recente que tocou a pasta, e com `design.md` e `tasks.md` em commits separados (workflow.md, Aprovação e autorizações) os dois divergem.
 
@@ -44,9 +44,9 @@ Para cada requisito em escopo, preencha uma linha da tabela de evidência. A col
 
 ## Gate Build
 
-Rode o gate Build: o comando da tabela Comandos de Gate (tasks.md, Comandos de Gate) ou, quando a mudança usa plano inline, o gate declarado no plano. Registre no relatório o comando, o total de testes, os passados, os falhos, os pulados e o exit code.
+Rode o gate Build: o comando da tabela Gate Commands (tasks.md, Gate Commands) ou, quando a mudança usa plano inline, o gate declarado no plano. Registre no relatório o comando, o total de testes, os passados, os falhos, os pulados e o exit code.
 
-Compare a contagem de testes com a contagem-base registrada no parágrafo "Como este repositório testa" do `tasks.md` ou na linha `Gate` do plano inline (tasks.md, Como o repositório testa) e investigue qualquer queda: só a aposentadoria de requisito com razão registrada justifica menos testes; queda sem essa razão é gap.
+Compare a contagem de testes com a contagem-base registrada no parágrafo "How this repository tests" do `tasks.md` ou na linha `Gate` do plano inline (tasks.md, Como o repositório testa) e investigue qualquer queda: só a aposentadoria de requisito com razão registrada justifica menos testes; queda sem essa razão é gap.
 
 - Teste pulado não é evidência.
 - Zero testes executados não é gate verde.
@@ -67,10 +67,10 @@ O worktree checa `<base>` numa árvore separada e não mexe na árvore de trabal
 
 Compare com o `design.md`, com a estrutura declarada no `tasks.md` ou com o plano inline, conforme o que a mudança tem. Verifique:
 
-- **Estrutura:** arquivos, componentes e localização batem com o design. Arquivo que o design não listava e que uma task registrou no campo `Onde` com a nota de descoberta conta como conformidade, não como gap: a regra está em execute.md (execute.md, Ciclo por task) e é ela que vale aqui. Arquivo no diff que nem o design lista nem nota alguma explica é gap, exceto o que veio de commit alheio dentro da janela da base (Escopo).
+- **Estrutura:** arquivos, componentes e localização batem com o design. Arquivo que o design não listava e que uma task registrou no campo `Where` com a nota de descoberta conta como conformidade, não como gap: a regra está em execute.md (execute.md, Ciclo por task) e é ela que vale aqui. Arquivo no diff que nem o design lista nem nota alguma explica é gap, exceto o que veio de commit alheio dentro da janela da base (Escopo).
 - **Responsabilidades:** cada componente faz o que o design diz, e só isso.
 - **Interfaces:** assinaturas iguais às do design.
-- **Dependências:** nenhuma fora do planejado (pacote, módulo, serviço).
+- **Dependencies:** nenhuma fora do planejado (pacote, módulo, serviço).
 - **Fronteiras entre módulos:** nenhum ciclo entre módulos; nenhuma classe interna de outro módulo instanciada.
 - **Domain events:** conformes ao contrato do design.
 - **Riscos:** mitigados como o design prometeu.
@@ -89,7 +89,7 @@ Para cada arquivo do diff, verifique:
 - estilo existente seguido;
 - guias de teste do projeto seguidos.
 
-Todo teste no escopo mapeia para um requisito, um edge case ou um critério de `Pronto quando`. Teste órfão, sem esse mapeamento, é escopo escondido.
+Todo teste no escopo mapeia para um requisito, um edge case ou um critério de `Done when`. Teste órfão, sem esse mapeamento, é escopo escondido.
 
 ## Relatório no chat
 
@@ -109,20 +109,20 @@ Comece pela cobertura e mantenha a ordem definida para o relatório. Distinga ac
 
 ## Gaps e tasks de correção
 
-Cada gap vira uma task de correção com ID `TCn`, registrada em `## Tasks de correção` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task `TCn` tem os mesmos campos de uma task (tasks.md, Campos) e entra na Rastreabilidade; repita a checagem de forma do `tasks.md` (validation.md, Checagem de forma); com commit autorizado e conteúdo aprovado, o `tasks.md` alterado entra no commit da primeira `TC` (workflow.md, Aprovação e autorizações). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar; a re-derivação por desvio de comportamento (Desvios, abaixo) conta nessas duas rodadas.
+Cada gap vira uma task de correção com ID `TCn`, registrada em `## Correction Tasks` do `tasks.md` (ou no plano inline, quando não há `tasks.md`). A task `TCn` tem os mesmos campos de uma task (tasks.md, Campos) e entra na Traceability; repita a checagem de forma do `tasks.md` (validation.md, Checagem de forma); com commit autorizado e conteúdo aprovado, o `tasks.md` alterado entra no commit da primeira `TC` (workflow.md, Aprovação e autorizações). A task de correção volta ao ciclo do Execute e é seguida de nova verificação. Depois de duas rodadas de correção com gap remanescente, escale ao usuário em vez de girar; a re-derivação por desvio de comportamento (Deviations, abaixo) conta nessas duas rodadas.
 
-## Desvios
+## Deviations
 
 - **Desvio que muda comportamento** não sobrevive à verificação. O caminho é voltar ao artefato de origem (PRD, spec ou design), corrigi-lo, obter o commit dele (workflow.md, Aprovação e autorizações), re-derivar a implementação e verificar de novo.
-- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Desvios` do `tasks.md` (ou do plano inline) com justificativa e é julgado no eixo 2. Arquivo indispensável descoberto durante a task tem rota própria, e não é esta (execute.md, Ciclo por task).
+- **Desvio sem mudança de comportamento** (estrutura, nome interno) fica registrado em `## Deviations` do `tasks.md` (ou do plano inline) com justificativa e é julgado no eixo 2. Arquivo indispensável descoberto durante a task tem rota própria, e não é esta (execute.md, Ciclo por task).
 
-## Mutação
+## Mutation
 
-Teste de mutação roda quando o comando de mutação está declarado nesta mudança, e só então. A declaração tem um lugar, e ele depende só de a mudança ter ou não `tasks.md`: com `tasks.md`, é a linha `Mutação` da tabela Comandos de Gate (tasks.md, Comandos de Gate); sem ele, é o slot `; mutação: <comando>` da linha `Gate` do plano inline (execute.md, Plano inline). Vale igual nas quatro configurações: com design e sem design, com `tasks.md` e sem ele.
+Teste de mutação roda quando o comando de mutação está declarado nesta mudança, e só então. A declaração tem um lugar, e ele depende só de a mudança ter ou não `tasks.md`: com `tasks.md`, é a linha `Mutation` da tabela Gate Commands (tasks.md, Gate Commands); sem ele, é o slot `; mutation: <comando>` da linha `Gate` do plano inline (execute.md, Plano inline). Vale igual nas quatro configurações: com design e sem design, com `tasks.md` e sem ele.
 
-Declarar o comando é obrigatório em dois casos: quando a tabela Riscos e técnicas do design tem linha de um destes três riscos, e só deles — dinheiro e cálculo financeiro; segurança e dado regulado; concorrência, duplicata e retry (design.md, Do risco à técnica) —, e quando o usuário pede mutação nesta mudança. Design com um desses três riscos e sem o comando declarado é gap do eixo 2: o risco não foi mitigado como o design prometeu. Fora dessas duas obrigações, declarar é opção do usuário.
+Declarar o comando é obrigatório em dois casos: quando a tabela Risks and Techniques do design tem linha de um destes três riscos, e só deles — dinheiro e cálculo financeiro; segurança e dado regulado; concorrência, duplicata e retry (design.md, Do risco à técnica) —, e quando o usuário pede mutação nesta mudança. Design com um desses três riscos e sem o comando declarado é gap do eixo 2: o risco não foi mitigado como o design prometeu. Fora dessas duas obrigações, declarar é opção do usuário.
 
-A obrigação vinda do design não espera o Verify quando há `tasks.md`: a checagem de forma do `tasks.md` lê a tabela Riscos e técnicas do design e acusa a tabela Comandos de Gate sem a linha `Mutação` (tasks.md, Registro no `tasks.md`). Sem `tasks.md`, quem confere é você, no plano inline, antes de apresentá-lo.
+A obrigação vinda do design não espera o Verify quando há `tasks.md`: a checagem de forma do `tasks.md` lê a tabela Risks and Techniques do design e acusa a tabela Gate Commands sem a linha `Mutation` (tasks.md, Registro no `tasks.md`). Sem `tasks.md`, quem confere é você, no plano inline, antes de apresentá-lo.
 
 Use a ferramenta de mutação da linguagem (Stryker.NET, mutmut, cargo-mutants) sobre o código novo e trate mutante sobrevivente como gap; ferramenta ausente é bloqueio com motivo, como o gate. Esta skill não descreve procedimento próprio de mutação.
 

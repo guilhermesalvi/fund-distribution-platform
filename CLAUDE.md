@@ -18,7 +18,7 @@ Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as c
 ## Idioma
 
 - Código, identificadores, nomes de arquivos e diretórios, comentários, logs, mensagens de erro e mensagens de commit: **inglês**.
-- Texto de documentação (`.md`, ADRs, notas): **português**.
+- Texto de documentação (`.md`, ADRs, notas): **português** na prosa. Headings, rótulos, tags e campos dos artefatos das skills `prd` e `sdd` são fixos em **inglês**, porque a checagem de forma os lê por igualdade; a regra está na seção Idioma de cada skill.
 
 ## Convenção de commits
 
@@ -96,7 +96,7 @@ dotnet test FundDistributionPlatform.slnx
 
 Valide os dois antes de encerrar qualquer mudança em código.
 
-A tabela de Critérios de Aceitação do PRD 0003 é a fonte dos casos de teste do Allocation: cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
+A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do Allocation: cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
 ## Convenções de projeto
 

@@ -15,14 +15,14 @@ import sys
 ID = r"(?:OFF|BOOK|ALLOC)-(?:NFR-)?\d\d"
 PREFIX = r"(?:OFF|BOOK|ALLOC)"
 SECTIONS = [
-    "Resumo Executivo", "Alinhamento Estratégico", "Contexto e Problema", "Usuário-alvo / JTBD",
-    "Oportunidade / Hipótese", "Solução Proposta", "Glossário de Domínio", "Requisitos Funcionais",
-    "Domain Events", "Requisitos Não Funcionais", "Considerações Regulatórias", "Não-objetivos",
-    "Trade-offs Declarados", "Métricas de Sucesso", "Critérios de Aceitação", "Dependências e Riscos",
-    "Perguntas em Aberto", "Ponto de Maior Fragilidade", "Referências",
+    "Executive Summary", "Strategic Alignment", "Context and Problem", "Target User / JTBD",
+    "Opportunity / Hypothesis", "Proposed Solution", "Domain Glossary", "Functional Requirements",
+    "Domain Events", "Non-functional Requirements", "Regulatory Considerations", "Non-goals",
+    "Declared Trade-offs", "Success Metrics", "Acceptance Criteria", "Dependencies and Risks",
+    "Open Questions", "Weakest Point", "References",
 ]
-MANDATORY = ["Resumo Executivo", "Contexto e Problema", "Usuário-alvo / JTBD", "Solução Proposta", "Requisitos Funcionais"]
-SECTIONS_0000 = ["Propósito", "Contextos", "Catálogo de eventos", "Fluxos entre contextos", "Termos por contexto", "Decisões delegadas a ADR"]
+MANDATORY = ["Executive Summary", "Context and Problem", "Target User / JTBD", "Proposed Solution", "Functional Requirements"]
+SECTIONS_0000 = ["Purpose", "Contexts", "Event Catalog", "Flows Between Contexts", "Terms per Context", "Decisions Delegated to ADR"]
 LINK_TEXT_OK = re.compile(r"^(PRD \d{4}|Resolução|Instrução|Takeover|Euro|CVM|ICVM|Briefing|\*)")
 
 
@@ -83,7 +83,7 @@ def check(folder):
             else:
                 positions.append(table.index(h))
             body = section(text, h).strip()
-            if not body or re.fullmatch(r"(Nenhuma\.|Nenhum\.|N/A\.?)", body):
+            if not body or re.fullmatch(r"(Nenhuma\.|Nenhum\.|None\.|N/A\.?)", body):
                 findings.append(f"{name}: empty section: {h}")
         if positions != sorted(positions):
             findings.append(f"{name}: sections out of table order")
@@ -91,7 +91,7 @@ def check(folder):
         # 9. Tags and placeholders.
         for m in re.finditer(r"\[([^\]]+)\]", text):
             inner = m.group(1)
-            if inner in ("PREMISSA", "LACUNA") or LINK_TEXT_OK.match(inner):
+            if inner in ("ASSUMPTION", "GAP") or LINK_TEXT_OK.match(inner):
                 continue
             if text[m.end():m.end() + 1] == "(" or inner.startswith('"'):
                 continue  # markdown link text or mermaid node label
@@ -112,7 +112,7 @@ def check(folder):
             for line in block.splitlines()[1:]:
                 if ("-->" in line or "->>" in line) and (":" in line or "|" in line) and not re.search(PREFIX + r"-\d\d", line):
                     findings.append(f"{name}: mermaid label without id: {line.strip()[:60]}")
-            if kind == "stateDiagram-v2" and "| Identificador |" not in text[m.end():m.end() + 400]:
+            if kind == "stateDiagram-v2" and "| Identifier |" not in text[m.end():m.end() + 400]:
                 findings.append(f"{name}: stateDiagram-v2 without the identifier table beside it")
 
         if is_overview:
@@ -126,10 +126,10 @@ def check(folder):
         # 2. Header: title, one-field table, prefix line pointing to 0000.
         if not text.startswith("# "):
             findings.append(f"{name}: first line is not the title")
-        if not re.search(r"^\| \*\*(Contexto Originário|Originating Context|Módulo|Module|Área|Area)\*\* \| .+ \|$", text, re.M):
+        if not re.search(r"^\| \*\*(Originating Context|Module|Area)\*\* \| .+ \|$", text, re.M):
             findings.append(f"{name}: header table missing or with an unexpected label")
         has_0000 = any(n.startswith("0000-") for n in texts)
-        prefix_line = re.search(r"^(Prefixo dos requisitos|Requirement prefix): `(" + PREFIX + r")`\.(.*)$", text, re.M)
+        prefix_line = re.search(r"^(Requirement prefix): `(" + PREFIX + r")`\.(.*)$", text, re.M)
         if not prefix_line:
             findings.append(f"{name}: prefix line missing")
         elif has_0000 and "0000-" not in prefix_line.group(3):
@@ -143,17 +143,17 @@ def check(folder):
         for h in MANDATORY:
             if h not in headings:
                 findings.append(f"{name}: mandatory section missing: {h}")
-        if "Ponto de Maior Fragilidade" in headings and headings[-2:] != ["Ponto de Maior Fragilidade", "Referências"]:
-            findings.append(f"{name}: Ponto de Maior Fragilidade must be followed only by Referências")
+        if "Weakest Point" in headings and headings[-2:] != ["Weakest Point", "References"]:
+            findings.append(f"{name}: Weakest Point must be followed only by References")
 
         # 5. Forms per section.
-        for line in section(text, "Trade-offs Declarados").splitlines():
-            if line.startswith("- ") and not ("*Custo:*" in line and "*Razão:*" in line):
-                findings.append(f"{name}: trade-off without Custo/Razão: {line[2:50]}")
-        metrics = section(text, "Métricas de Sucesso")
+        for line in section(text, "Declared Trade-offs").splitlines():
+            if line.startswith("- ") and not ("*Cost:*" in line and "*Reason:*" in line):
+                findings.append(f"{name}: trade-off without Cost/Reason: {line[2:50]}")
+        metrics = section(text, "Success Metrics")
         if metrics and "Guardrail" not in metrics:
-            findings.append(f"{name}: Métricas de Sucesso without a guardrail line")
-        for line in section(text, "Considerações Regulatórias").splitlines():
+            findings.append(f"{name}: Success Metrics without a guardrail line")
+        for line in section(text, "Regulatory Considerations").splitlines():
             if not line.startswith("- "):
                 continue
             if "→" not in line:
@@ -163,26 +163,26 @@ def check(folder):
             note = re.sub(r"^[^.]*\.\s*", "", after, count=1)
             if note and len(note.split()) > 20:
                 findings.append(f"{name}: regulatory note over 20 words: {note[:50]}")
-        open_questions = section(text, "Perguntas em Aberto")
+        open_questions = section(text, "Open Questions")
         for m in re.finditer(r"^- (.*)$", open_questions, re.M):
-            if "se falsa" in m.group(1) and not m.group(1).startswith("**"):
-                findings.append(f"{name}: 'se falsa' premise not in bold")
+            if "if false" in m.group(1) and not m.group(1).startswith("**"):
+                findings.append(f"{name}: 'if false' premise not in bold")
         for h in headings:
-            if h != "Perguntas em Aberto" and "se falsa" in section(text, h):
-                findings.append(f"{name}: 'se falsa' premise outside Perguntas em Aberto ({h})")
-        for m in re.finditer(r"^- \*\*Dad[oa]s?\*\*.*$", text, re.M):
+            if h != "Open Questions" and "if false" in section(text, h):
+                findings.append(f"{name}: 'if false' premise outside Open Questions ({h})")
+        for m in re.finditer(r"^- \*\*Given\*\*.*$", text, re.M):
             if not re.search(r"\(" + PREFIX + r"-", m.group(0)):
-                findings.append(f"{name}: Dado/Quando/Então without an id: {m.group(0)[:50]}")
-        header = re.search(r"\| \*\*Contexto Originário\*\* \| [^;|]+; afeta ([^|]+) \|", text)
+                findings.append(f"{name}: Given/When/Then without an id: {m.group(0)[:50]}")
+        header = re.search(r"\| \*\*Originating Context\*\* \| [^;|]+; affects ([^|]+) \|", text)
         if header:
-            deps = section(text, "Dependências e Riscos")
-            for ctx in re.split(r",| e ", header.group(1)):
+            deps = section(text, "Dependencies and Risks")
+            for ctx in re.split(r",| and ", header.group(1)):
                 ctx = ctx.strip()
                 if ctx and not re.search(r"^\| " + re.escape(ctx) + r" \|", deps, re.M):
-                    findings.append(f"{name}: affected context without a row in Dependências e Riscos: {ctx}")
+                    findings.append(f"{name}: affected context without a row in Dependencies and Risks: {ctx}")
 
     # 7. PRD 0000 exists when there are two or more prefixes; each PRD links it (checked above).
-    prefixes = set(re.findall(r"^Prefixo dos requisitos: `(" + PREFIX + r")`", everything, re.M))
+    prefixes = set(re.findall(r"^Requirement prefix: `(" + PREFIX + r")`", everything, re.M))
     if len(prefixes) >= 2 and not any(n.startswith("0000-") for n in texts):
         findings.append("folder: two or more prefixes without a PRD 0000")
 

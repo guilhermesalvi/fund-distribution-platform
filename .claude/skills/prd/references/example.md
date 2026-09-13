@@ -1,37 +1,37 @@
 # Exemplo de PRD no formato-alvo
 
-Exemplo completo de PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[PREMISSA]` porque o artigo não foi conferido no texto.
+Exemplo completo de PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[ASSUMPTION]` porque o artigo não foi conferido no texto.
 
 ````markdown
 # Verificação Assíncrona de Documentos para Onboarding
 
 | | |
 |---|---|
-| **Contexto Originário** | Customer Onboarding; afeta Account Activation e Compliance Review |
+| **Originating Context** | Customer Onboarding; affects Account Activation, Compliance Review |
 
-Prefixo dos requisitos: `ONB`. Contexto único, portanto não há PRD 0000.
+Requirement prefix: `ONB`. Contexto único, portanto não há PRD 0000.
 
-## Resumo Executivo
+## Executive Summary
 
 O onboarding de clientes PJ depende de troca de e-mails entre operações e compliance para verificar documentos, com lead time de 5 dias úteis e retrabalho recorrente por submissão fora do padrão. A proposta substitui essa troca por um caso de verificação com estado explícito: a submissão acontece sem depender da agenda de compliance, cada item é validado contra critério definido e a elegibilidade de ativação deriva do estado do caso. A métrica primária é o lead time da submissão completa à ativação em até 1 dia útil.
 
-## Alinhamento Estratégico
+## Strategic Alignment
 
 Time-to-revenue é o objetivo do trimestre. Concorrentes ativam em D+1 e o gargalo de verificação é a maior parcela do nosso lead time. Digitalizar o fluxo é pré-condição para o self-service de v2.
 
-## Contexto e Problema
+## Context and Problem
 
 A verificação é manual, feita por e-mail e planilha entre operações e compliance. O lead time médio é de 5 dias úteis, e 30% dos casos voltam por documento fora do padrão.
 
 A ativação da conta só ocorre depois da aprovação de compliance, e hoje essa aprovação é uma mensagem de e-mail sem registro estruturado.
 
-## Usuário-alvo / JTBD
+## Target User / JTBD
 
 - Analista de compliance: validar cada documento contra critério definido, com rastro, sem coordenar por inbox.
 - Operador de onboarding: saber em que pé está cada cliente e o que falta, sem perguntar a compliance.
 - Account Activation (contexto consumidor): saber se o cliente está elegível para ativação sem interpretar e-mails.
 
-## Solução Proposta
+## Proposed Solution
 
 Um caso de verificação por cliente, com itens (um por documento exigido) e uma máquina de estados explícita. Os rótulos das transições citam o requisito que governa cada uma.
 
@@ -46,7 +46,7 @@ stateDiagram-v2
     PendingResubmission --> Declined: prazo esgotado (ONB-10)
 ```
 
-| Estado | Identificador | Significado |
+| Estado | Identifier | Significado |
 |---|---|---|
 | Aguardando documentos | `AwaitingDocuments` | Convite ativo; itens exigidos ainda não submetidos por completo |
 | Em análise | `UnderReview` | Todos os itens submetidos; compliance valida |
@@ -56,7 +56,7 @@ stateDiagram-v2
 
 Armazenamento de documentos, notificação, filas e desenho de tela são downstream.
 
-## Glossário de Domínio
+## Domain Glossary
 
 | Termo | Definição |
 |---|---|
@@ -66,7 +66,7 @@ Armazenamento de documentos, notificação, filas e desenho de tela são downstr
 | Submissão completa | Instante em que todo item do checklist tem documento anexado (ONB-03). |
 | Elegibilidade de ativação | Propriedade derivada do estado do caso (ONB-11); não é decisão do operador. |
 
-## Requisitos Funcionais
+## Functional Requirements
 
 Cada requisito é uma condição verificável.
 
@@ -91,41 +91,41 @@ Cada requisito é uma condição verificável.
 - **ONB-11 (Must)** Elegibilidade de ativação é verdadeira se e somente se o caso está Aprovado.
 - **ONB-12 (Must)** Toda submissão, validação e transição registra autor, instante e motivo, consultável por caso e por cliente.
 
-## Requisitos Não Funcionais
+## Non-functional Requirements
 
 - **ONB-NFR-01** Submissão completa é refletida como Em análise em até 1 minuto.
 - **ONB-NFR-02** Documentos de caso Recusado são retidos por no máximo 30 dias após a recusa, salvo obrigação legal de guarda, que prevalece pelo prazo que ela fixar.
 - **ONB-NFR-03** Dados pessoais não aparecem em rastros de execução; identificadores de caso e de item bastam.
 
-## Considerações Regulatórias
+## Regulatory Considerations
 
 Textos lidos em 2026-09-05.
 
-- [PREMISSA] Circular BCB 3.978/2020, art. 2º: identificação e qualificação do cliente antes do início do relacionamento → ONB-05, ONB-11. Validar com compliance se o checklist atual cobre a qualificação.
+- [ASSUMPTION] Circular BCB 3.978/2020, art. 2º: identificação e qualificação do cliente antes do início do relacionamento → ONB-05, ONB-11. Validar com compliance se o checklist atual cobre a qualificação.
 - LGPD, art. 15, I: o tratamento termina quando a finalidade é alcançada → ONB-NFR-02.
 - LGPD, art. 16, I: conservação permitida para cumprimento de obrigação legal → exceção de ONB-NFR-02.
-- [LACUNA] Regulação setorial além de KYC e LGPD para o segmento PJ não foi levantada; validar com compliance.
+- [GAP] Regulação setorial além de KYC e LGPD para o segmento PJ não foi levantada; validar com compliance.
 
-## Não-objetivos
+## Non-goals
 
 - Onboarding de outros segmentos (consumidor, enterprise com contrato customizado).
 - Assinatura digital de contrato.
 - Self-service do cliente para atualização contínua de cadastro.
 - Revisão do mérito das regras do checklist.
 
-## Trade-offs Declarados
+## Declared Trade-offs
 
-- **v1 sem self-service direto do cliente (ONB-02).** *Custo:* operações continua intermediária no upload; carga humana parcialmente preservada. *Razão:* validar o fluxo internamente antes de expor reduz risco reputacional e regulatório; self-service é v2.
-- **Checklist modelado a partir do processo atual, sem revisitar o mérito.** *Custo:* regra legada de baixo valor persiste no fluxo digital. *Razão:* revisitar mérito cruza a fronteira de compliance e expande escopo; é iniciativa separada depois da baseline digital.
-- **Prazo de pendência fixo em 10 dias úteis.** *Custo:* cliente lento é recusado e precisa de novo convite. *Razão:* caso aberto sem fim inflaria o lead time medido e o estoque de compliance.
+- **v1 sem self-service direto do cliente (ONB-02).** *Cost:* operações continua intermediária no upload; carga humana parcialmente preservada. *Reason:* validar o fluxo internamente antes de expor reduz risco reputacional e regulatório; self-service é v2.
+- **Checklist modelado a partir do processo atual, sem revisitar o mérito.** *Cost:* regra legada de baixo valor persiste no fluxo digital. *Reason:* revisitar mérito cruza a fronteira de compliance e expande escopo; é iniciativa separada depois da baseline digital.
+- **Prazo de pendência fixo em 10 dias úteis.** *Cost:* cliente lento é recusado e precisa de novo convite. *Reason:* caso aberto sem fim inflaria o lead time medido e o estoque de compliance.
 
-## Métricas de Sucesso
+## Success Metrics
 
 - Leading: 80% dos onboardings iniciados pelo novo fluxo em 30 dias; resposta de compliance em até 4 h após Em análise.
 - Lagging: lead time da submissão completa à ativação em até 1 dia útil em 90% dos casos após 60 dias; zero retrabalho por documento fora do padrão.
 - Guardrails: taxa de rejeição em auditoria pós-onboarding no baseline ou abaixo; tickets de suporte abertos pelo cliente durante o onboarding no baseline ou abaixo; tempo efetivo de análise estável (o ganho vem de eliminar espera, não de acelerar análise).
 
-## Critérios de Aceitação
+## Acceptance Criteria
 
 Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úteis.
 
@@ -138,9 +138,9 @@ Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úte
 | Aprovação | reenvio do item 2 aprovado | 3 de 3 aprovados | ONB-07 | Aprovado; elegibilidade verdadeira (ONB-11) |
 | Prazo esgotado | Com pendência há 11 dias úteis | sem reenvio | ONB-10 | Recusado, motivo "prazo esgotado"; elegibilidade falsa |
 
-- **Dado** um cliente Aprovado, **quando** um auditor consulta o histórico, **então** vê toda submissão, validação e transição com autor, instante e motivo (ONB-12).
+- **Given** um cliente Aprovado, **when** um auditor consulta o histórico, **then** vê toda submissão, validação e transição com autor, instante e motivo (ONB-12).
 
-## Dependências e Riscos
+## Dependencies and Risks
 
 | Item | Tipo | Impacto |
 |---|---|---|
@@ -149,20 +149,20 @@ Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úte
 | Compliance Review recebe o caso em pendência | Acoplamento entre contextos | A revisão parte do estado que este contexto publica; sem ele, a fila de compliance não abre |
 | Migração de clientes em onboarding | Risco | Casos em curso precisam de estado inicial equivalente |
 
-## Perguntas em Aberto
+## Open Questions
 
-- **[PREMISSA] O lead time é causado pela troca manual e pela espera, não pela complexidade da análise; se falsa, a análise continua custosa depois da digitalização, o ganho é marginal e a iniciativa não se paga.** Dono: operações. Resolve-se medindo o tempo efetivo de análise em 20 casos antes de aprovar.
-- Há regulação setorial além de KYC e LGPD para o segmento PJ que acrescente itens ao checklist (ONB-05)? É a `[LACUNA]` registrada em Considerações Regulatórias. Dono: compliance. Resolve-se com parecer por escrito antes de aprovar.
+- **[ASSUMPTION] O lead time é causado pela troca manual e pela espera, não pela complexidade da análise; if false, a análise continua custosa depois da digitalização, o ganho é marginal e a iniciativa não se paga.** Dono: operações. Resolve-se medindo o tempo efetivo de análise em 20 casos antes de aprovar.
+- Há regulação setorial além de KYC e LGPD para o segmento PJ que acrescente itens ao checklist (ONB-05)? É a `[GAP]` registrada em Regulatory Considerations. Dono: compliance. Resolve-se com parecer por escrito antes de aprovar.
 
-## Ponto de Maior Fragilidade
+## Weakest Point
 
-A decisão de **modelar o checklist a partir do processo atual sem revisitar o mérito das regras**, registrada em Trade-offs Declarados.
+A decisão de **modelar o checklist a partir do processo atual sem revisitar o mérito das regras**, registrada em Declared Trade-offs.
 
 *Vetor de ataque:* digitalizar um processo manual ruim entrega um processo digital ruim, mais rápido. Se uma fração relevante das rejeições atuais vem de regra legada dispensável, "zero retrabalho" não é alcançável sem tocar no mérito, e adiar a revisão para "iniciativa separada" protege a causa-raiz.
 
 *Desafie antes de aprovar:* há evidência de que o checklist atual é majoritariamente valor real e não cerimônia herdada? Sem ela, mova uma triagem mínima de mérito para a v1 ou rebaixe a meta de retrabalho até a baseline digital existir.
 
-## Referências
+## References
 
 - [Circular BCB 3.978/2020](https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Circular&numero=3978), art. 2º. Lida em 2026-09-05.
 - [Lei 13.709/2018 (LGPD)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm), arts. 15 e 16. Lida em 2026-09-05.

@@ -33,12 +33,12 @@ A primeira linha de cada artefato, antes do `#`, é um comentário de máquina e
 Campos condicionais:
 
 - `design:` entra no comentário das tasks só quando o `design.md` existe.
-- `scope: RSV-07, RSV-10` entra no comentário do design e das tasks quando a mudança toca só parte dos requisitos da spec; no design, limita a cobertura de `IF ... THEN` exigida em Tratamento de erros aos IDs listados.
+- `scope: RSV-07, RSV-10` entra no comentário do design e das tasks quando a mudança toca só parte dos requisitos da spec; no design, limita a cobertura de `IF ... THEN` exigida em Error Handling aos IDs listados.
 - `prd:` e `prd-rev:` entram no comentário da spec só quando há PRD. `prd-rev` é o resultado de `git hash-object <prd.md>` sobre o arquivo em disco, com a árvore limpa para esse arquivo (é o que a checagem de forma recalcula); PRD modificado e não commitado pede o commit dele antes de gravar a spec. Se o PRD mudar depois, o hash diverge; esse achado é sempre corrigido, nunca mantido com razão: re-derive os requisitos que citam os IDs tocados e atualize o hash.
 
 ### Linha de prefixo
 
-Logo abaixo do `#` vem a linha ``Prefixo dos requisitos: `RSV`.`` e nada mais de cabeçalho.
+Logo abaixo do `#` vem a linha ``Requirement prefix: `RSV`.`` e nada mais de cabeçalho.
 
 ## Origem
 
@@ -46,10 +46,10 @@ O sinal no pedido determina a origem da spec, o que conta como fato e o cuidado 
 
 | Sinal no pedido | Origem | O que é fato | Cuidado |
 |---|---|---|---|
-| Há PRD em `/docs/prd` | PRD | O texto sem tag do PRD. O que está marcado `[PREMISSA]` no PRD continua `[PREMISSA]` na spec, com a origem PRD anotada, e não conta como premissa de solution space | Siga as seis regras da subseção A partir do PRD |
-| Não há PRD, mas usuário-alvo e problema estão no pedido | Ideia | O que o usuário afirmou | Registre usuário, problema e resultado no Contexto; comportamento observável ausente vira `[LACUNA]` no Contexto. Se faltar usuário ou problema, pare |
+| Há PRD em `/docs/prd` | PRD | O texto sem tag do PRD. O que está marcado `[ASSUMPTION]` no PRD continua `[ASSUMPTION]` na spec, com a origem PRD anotada, e não conta como premissa de solution space | Siga as seis regras da subseção A partir do PRD |
+| Não há PRD, mas usuário-alvo e problema estão no pedido | Ideia | O que o usuário afirmou | Registre usuário, problema e resultado no Contexto; comportamento observável ausente vira `[GAP]` no Contexto. Se faltar usuário ou problema, pare |
 | Pedido solution-first, sem usuário nem problema ("CRUD para X", "tela de Y") | — | — | Responda "Isso precisa de PRD antes" e pare |
-| Código existente sem spec ("documente a spec do módulo X") | Código | O que o código *faz*: comportamento, testes, docs | Intenção inferida é `[PREMISSA]`; comportamento sem justificativa de negócio é `[LACUNA]`; divergências vão na seção Divergências; a leitura da base segue design.md, Base de código |
+| Código existente sem spec ("documente a spec do módulo X") | Código | O que o código *faz*: comportamento, testes, docs | Intenção inferida é `[ASSUMPTION]`; comportamento sem justificativa de negócio é `[GAP]`; divergências vão na seção Divergências; a leitura da base segue design.md, Base de código |
 
 ### A partir do PRD
 
@@ -58,9 +58,9 @@ Quando a origem é o PRD, valem seis regras:
 1. **Cite o ID, não reescreva a regra.** O requisito EARS cita o ID do PRD ao fim da linha (`[BOOK-04]`) e descreve o comportamento observável que realiza a regra (valor, status, evento, prazo), sem reescrevê-la. Regra escrita em dois lugares diverge. Estado, evento e enumeração usam o identificador que o PRD fixa.
 2. **Regra de negócio se corrige no PRD.** Lacuna ou inconsistência de regra de negócio se corrige no PRD e nunca vira premissa na spec. Premissa nova na spec é só de solution space: formato de erro, prazo técnico, ordem de processamento; premissa herdada do PRD mantém a tag com a origem anotada (Origem).
 3. **Prefixo distinto.** O prefixo da spec é distinto de todo prefixo de PRD e não compartilha com nenhum deles as duas primeiras letras: `OFR` ao lado de `OFF` convida a erro; prefira sigla de outra raiz. Confira a colisão lendo os prefixos declarados em `/docs/prd` (validation.md, Checagem de forma).
-4. **PRD 0000.** Quando existe, o PRD 0000 fornece o mapa de contextos, o catálogo de eventos e as decisões delegadas a ADR. Evento que a capability produz ou consome vira requisito citando o ID que o governa; decisão delegada a ADR entra em Perguntas em Aberto com dono "Design/ADR".
-5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios antes das abordagens) e aparece na Rastreabilidade numa linha cuja segunda coluna começa com `Critério de design:` (forma fixada).
-6. **Cenários de aceitação.** Os cenários dos Critérios de Aceitação do PRD são a suíte mínima que o Execute reproduz (execute.md, Ciclo por task). A Rastreabilidade os lista pelo nome do caso quando o PRD os traz em tabela (primeira coluna; os que citam FR em escopo são obrigatórios) e pelo FR que exercitam quando o PRD os traz em bullets, com os IDs EARS que os cobrem. FR ou cenário de outra capability entra numa linha cuja segunda coluna começa com `Fora desta capability:` e o nome da capability dona (forma fixada). Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
+4. **PRD 0000.** Quando existe, o PRD 0000 fornece o mapa de contextos, o catálogo de eventos e as decisões delegadas a ADR. Evento que a capability produz ou consome vira requisito citando o ID que o governa; decisão delegada a ADR entra em Open Questions com dono "Design/ADR".
+5. **NFR.** NFR com resultado observável por teste (prazo, atomicidade, registro de auditoria) vira requisito EARS citando o `X-NFR-nn`. NFR que é atributo de qualidade sem teste direto vira critério de design (design.md, Critérios antes das abordagens) e aparece na Traceability numa linha cuja segunda coluna começa com `Design criterion:` (forma fixada).
+6. **Cenários de aceitação.** Os cenários dos Acceptance Criteria do PRD são a suíte mínima que o Execute reproduz (execute.md, Ciclo por task). A Traceability os lista pelo nome do caso quando o PRD os traz em tabela (primeira coluna; os que citam FR em escopo são obrigatórios) e pelo FR que exercitam quando o PRD os traz em bullets, com os IDs EARS que os cobrem. FR ou cenário de outra capability entra numa linha cuja segunda coluna começa com `Outside this capability:` e o nome da capability dona (forma fixada). Aceitar a entrada válida e rejeitar a inválida são cenários distintos e requisitos distintos.
 
 ### Leitura prévia
 
@@ -71,8 +71,8 @@ Em qualquer origem, leia antes de escrever: a `spec.md` viva da capability, se e
 - **Varra a base antes de perguntar:** o módulo que a capability toca, os padrões que ele usa e ao menos uma feature irmã já implementada. Use o que encontrar para ancorar as perguntas, não para limitar a spec ao que já existe.
 - **Você é par técnico, não entrevistador.** Desafie vagueza ("rápido" é quanto? "usuários" são quem?) e torne o abstrato concreto ("me conduz por um uso disso").
 - **Pergunte só quando a resposta muda** arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (é a exceção de workflow.md, Tags e dúvidas; com delegação escrita para o solution space, não se pergunta). O que o código ou o PRD já responde não se pergunta; preferência estilística não se pergunta.
-- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada. Teto: cinco perguntas por spec; da sexta em diante, a decisão vai direto para Perguntas em Aberto, com dono e o que bloqueia.
-- **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Perguntas em Aberto, bloqueia só o que depende dela e nunca vira default.
+- **Uma pergunta por vez:** interrogativa completa, uma linha de "por que importa" e duas ou três opções concretas, com a recomendada primeiro. Ofereça "você decide" quando a escolha é de solution space e todas as opções atendem aos requisitos já escritos; a delegação vira decisão registrada. Teto: cinco perguntas por spec; da sexta em diante, a decisão vai direto para Open Questions, com dono e o que bloqueia.
+- **Codifique cada resposta na spec imediatamente,** como requisito, premissa ou fora de escopo. Decisão material sem resposta fica em Open Questions, bloqueia só o que depende dela e nunca vira default.
 - **A fronteira da mudança é fixa:** clarify esclarece *como* algo se comporta, nunca *se* uma capability nova entra.
 
 ## Dimensões implícitas
@@ -115,26 +115,26 @@ Escreva a condição e a resposta em ordem direta, mantendo o padrão EARS aplic
 
 A spec é editada no lugar; a mudança é o diff.
 
-- **Remover requisito:** apague a linha e acrescente o ID à linha `Aposentados: RSV-05, RSV-09` ao fim da spec; crie a linha na primeira aposentadoria. ID reutilizado e número pulado fora dos aposentados são achados da checagem de forma (validation.md, Checagem de forma).
+- **Remover requisito:** apague a linha e acrescente o ID à linha `Retired: RSV-05, RSV-09` ao fim da spec; crie a linha na primeira aposentadoria. ID reutilizado e número pulado fora dos aposentados são achados da checagem de forma (validation.md, Checagem de forma).
 - **Mudar significado:** edite o texto e mantenha o ID.
 - **Substituir conceito:** aposente o ID e crie um novo.
 - **Refactor sem mudança de comportamento** não toca a spec: o design ou as tasks citam os IDs que o refactor preserva, e os testes existentes são a evidência.
 
 ## Seções
 
-Cada seção existe quando há o que dizer; obrigatórias são só Contexto e Requisitos e, quando há `prd:`, Rastreabilidade. A lista é fechada: a checagem de forma acusa a seção `##` fora dela, tolerando só a seção herdada do PRD (validation.md, Checagem de forma). A coluna Seção (en) traz o heading da spec escrita em inglês (workflow.md, Idioma); nome separado por vírgula é forma alternativa aceita no mesmo idioma.
+Cada seção existe quando há o que dizer; obrigatórias são só Context e Requirements e, quando há `prd:`, Traceability. A lista é fechada: a checagem de forma acusa a seção `##` fora dela, tolerando só a seção herdada do PRD (validation.md, Checagem de forma). O heading é fixo em inglês seja qual for o idioma da prosa (workflow.md, Idioma); nome separado por vírgula é forma alternativa aceita.
 
-| Seção | Seção (en) | Conteúdo |
-|---|---|---|
-| Contexto | Context | 3–5 linhas: a origem (o PRD e o que foi corrigido nele; a ideia; ou o código e por que está sendo especificado), a base lida, e o que a capability produz e consome |
-| Escopo e Fora de Escopo, Escopo | Scope / Out of Scope, Scope | O que entra; tabela item / razão para o que fica fora |
-| Premissas | Assumptions | Tabela premissa / default / racional, cada linha marcada `[PREMISSA]` |
-| Perguntas em Aberto | Open Questions | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
-| Requisitos | Requirements | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
-| Domain Events | Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
-| Glossário | Glossary | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
-| Rastreabilidade | Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; a checagem de forma confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
-| Divergências | Divergences | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
+| Seção | Conteúdo |
+|---|---|
+| Context | 3–5 linhas: a origem (o PRD e o que foi corrigido nele; a ideia; ou o código e por que está sendo especificado), a base lida, e o que a capability produz e consome |
+| Scope / Out of Scope, Scope | O que entra; tabela item / razão para o que fica fora |
+| Assumptions | Tabela premissa / default / racional, cada linha marcada `[ASSUMPTION]` |
+| Open Questions | Pergunta, dono e o que ela bloqueia; a que bloqueia mais requisitos primeiro, em negrito |
+| Requirements | Lista EARS com IDs; subtítulos `###` por tema a partir de 8 requisitos |
+| Domain Events | Evento, produtor, consumidores, payload semântico, gatilho |
+| Glossary | Só termos de solution space; termo de domínio aponta para o glossário do PRD |
+| Traceability | Presente quando há PRD: de cada FR em escopo (ID do PRD citado por ao menos um requisito EARS) para os IDs EARS que o cobrem, e de cada cenário herdado para os IDs EARS que o cobrem; a checagem de forma confere FR e IDs EARS nas duas direções e a presença de cada cenário da tabela do PRD |
+| Divergences | Presente na origem código: o que o código faz e parece não dever, o que deveria fazer e não faz, dead code; cada item com `file:line` |
 
 Exemplo didático completo de formato; dados, contratos e decisões abaixo não afirmam adoção pelo projeto.
 
@@ -144,15 +144,15 @@ Exemplo didático completo de formato; dados, contratos e decisões abaixo não 
 <!-- sdd: spec | capability: reservation-book/reservation-lifecycle | prd: /docs/prd/0002-reservation-book-reservation-lifecycle.md | prd-rev: git:3f9c2a1b7d0e4c5a9b8d7e6f0a1b2c3d4e5f6a7b -->
 # Livro de Reservas
 
-Prefixo dos requisitos: `RSV`.
+Requirement prefix: `RSV`.
 
-## Contexto
+## Context
 
 Origem: [PRD 0002](../../../prd/0002-reservation-book-reservation-lifecycle.md).
 A capability consome `OfferPublished` e `OfferClosed` e fornece o livro fechado ao Allocation por consulta (BOOK-16).
 Base lida: `src/ReservationBook` tem só a composição do serviço.
 
-## Escopo e Fora de Escopo
+## Scope / Out of Scope
 
 **Em escopo:** registro, alteração e cancelamento contra oferta `Open`; congelamento no fechamento.
 
@@ -160,17 +160,17 @@ Base lida: `src/ReservationBook` tem só a composição do serviço.
 |---|---|
 | Rateio e condicionamento | Capability `allocation/book-processing` |
 
-## Premissas
+## Assumptions
 
 | Premissa | Default | Racional |
 |---|---|---|
-| [PREMISSA] Forma da rejeição | ProblemDetails 422 com `violations[]` | `AddApiDefaults()` já usa ProblemDetails; BOOK-09 exige todas as violações |
+| [ASSUMPTION] Forma da rejeição | ProblemDetails 422 com `violations[]` | `AddApiDefaults()` já usa ProblemDetails; BOOK-09 exige todas as violações |
 
-## Perguntas em Aberto
+## Open Questions
 
 - **A prática da corretora permite ajustar a reserva até o fechamento?** Dono: autor do PRD. Bloqueia os requisitos de alteração de reserva, que só entram com a resposta.
 
-## Requisitos
+## Requirements
 
 - **RSV-01** — WHEN o operador registra uma reserva sem violação de RSV-02 e RSV-03 THEN the system SHALL registrá-la em `Active` com instante e ordem de registro [BOOK-01]
 - **RSV-02** — IF a oferta não está `Open` THEN the system SHALL registrar a violação `OFFER_NOT_ACCEPTING_RESERVATIONS` com regra BOOK-01 [BOOK-01]
@@ -178,7 +178,7 @@ Base lida: `src/ReservationBook` tem só a composição do serviço.
 - **RSV-04** — IF o mesmo registro chega duas vezes com o mesmo `idempotencyKey` THEN the system SHALL devolver a reserva original sem duplicar
 - **RSV-05** — WHEN a reserva é aceita THEN the system SHALL atribuir ordem de registro estritamente crescente no livro da oferta [BOOK-14]
 
-## Rastreabilidade
+## Traceability
 
 | ID do PRD | IDs EARS |
 |---|---|

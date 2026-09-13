@@ -13,47 +13,47 @@ Antes de criar a pasta de uma mudança ou uma ADR, liste os filhos diretos da pa
 ### Spec
 
 - Comentário de máquina na primeira linha não vazia, na forma `<!-- sdd: spec | capability: <domínio>/<capability> [| prd: <path> | prd-rev: git:<hash>] -->` (specify.md, Comentário de máquina).
-- Linha de prefixo logo abaixo do título, na forma `Prefixo dos requisitos: \`RSV\`.` (ou `Requirement prefix:`).
-- `## Contexto` e `## Requisitos` presentes, sem seção duplicada; toda `##` na lista de Seções (specify.md, Seções), com a seção herdada do PRD como única tolerância.
+- Linha de prefixo logo abaixo do título, na forma `Requirement prefix: \`RSV\`.`.
+- `## Context` e `## Requirements` presentes, sem seção duplicada; toda `##` na lista de Seções (specify.md, Seções), com a seção herdada do PRD como única tolerância.
 - Todo requisito com um `SHALL` por linha, num padrão EARS (WHEN, WHILE, WHERE, IF ou `The <system> SHALL`), na forma `- **PFX-NN** — texto`, sem termo vago.
-- Prefixo dos IDs igual ao declarado; ID único; ID aposentado (linha `Aposentados:`) não reutilizado; número pulado só quando consta dos aposentados.
+- Prefixo dos IDs igual ao declarado; ID único; ID aposentado (linha `Retired:`) não reutilizado; número pulado só quando consta dos aposentados.
 - Prefixo distinto de todo prefixo declarado em PRD e sem as duas primeiras letras em comum com algum deles.
-- Com `prd:`: o PRD existe; `prd-rev` igual a `git hash-object <prd>`; toda citação `X-nn` ou `X-NFR-nn` resolve para uma definição no PRD; `## Rastreabilidade` presente, com todo FR em escopo e todo cenário da tabela de Critérios de Aceitação que cita FR em escopo, e só IDs EARS que existem na spec; linha só com IDs de PRD que nenhum requisito cita começa com `Critério de design:`.
+- Com `prd:`: o PRD existe; `prd-rev` igual a `git hash-object <prd>`; toda citação `X-nn` ou `X-NFR-nn` resolve para uma definição no PRD; `## Traceability` presente, com todo FR em escopo e todo cenário da tabela de Acceptance Criteria que cita FR em escopo, e só IDs EARS que existem na spec; linha só com IDs de PRD que nenhum requisito cita começa com `Design criterion:`.
 - Contexto com 3 a 5 linhas; Requisitos com subtítulos `###` a partir de 8 requisitos e sem eles abaixo disso.
-- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração; todo link Markdown local resolve.
+- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração; todo link Markdown local resolve.
 
 ### Design
 
 - Comentário de máquina `<!-- sdd: design | spec: ../spec.md [| scope: ...] -->` cujo `spec:` resolve para arquivo; todo ID em `scope:` existe na spec.
-- Toda `##` na lista de Seções, na ordem dela, sem seção vazia ou reduzida a "Nenhuma." ou "N/A" (design.md, Seções).
-- Sem `## Abordagens`, a última linha de `## Critérios de avaliação` é `Sem alternativa real: <motivo>`; com a seção, essa linha não existe.
-- Todo requisito `IF ... THEN` da spec (no escopo) citado em `## Tratamento de erros`.
-- Seção com mais de dez linhas de corpo só quando o assunto dela aparece em `## Riscos e técnicas`; em `## Componentes`, cada `- **Propósito:**` com uma frase e um propósito.
+- Toda `##` na lista de Seções, na ordem dela, sem seção vazia ou reduzida a "Nenhuma.", "None." ou "N/A" (design.md, Seções).
+- Sem `## Approaches`, a última linha de `## Evaluation Criteria` é `No real alternative: <motivo>`; com a seção, essa linha não existe.
+- Todo requisito `IF ... THEN` da spec (no escopo) citado em `## Error Handling`.
+- Seção com mais de dez linhas de corpo só quando o assunto dela aparece em `## Risks and Techniques`; em `## Components`, cada `- **Purpose:**` com uma frase e um propósito.
 - Todo bloco Mermaid lido linha a linha: fence fechado, sintaxe que renderiza, nenhuma palavra reservada como alias.
-- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
 
 ### Tasks
 
 - Comentário de máquina `<!-- sdd: tasks | spec: ../spec.md [| design: ./design.md] [| scope: ...] -->` cujos destinos resolvem para arquivo.
-- Parágrafo "Como este repositório testa" antes de `## Comandos de Gate`, com a contagem-base de testes do gate Build.
-- `## Comandos de Gate`, `## Plano de execução` e `## Rastreabilidade` presentes; toda `##` na lista de Seções (tasks.md, Seções do `tasks.md`).
-- Tabela Comandos de Gate com linhas só entre `quick`, `full`, `build` e `Mutação`, nenhuma célula de comando vazia; a linha `Mutação` presente quando a tabela Riscos e técnicas do design tem risco que obriga mutação (verify.md, Mutação); todo valor de `Gate` usado tem linha.
-- Cada task `### Tn:` ou `### TCn:` com ID único e os campos O quê, Onde, Depende de, Requisito, Interfaces, Pronto quando, Tests e Gate, uma vez cada e preenchidos (tasks.md, Campos).
-- `Pronto quando` com o comando do gate da task entre crases, copiado da tabela, e ao menos um critério de comportamento; `Tests` e `Gate` na combinação que o campo `Gate` fixa; última task de cada fase com `build`.
-- Todo requisito da spec (no escopo) com task e toda task com ao menos um requisito existente; `## Rastreabilidade` coerente com os campos `Requisito` nos dois sentidos.
+- Parágrafo "How this repository tests" antes de `## Gate Commands`, com a contagem-base de testes do gate Build.
+- `## Gate Commands`, `## Execution Plan` e `## Traceability` presentes; toda `##` na lista de Seções (tasks.md, Seções do `tasks.md`).
+- Tabela Gate Commands com linhas só entre `quick`, `full`, `build` e `Mutation`, nenhuma célula de comando vazia; a linha `Mutation` presente quando a tabela Risks and Techniques do design tem risco que obriga mutação (verify.md, Mutation); todo valor de `Gate` usado tem linha.
+- Cada task `### Tn:` ou `### TCn:` com ID único e os campos What, Where, Depends on, Requirement, Interfaces, Done when, Tests e Gate, uma vez cada e preenchidos (tasks.md, Campos).
+- `Done when` com o comando do gate da task entre crases, copiado da tabela, e ao menos um critério de comportamento; `Tests` e `Gate` na combinação que o campo `Gate` fixa; última task de cada fase com `build`.
+- Todo requisito da spec (no escopo) com task e toda task com ao menos um requisito existente; `## Traceability` coerente com os campos `Requirement` nos dois sentidos.
 - Dependências só para trás na ordem do plano, sem ciclo e sem `T` dependendo de `TC`; toda task citada no plano com corpo e toda task `T` com corpo citada no plano.
-- `O quê` com um entregável; `Onde` com paths reconhecíveis; `Tests` `none` só quando todo path de `Onde` é config, schema ou migration.
-- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+- `What` com um entregável; `Where` com paths reconhecíveis; `Tests` `none` só quando todo path de `Where` é config, schema ou migration.
+- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
 
 ### ADR
 
-- Título `# ADR NNNN: título`; linha `Participantes:` com nome antes da primeira `##`.
-- `## Contexto`, `## Decisão`, `## Alternativas consideradas` e `## Consequências` presentes, nessa ordem, sem seção vazia; nenhuma `##` fora dessas e de `## Regras derivadas`, que quando existe é a última (adr.md, Template).
+- Título `# ADR NNNN: título`; linha `Participants:` com nome antes da primeira `##`.
+- `## Context`, `## Decision`, `## Alternatives considered` e `## Consequences` presentes, nessa ordem, sem seção vazia; nenhuma `##` fora dessas e de `## Derived rules`, que quando existe é a última (adr.md, Template).
 - Alternativas consideradas com tabela preenchida: cada linha com alternativa e razão.
-- Consequências com a linha `- Negativas: <texto>`.
-- `## Regras derivadas` com ao menos um bullet, cada um com o path do arquivo onde a regra vive entre crases (adr.md, Conformar e superseder).
-- `Substitui: NNNN` e `Substituída por: NNNN` apontando para ADR existente na pasta, com a linha recíproca na outra ADR.
-- Tags só `[PREMISSA]` e `[LACUNA]`; nenhum placeholder, hedging ou meta-narração.
+- Consequências com a linha `- Negative: <texto>`.
+- `## Derived rules` com ao menos um bullet, cada um com o path do arquivo onde a regra vive entre crases (adr.md, Conformar e superseder).
+- `Supersedes: NNNN` e `Superseded by: NNNN` apontando para ADR existente na pasta, com a linha recíproca na outra ADR.
+- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
 
 ### Forma mantida por pedido ou convenção
 
@@ -63,7 +63,7 @@ Para reconhecer uma convenção por exemplos, use a versão dos arquivos present
 
 ### Heurísticas de redação
 
-Escreva de forma declarativa. Hedging, meta-narração, placeholder e tag fora de `[PREMISSA]` e `[LACUNA]` são achados da checagem de forma nos quatro artefatos. A revisão aplica (prose.md, Checklist editorial), sem novo ciclo de estilo.
+Escreva de forma declarativa. Hedging, meta-narração, placeholder e tag fora de `[ASSUMPTION]` e `[GAP]` são achados da checagem de forma nos quatro artefatos. A revisão aplica (prose.md, Checklist editorial), sem novo ciclo de estilo.
 
 Checagem de forma limpa comprova o esqueleto; a revisão confere o conteúdo.
 
@@ -96,7 +96,7 @@ A revisão vem depois da checagem de forma. Se alterou o artefato, repita a chec
 ### Specify
 
 - `SHALL`, ID único e padrão EARS já estão na checagem de forma; aqui: o padrão está correto, o valor de cada requisito é concreto e dá para escrever o teste que o afirma. Se não dá, reescreva o requisito.
-- Cada cenário dos Critérios de Aceitação do PRD aparece na Rastreabilidade com os IDs EARS que o cobrem: a presença já está na checagem de forma quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
+- Cada cenário dos Acceptance Criteria do PRD aparece na Traceability com os IDs EARS que o cobrem: a presença já está na checagem de forma quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
 - Requisito que vem do PRD cita o ID e não reescreve a regra.
 - Nenhuma regra de negócio foi decidida por premissa nova na spec; premissa herdada do PRD, com origem anotada, não conta.
 - Toda inferência está marcada.
@@ -104,7 +104,7 @@ A revisão vem depois da checagem de forma. Se alterou o artefato, repita a chec
 
 ### Design
 
-- Profundidade proporcional ao risco: a checagem de forma marca a seção acima de dez linhas de corpo; aqui você decide, para cada seção marcada, se o assunto dela aparece em Riscos e técnicas — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
+- Profundidade proporcional ao risco: a checagem de forma marca a seção acima de dez linhas de corpo; aqui você decide, para cada seção marcada, se o assunto dela aparece em Risks and Techniques — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
 - Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
 - Nenhum comportamento decidido aqui que devia estar na spec.
 - Interfaces com tipos; a cobertura de todo `IF/THEN` da spec no tratamento de erros já está na checagem de forma.
@@ -112,10 +112,10 @@ A revisão vem depois da checagem de forma. Se alterou o artefato, repita a chec
 
 ### Tasks
 
-- Cobertura requisito para task e task para requisito já está na checagem de forma; aqui: nenhuma task cita em `Requisito` um ID que ela não exercita.
-- `Consome` e `Produz` consistentes entre as tasks e com o design, suficientes sem ler outra task; o executor também lê os requisitos citados e o trecho pertinente do design (tasks.md, Interfaces).
+- Cobertura requisito para task e task para requisito já está na checagem de forma; aqui: nenhuma task cita em `Requirement` um ID que ela não exercita.
+- `Consumes` e `Produces` consistentes entre as tasks e com o design, suficientes sem ler outra task; o executor também lê os requisitos citados e o trecho pertinente do design (tasks.md, Interfaces).
 - `Tests` coerente com a camada da task, com teste co-locado.
-- `Pronto quando` com critério de comportamento que a spec define; a checagem de forma já exige que o comando entre crases seja o do gate da task e que exista critério além dele; o conteúdo do critério é você quem confere.
+- `Done when` com critério de comportamento que a spec define; a checagem de forma já exige que o comando entre crases seja o do gate da task e que exista critério além dele; o conteúdo do critério é você quem confere.
 
 ### ADR
 
@@ -123,7 +123,7 @@ Quatro itens, os que a checagem de forma não alcança porque são conteúdo, n�
 
 - A decisão fixa convenção, restrição ou padrão que features futuras seguem; decisão local à feature é ocorrência, e o destino dela é o design (adr.md, Quando a decisão é de projeto).
 - Cada linha de Alternativas consideradas é uma alternativa realmente avaliada, derrubada contra os mesmos critérios que sustentam a decisão; alternativa escrita para encher a tabela é ocorrência.
-- A linha `Negativas` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
+- A linha `Negative` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
 - Toda regra de projeto que a decisão cria ou altera está em Regras derivadas; o bullet e o path do arquivo já estão na checagem de forma (adr.md, Conformar e superseder), aqui: cada regra listada é mesmo criada ou alterada por esta decisão, e ADR que não cria regra não tem a seção.
 
 ### Execute

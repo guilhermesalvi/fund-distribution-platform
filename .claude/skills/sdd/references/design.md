@@ -11,7 +11,7 @@ Leia, nesta ordem, antes de projetar:
 1. **A `spec.md` da capability.** É o contrato; o design não a reinterpreta.
 2. **As ADRs ativas em `/docs/adr`.** Cada uma é uma restrição de projeto. Quando uma decisão anterior conflita com o que seria melhor para esta feature, a escolha é explícita: conformar-se à ADR ou supersedê-la, pelo procedimento descrito em adr.md. Ignorar a ADR em silêncio cria inconsistência invisível entre features.
 3. **O PRD, quando existe.**
-   - As seções Trade-offs Declarados e Dependências e Riscos são restrições do design e fonte de riscos.
+   - As seções Declared Trade-offs e Dependencies and Risks são restrições do design e fonte de riscos.
    - Os NFRs são a origem primeira dos critérios de avaliação.
    - No PRD 0000: o mapa de contextos fixa quem é upstream e a direção de mudança de contrato; o catálogo de eventos fixa o produtor e os consumidores de cada evento; as decisões delegadas a ADR são decisões deste design ou de uma ADR própria.
 
@@ -22,8 +22,8 @@ Não leia a base inteira; a spec é o guia de foco.
 1. Identifique os módulos e arquivos ligados ao escopo. Leia a estrutura de diretórios antes de abrir qualquer arquivo.
 2. Leia nesta ordem: interfaces e contratos; entidades de domínio; serviços e casos de uso; infraestrutura. Abra a implementação completa só quando assinatura e nome não bastam.
 3. Declare o que foi lido e o que foi ignorado, na forma: "Analisei X, Y, Z. A e B ficaram fora e podem conter restrições não consideradas."
-4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[PREMISSA]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto; conte os arquivos rastreados da camada com `git ls-files '<glob da camada>'`, o mesmo limite que decide se a mudança pede design (workflow.md, Quanto artefato a mudança pede).
-5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Riscos e técnicas, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[PREMISSA]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
+4. Separe fato de inferência: o que a base impõe é fato; o que você inferiu de um padrão é `[ASSUMPTION]`. Padrão visto em menos de três arquivos da mesma camada não é convenção do projeto; conte os arquivos rastreados da camada com `git ls-files '<glob da camada>'`, o mesmo limite que decide se a mudança pede design (workflow.md, Quanto artefato a mudança pede).
+5. Toda preocupação encontrada na base (acoplamento, dívida, segredo exposto, N+1, lacuna de teste no caminho da mudança) vira uma linha na seção Risks and Techniques, com mitigação ou aceite. Enquanto você não encontra a decisão que explica o desenho (ADR, commit, PR), essa preocupação fica marcada como `[ASSUMPTION]`: um desenho que parece errado hoje pode ter sido o melhor sob as restrições da época.
 6. Reuso: cada componente novo referencia o componente existente que ele segue; componente sem reuso justifica por quê.
 
 ## Do risco à técnica
@@ -48,7 +48,7 @@ Quem propõe e quem julga é o mesmo agente; por isso, critério escrito depois 
 
 1. **Critérios.** Cada critério tem origem declarada: NFR do PRD, dimensão da spec, ADR, custo ou prazo. Critério é atributo de qualidade ou restrição, nunca mecanismo: "sem ponto único de falha" é critério; "usar Bloom filter" não é.
 2. **Crítica dos critérios.** Pergunte: que critério falta para este tipo de problema (falso positivo em segurança, frescor do dado, custo de operação)? Que trade-off decide a escolha e ainda não está fixado? Critério de negócio ausente volta ao PRD como pergunta; critério de solution space segue os ramos abaixo (workflow.md, Tags e dúvidas).
-3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes, salvo delegação escrita para o solution space (workflow.md, Tags e dúvidas). Sem alternativa real, a seção não existe; a última linha de Critérios de avaliação diz "Sem alternativa real: <motivo em uma frase>".
+3. **Abordagens.** Alternativa real é a abordagem que atende a todos os critérios e troca de lugar com a recomendada em pelo menos um deles; a seção existe só quando há uma. Nesse caso, apresente 2–3 abordagens materialmente viáveis, com o mesmo escopo, avaliadas contra os critérios (que são as colunas da tabela) e contra as quatro perguntas abaixo. A recomendada vem primeiro, com o racional, e é confirmada pelo usuário antes de você detalhar componentes, salvo delegação escrita para o solution space (workflow.md, Tags e dúvidas). Sem alternativa real, a seção não existe; a última linha de Evaluation Criteria diz "No real alternative: <motivo em uma frase>".
 
 | Situação | Critérios e crítica | Abordagens e espera |
 |---|---|---|
@@ -71,7 +71,7 @@ A quarta é sempre respondida: complexidade (componentes × interconexões) é c
 
 - **Componentes.** Para cada componente: propósito em uma frase (sem "e"), path real, interfaces com tipos, dependências e o que reusa. As interfaces vêm antes da implementação: são o que as tasks consomem.
 - **Domain events.** Para cada evento: produtor, consumidores conhecidos, payload semântico, chave de partição ou de ordenação, garantia de entrega e versionamento. At-least-once é a garantia normal; a idempotência do consumidor é o que torna a reentrega segura. Evento mal documentado é acoplamento implícito entre contextos.
-- **Modelo de dados.** Presente quando a feature toca persistência: entidades, relacionamentos, invariantes e migração.
+- **Data Model.** Presente quando a feature toca persistência: entidades, relacionamentos, invariantes e migração.
 - **Tratamento de erro.** Uma linha por cenário: cenário (com o ID do requisito), tratamento e impacto. Todo `IF … THEN` da spec aparece aqui, com o mecanismo escolhido para tratá-lo.
 
 ### Forma de escrita
@@ -96,7 +96,7 @@ São conceitos distintos; diga sempre de qual está falando:
 
 O que justifica um deployável novo é demanda de **deploy independente**: time com ritmo próprio, stack diferente, estrangulamento de legado. Escalabilidade, resiliência e "separação de responsabilidades" não justificam sozinhos, porque réplica e módulo entregam o mesmo. Um deployável novo carrega contrato de interface, versionamento, compatibilidade retroativa e um dono nomeado.
 
-Desvio da ordem de preferência registra o porquê na tabela de Decisões técnicas, não em seção própria.
+Desvio da ordem de preferência registra o porquê na tabela de Technical Decisions, não em seção própria.
 
 ### Biblioteca compartilhada e fronteiras de módulo
 
@@ -104,7 +104,7 @@ Desvio da ordem de preferência registra o porquê na tabela de Decisões técni
 - Regra de negócio não vive em biblioteca de plataforma. `Utils` ou `Shared` como destino é o cheiro dessa regra não aplicada.
 - Sem ciclo entre módulos com fronteira própria; um módulo é consumido só pela sua interface pública.
 
-## Decisões técnicas
+## Technical Decisions
 
 Registre só as decisões em que outra escolha também atendia aos critérios de avaliação, em tabela com quatro colunas: decisão, escolha, racional e tipo. O tipo distingue:
 
@@ -115,20 +115,20 @@ Decisão que fixa convenção, restrição ou padrão para features futuras vira
 
 ## Seções
 
-Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: a checagem de forma acusa a seção `##` fora dela e a seção fora desta ordem (validation.md, Checagem de forma). O nome entre parênteses é o heading do design escrito em inglês (workflow.md, Idioma); sem parênteses, o nome é o mesmo nos dois idiomas. Na ordem do documento:
+Cada seção existe quando há o que dizer; nenhuma seção vazia. A lista é fechada: a checagem de forma acusa a seção `##` fora dela e a seção fora desta ordem (validation.md, Checagem de forma). O heading é fixo em inglês seja qual for o idioma da prosa (workflow.md, Idioma). Na ordem do documento:
 
-1. Contexto de design (Design Context) — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
-2. Critérios de avaliação (Evaluation Criteria).
-3. Riscos e técnicas (Risks and Techniques).
-4. Abordagens (Approaches) — só quando há alternativa real.
-5. Visão da arquitetura (Architecture Overview) — um parágrafo e, quando três ou mais componentes trocam mensagens, um diagrama Mermaid.
-6. Unidade de deploy (Deployment Unit) — uma linha quando a mudança fica no deployável existente.
-7. Componentes (Components).
+1. Design Context — restrições da spec, do PRD e das ADRs; base lida e base ignorada.
+2. Evaluation Criteria.
+3. Risks and Techniques.
+4. Approaches — só quando há alternativa real.
+5. Architecture Overview — um parágrafo e, quando três ou mais componentes trocam mensagens, um diagrama Mermaid.
+6. Deployment Unit — uma linha quando a mudança fica no deployável existente.
+7. Components.
 8. Domain Events.
-9. Modelo de dados (Data Model).
-10. Tratamento de erros (Error handling).
-11. Decisões técnicas (Technical Decisions).
-12. Arquivos a criar ou modificar (Files to Create or Modify) — insumo direto do `tasks.md`.
+9. Data Model.
+10. Error Handling (Error handling).
+11. Technical Decisions.
+12. Files to Create or Modify — insumo direto do `tasks.md`.
 
 Exemplo didático completo de formato; dados, contratos e decisões abaixo não afirmam adoção pelo projeto.
 
@@ -138,55 +138,55 @@ Exemplo didático completo de formato; dados, contratos e decisões abaixo não 
 <!-- sdd: design | spec: ../spec.md | scope: RSV-07, RSV-08, RSV-09, RSV-10, RSV-11, RSV-12 -->
 # Reserva Parcial — Design
 
-## Contexto de design
+## Design Context
 
 Spec: RSV-07 a RSV-12. ADR 0001 (outbox) restringe a publicação de eventos. Base lida: `src/ReservationBook/Reservations/*`; ignorado: `src/ReservationBook/Reports/*`.
 
-## Critérios de avaliação
+## Evaluation Criteria
 
 | # | Critério | Origem |
 |---|---|---|
 | C1 | O livro lido pelo Allocation é idêntico ao congelado | BOOK-NFR-02 |
 | C2 | Resultado visível em até 5s após `BookProcessed` | usuário, nesta sessão |
 
-Sem alternativa real: a ADR 0001 já fixa o transporte e a spec fixa o comportamento.
+No real alternative: a ADR 0001 já fixa o transporte e a spec fixa o comportamento.
 
-## Riscos e técnicas
+## Risks and Techniques
 
 | Risco | Fonte | Técnica | Onde |
 |---|---|---|---|
 | Duplicata por retry do canal | RSV-10 | Idempotency key persistida; unicidade (investorId, offerId) | `ReservationService` |
 
-## Visão da arquitetura
+## Architecture Overview
 
 [Parágrafo; diagrama Mermaid pelo critério da seção Seções.]
 
-## Unidade de deploy
+## Deployment Unit
 
 Fica em `src/ReservationBook`.
 
-## Componentes
+## Components
 
 ### ReservationService
-- **Propósito:** manter o livro de reservas de uma oferta publicada.
-- **Localização:** `src/ReservationBook/Reservations/ReservationService.cs`
+- **Purpose:** manter o livro de reservas de uma oferta publicada.
+- **Location:** `src/ReservationBook/Reservations/ReservationService.cs`
 - **Interfaces:** `Place(PlaceReservation cmd, CancellationToken ct): Task<Result<Reservation, ReservationError>>`
-- **Dependências:** `IOfferReader`, `IReservationStore`
-- **Reusa:** `src/ServiceDefaults/TraceAsync.cs`
+- **Dependencies:** `IOfferReader`, `IReservationStore`
+- **Reuses:** `src/ServiceDefaults/TraceAsync.cs`
 
-## Tratamento de erros
+## Error Handling
 
 | Cenário (ID) | Tratamento | Impacto |
 |---|---|---|
 | Posição acima do máximo (RSV-11) | `Result.Failure(POSITION_ABOVE_MAXIMUM)`; 422 no endpoint | Operador vê a posição resultante |
 
-## Decisões técnicas
+## Technical Decisions
 
 | Decisão | Escolha | Racional | Tipo |
 |---|---|---|---|
 | Ordem de registro | Contador por oferta, não instante | BOOK-14 exige ordem total com instantes iguais | interna |
 
-## Arquivos a criar ou modificar
+## Files to Create or Modify
 
 - `src/ReservationBook/Reservations/ReservationService.cs` — novo
 - `tests/UnitTests/Reservations/ReservationServiceTests.cs` — novo

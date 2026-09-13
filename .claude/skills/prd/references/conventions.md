@@ -20,39 +20,27 @@
 O header tem estes elementos, nesta ordem:
 
 1. A primeira linha é `# Título`.
-2. Abaixo, uma tabela de duas colunas com um único campo, `Contexto Originário` (`Originating Context` em PRD em inglês). O valor é o contexto primário, seguido de `; afeta <contextos>` quando houver; o impacto em cada contexto afetado vai a Dependências e Riscos. Se DDD não se aplica, o rótulo é `Módulo` (`Module`) ou `Área` (`Area`); a lista é fechada nesses três, e no PRD 0000 só `Escopo` (`Scope`).
-3. Depois, a linha de prefixo dos requisitos (writing.md, IDs). O rótulo é `Prefixo dos requisitos:` em PRD em português e `Requirement prefix:` em PRD em inglês — são essas as duas formas aceitas.
+2. Abaixo, uma tabela de duas colunas com um único campo, `Originating Context`. O valor é o contexto primário, seguido de `; affects <contextos>` quando houver, com os contextos separados por vírgula; o impacto em cada contexto afetado vai a Dependencies and Risks. Se DDD não se aplica, o rótulo é `Module` ou `Area`; a lista é fechada nesses três, e no PRD 0000 só `Scope`.
+3. Depois, a linha de prefixo dos requisitos (writing.md, IDs), com o rótulo fixo `Requirement prefix:`.
 4. Na mesma linha do prefixo, a frase que aponta o PRD 0000, quando ele existe.
 
-O PRD 0000 difere em três pontos: usa `Escopo` no lugar de `Contexto Originário`, não tem linha de prefixo e carrega `<!-- prd: overview -->` na primeira linha, por ser o único PRD com forma própria. Nenhum outro comentário de máquina entra em PRD algum.
+O PRD 0000 difere em três pontos: usa `Scope` no lugar de `Originating Context`, não tem linha de prefixo e carrega `<!-- prd: overview -->` na primeira linha, por ser o único PRD com forma própria. Nenhum outro comentário de máquina entra em PRD algum.
 
-O rótulo do campo segue o idioma do PRD; o nome do contexto preserva o termo do domínio.
+O rótulo do campo é fixo em inglês (Idioma); o nome do contexto preserva o termo do domínio.
 
 ```markdown
 # Verificação Assíncrona de Documentos
 
 | | |
 |---|---|
-| **Contexto Originário** | Customer Onboarding; afeta Account Activation |
+| **Originating Context** | Customer Onboarding; affects Account Activation |
 
-Prefixo dos requisitos: `ONB`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
+Requirement prefix: `ONB`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
 ```
 
 ## Idioma
 
-- **O PRD é escrito em português ou em inglês.** São os dois idiomas que a tabela de seções cobre: ela dá o nome de cada seção nos dois, o em português e, entre parênteses, o em inglês (writing.md, Seções). A precedência escolhe entre esses dois e não abre um terceiro.
-- Entre os dois, o idioma do artefato segue a precedência. Quando ninguém o fixou, é o idioma do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem material, o idioma do pedido. Uma vez fixado, pedido explícito de idioma na sessão é precedência e o muda; mensagem em outro idioma sem esse pedido não muda.
-- Material, pedido ou pedido explícito de idioma fora desses dois: o PRD sai em inglês, e a apresentação abre com uma linha dizendo que ele está em inglês porque a skill escreve em português ou inglês. O termo de domínio continua no original nos dois casos (writing.md, Ubiquitous Language).
-- Termo canônico em inglês se traduz quando existe tradução de mesma força e reconhecimento:
-
-| Inglês | Português |
-|---|---|
-| Given/When/Then | Dado/Quando/Então |
-| Functional Requirements | Requisitos Funcionais |
-| Non-functional Requirements | Requisitos Não Funcionais |
-| Open Questions | Perguntas em Aberto |
-
-- Sem tradução de mesma força, o termo fica em inglês: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off.
-- Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem.
-- Fora das duas listas, traduza o termo só quando a tradução já aparece no material recebido ou no PRD 0000; caso contrário, mantenha o original em inglês.
-- O par PT/EN de cada heading é alias; qual dos dois vale neste PRD é o idioma fixado, e heading do outro idioma é ocorrência da revisão (workflow.md, Revisão antes de apresentar).
+- **Estrutura em inglês, prosa no idioma do PRD.** A estrutura é o que a checagem de forma lê, e tem uma única forma, em inglês: os headings `##` (writing.md, Seções e PRD 0000), os rótulos do header e a linha de prefixo (Header), as tags `[ASSUMPTION]` e `[GAP]` (writing.md, Tags), os rótulos de forma `*Cost:*` e `*Reason:*`, `Guardrail`, `**Given**`/`**when**`/`**then**`, `if false`, `; affects` e a coluna `Identifier` (writing.md, Seções). Heading ou rótulo traduzido é achado da checagem de forma (workflow.md, Checar), mesmo em PRD escrito em português.
+- **O idioma da prosa** segue a precedência (SKILL.md, Limites). Quando ninguém o fixou, é o idioma do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem material, o idioma do pedido. Uma vez fixado, pedido explícito de idioma na sessão é precedência e o muda; mensagem em outro idioma sem esse pedido não muda. Qualquer idioma serve para a prosa, porque a checagem de forma não a lê.
+- Termo canônico em inglês sem tradução de mesma força fica em inglês na prosa: Factory Pattern, Entity Service Antipattern, Bounded Context, Domain Event, Ubiquitous Language, JTBD, MoSCoW, guardrail, leading/lagging, trade-off. Fora dessa lista, traduza o termo só quando a tradução já aparece no material recebido ou no PRD 0000; caso contrário, mantenha o original em inglês.
+- Identificadores de domínio (`Offering`, `ReservationBook`), IDs e tags não se traduzem. O termo de domínio continua no original (writing.md, Ubiquitous Language).

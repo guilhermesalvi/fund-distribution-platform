@@ -49,7 +49,7 @@ Essa autorização para teste local exige comando e isolamento comprovados na co
 
 ## Tags e dúvidas
 
-- **Tags.** `[PREMISSA]` marca inferência com default e racional; `[LACUNA]` marca informação insuficiente para decidir. Texto sem tag é fato, com origem no PRD, no usuário, no código ou na documentação. Aprovação não converte premissa em fato.
+- **Tags.** `[ASSUMPTION]` marca inferência com default e racional; `[GAP]` marca informação insuficiente para decidir. Texto sem tag é fato, com origem no PRD, no usuário, no código ou na documentação. Aprovação não converte premissa em fato.
 - **Fatos você procura; decisões você pergunta.** A cadeia de pesquisa para um fato, nesta ordem: base de código, docs do projeto, documentação oficial, web; se nada responder, sinalize a incerteza. Nunca fabrique API, padrão ou comportamento; "não encontrei" é resposta válida.
 
 Toda dúvida cai em uma de três categorias:
@@ -57,7 +57,7 @@ Toda dúvida cai em uma de três categorias:
 | Condição | Ação | Bloqueio |
 |---|---|---|
 | 1. Decisão dentro da autonomia delegada por escrito no pedido da sessão ou no CLAUDE.md | Decida, registre e siga | Só a apresentação de cada artefato espera |
-| 2. Inferência de solution space sem delegação escrita | Marque `[PREMISSA]` com default e racional e avance; a premissa fica revisável | Pergunte nas exceções de Clarify e Design abaixo |
+| 2. Inferência de solution space sem delegação escrita | Marque `[ASSUMPTION]` com default e racional e avance; a premissa fica revisável | Pergunte nas exceções de Clarify e Design abaixo |
 | 3. Decisão material do usuário: escopo, regra de negócio, trade-off ou efeito externo | Pergunte; sem resposta, não adote default | Bloqueie somente o que depende da resposta |
 
 Sem delegação escrita, escolha de negócio é categoria 3 e escolha de solution space é categoria 2. Nesta última, pergunte no Clarify quando a resposta muda arquitetura, modelo de dados, decomposição, desenho de teste ou aceitação (specify.md, Clarify), e no Design sobre critérios e abordagem (design.md, Critérios antes das abordagens). Com delegação escrita para o solution space, essas duas exceções caem e só a apresentação de cada artefato espera.
@@ -74,10 +74,8 @@ Sem delegação escrita, escolha de negócio é categoria 3 e escolha de solutio
 
 ### Idioma
 
-- **O artefato é escrito em português ou em inglês, nunca em outro idioma.** A checagem de forma casa os headings por igualdade com os aliases PT/EN da lista de seções do artefato, e cada lista traz os dois nomes: spec (specify.md, Seções), design (design.md, Seções), tasks (tasks.md, Seções do `tasks.md`) e ADR (adr.md, Template). Seção fora da lista é achado em design, tasks e ADR; na spec, só a seção herdada do PRD é tolerada. Artefato em terceiro idioma sai com um achado por seção e sem correção possível.
-- Qual dos dois: o idioma do PRD; sem PRD, o do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, o do pedido; se o pedido mistura idiomas, português.
-- Quando o idioma que essa regra devolve não é português nem inglês, o artefato fica em inglês e a apresentação diz, em uma linha, qual era o idioma do material e que o artefato saiu em inglês por isso.
-- Termo canônico com tradução de mesma força se traduz: Requisitos, Fora de Escopo, Perguntas em Aberto, Dado/Quando/Então.
+- **Estrutura em inglês, prosa no idioma do artefato.** A estrutura é o que a checagem de forma lê, e tem uma única forma, em inglês: os headings `##` da lista de seções de cada artefato (specify.md, Seções; design.md, Seções; tasks.md, Seções do `tasks.md`; adr.md, Template), os comentários de máquina, a linha de prefixo, as tags `[ASSUMPTION]` e `[GAP]`, os campos de task (tasks.md, Campos) e as linhas de forma fixada (`Retired:`, `Design criterion:`, `Outside this capability:`, `No real alternative:`, `Participants:`, `Supersedes:`, `Superseded by:`, `Positive:`, `Negative:`). Heading ou rótulo traduzido é achado da checagem de forma; seção fora da lista é achado em design, tasks e ADR, e na spec só a seção herdada do PRD é tolerada.
+- **O idioma da prosa:** o do PRD; sem PRD, o do material recebido (com material em mais de um idioma, o do documento que o pedido cita primeiro ou, sem citação, o do primeiro anexo); sem os dois, o do pedido; se o pedido mistura idiomas, português. Qualquer idioma serve para a prosa, porque a checagem de forma não a lê.
 - Termo sem tradução de mesma força fica em inglês: domain event, outbox, idempotency key, retry, circuit breaker, aggregate, value object, port/adapter, trade-off, gate.
 - Keywords EARS, IDs, código, paths, slugs e identificadores não se traduzem.
 - Termo que o time usa em português (CLAUDE.md, glossário do PRD ou código) fica em português mesmo que esteja na lista acima: é a precedência de Tags e dúvidas.

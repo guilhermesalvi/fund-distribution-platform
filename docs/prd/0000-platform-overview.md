@@ -3,13 +3,13 @@
 
 | | |
 |---|---|
-| **Escopo** | Propósito, mapa de contextos, catálogo de eventos e fluxos entre contextos; regras de negócio pertencem aos PRDs donos e são referenciadas por ID. |
+| **Scope** | Propósito, mapa de contextos, catálogo de eventos e fluxos entre contextos; regras de negócio pertencem aos PRDs donos e são referenciadas por ID. |
 
-## Propósito
+## Purpose
 
 A plataforma demonstra um recorte executável da distribuição de cotas de classe fechada por uma corretora a investidores finais, com base nas Resoluções CVM 160 e CVM 175. O operador atua em nome do investidor; liquidação financeira e integrações externas ficam fora do modelo. O projeto não tem uso em produção: suas métricas medem correção por cenários e invariantes verificáveis. O recorte e as decisões de produto vêm dos quatro briefings de `prd-briefings.md`, fora do repositório; as fontes normativas estão nos PRDs de domínio.
 
-## Contextos
+## Contexts
 
 | Contexto | Responsabilidade | PRD | Prefixo de ID | Posição |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@ Cada contexto mantém sua persistência; as relações usam eventos ou consulta 
 
 Os requisitos são citados pelo prefixo e número; sua definição ocorre somente no PRD dono. Identificadores de domínio seguem os glossários desses documentos.
 
-## Catálogo de eventos
+## Event Catalog
 
 | Evento | Produtor | Consumidores | Gatilho | IDs |
 |---|---|---|---|---|
@@ -34,7 +34,7 @@ Todo evento identifica a oferta, o estado resultante da operação e seu instant
 
 São candidatos futuros, condicionados à existência de consumidores: `OfferBecameUnconditional`, `OfferLapsed`, `OfferCompleted`, `ReservationPlaced`, `ReservationChanged` e `ReservationWithdrawn`. O livro fechado é obtido por consulta (BOOK-16), e não por um evento adicional.
 
-## Fluxos entre contextos
+## Flows Between Contexts
 
 Os diagramas mostram a ordem lógica das operações; transporte e sincronização precisam atender aos NFRs relacionados nas decisões delegadas a ADR.
 
@@ -97,14 +97,14 @@ sequenceDiagram
     end
 ```
 
-## Termos por contexto
+## Terms per Context
 
 | Conceito | Allocation | ReservationBook | Regra de correspondência |
 |---|---|---|---|
 | Atendimento pelo proporcional condicionado ou pelo rateio | `PartiallyFilledByCondition` ou `ScaledBack` | `PartiallyFilled` | ALLOC-25, BOOK-17 |
 | Não formação da oferta | `OfferLapsed` | `Void` | ALLOC-25, BOOK-17 |
 
-## Decisões delegadas a ADR
+## Decisions Delegated to ADR
 
 | Decisão | Exigência que a ADR precisa satisfazer |
 |---|---|

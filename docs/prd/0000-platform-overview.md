@@ -27,7 +27,7 @@ Os requisitos são citados pelo prefixo e número; sua definição ocorre soment
 | `OfferPublished` | Offering | BookBuilding | Publicação; inclui a definição completa | OFF-03, BOOK-01 |
 | `OfferClosed` | Offering | BookBuilding | Fechamento pelo operador | OFF-07, BOOK-15, ALLOC-01 |
 | `OfferRevoked` | Offering | BookBuilding | Revogação pelo operador em Aberta ou Fechada | OFF-12, BOOK-18, ALLOC-03 |
-| `BookProcessed` | BookBuilding | Offering | Conclusão do processamento; carrega desfecho, `D`, `Dn`, `D'`, `E`, ramo e resultado por reserva | ALLOC-26, OFF-31 a OFF-33 |
+| `BookProcessed` | BookBuilding | Offering | Conclusão do processamento; carrega o desfecho, o ramo aplicado e o resultado por reserva | ALLOC-26, OFF-31 a OFF-33 |
 
 Todo evento identifica a oferta, o estado resultante da operação e seu instante. Em `BookProcessed`, o estado comunicado é o desfecho do processamento; a aceitação no Offering segue OFF-33. A definição completa acompanha `OfferPublished`; a informação do processamento segue ALLOC-26. Encerrada não tem evento próprio na v1 porque não há consumidor; a formação viaja em `BookProcessed` e não vira estado da oferta (OFF-30). Congelamento do livro, processamento e aplicação do resultado são internos ao BookBuilding e não geram evento entre contextos (BOOK-15, ALLOC-01, BOOK-17).
 

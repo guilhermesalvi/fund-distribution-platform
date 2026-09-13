@@ -41,6 +41,8 @@ Tipos: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`
 
 Confira a mensagem contra estas regras antes de commitar; não há validação automática.
 
+O commit é de autoria de quem pediu a mudança, com o `user.name` e o `user.email` do próprio usuário; nada de trailer de ferramenta (`Co-Authored-By`, `Generated-by`), porque a regra de rodapé acima vale para qualquer origem da mensagem. Quando o ambiente não tem autor configurado, passe `-c user.name=… -c user.email=…` no commit em vez de configurar a máquina.
+
 Exemplos:
 
 ```

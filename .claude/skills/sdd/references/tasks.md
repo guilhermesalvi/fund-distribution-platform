@@ -104,7 +104,7 @@ A lista é fechada: a checagem de forma acusa a seção `##` fora dela (validati
 
 Fora da lista, no comentário de máquina: mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
 
-Exemplo didático completo de formato: as dependências indicadas são pressupostas somente neste exemplo. Uma task real substitui os contratos ilustrativos pelos verificados na base e na spec aprovada. A contagem-base ilustrativa não é evidência de execução.
+Exemplo didático completo de formato: as dependências indicadas são pressupostas somente neste exemplo. Uma task real substitui os contratos ilustrativos pelos verificados na base e na spec aprovada, e os comandos de gate pelos descobertos no repositório (Descoberta); os comandos abaixo são os de um repositório .NET e não valem em outro. A contagem-base ilustrativa não é evidência de execução.
 
 ## Template
 

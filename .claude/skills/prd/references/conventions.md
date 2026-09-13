@@ -4,7 +4,7 @@
 
 ### Caminho e numeração
 
-- O path é `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, com slug em kebab-case em inglês e sem prefixo `prd-`.
+- O path é `/docs/prd/NNNN-<domain-slug>-<feature-slug>.md`, com slug em kebab-case em inglês e sem prefixo `prd-`. A pasta é default desta skill: pasta de PRD fixada no guia do repositório (CLAUDE.md) prevalece pela precedência (SKILL.md, Limites), e a checagem de forma recebe essa pasta como argumento (workflow.md, Checar).
 - `NNNN` é um contador de 4 dígitos, global na pasta, porque dá referência curta ("PRD 0007") e registra a ordem de chegada. Obtenha o número listando os `NNNN-*.md` da pasta e somando 1 ao maior; pasta sem PRD começa em 0001. A exceção é o PRD 0000, cujo número é fixo e não passa pelo contador.
 - `0000-<slug>-overview.md` é o PRD 0000 (writing.md, PRD 0000); visão geral gravada em qualquer outro número é achado da checagem de forma (workflow.md, Checar).
 - O contador colide quando dois PRs paralelos alocam o mesmo número; a checagem de forma acusa a duplicata (workflow.md, Checar). Renumere o PRD do branch cujo merge acontece depois: mova o arquivo para o próximo número livre da pasta, atualize quem o cita e confira a numeração de novo.

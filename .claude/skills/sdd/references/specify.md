@@ -13,6 +13,8 @@
 /docs/adr/NNNN-<slug>.md         # decisão de projeto (adr.md)
 ```
 
+O layout é default desta skill: pasta de specs ou de ADRs fixada no guia do repositório (CLAUDE.md) prevalece pela precedência (workflow.md, Tags e dúvidas).
+
 ### Slugs e numeração
 
 - **Slugs** em inglês e kebab-case, espelhando o nome que o código usa: `PartialReservation` vira `partial-reservation`. Capability é uma área funcional de um bounded context, como `reservation-book/reservation-lifecycle`.

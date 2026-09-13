@@ -87,14 +87,14 @@ Cada requisito é uma condição verificável. "Investidor" como ator significa 
 
 ### Registro
 
-- **BOOK-01 (Must)** Reserva só é aceita contra oferta Aberta e com instante do registro dentro do período de reserva (intervalo fechado, glossário do PRD 0001).
+- **BOOK-01 (Must)** Reserva só é aceita contra oferta Aberta e com instante do registro dentro do período de reserva (OFF-08; intervalo fechado em OFF-23).
 - **BOOK-02 (Must)** O investidor deve existir; este contexto não cria investidor.
 - **BOOK-03 (Must)** Quantidade reservada inteira e maior ou igual ao investimento mínimo por investidor.
 - **BOOK-04 (Must)** Posição do investidor, incluindo a reserva sendo registrada ou alterada, menor ou igual ao investimento máximo por investidor.
 - **BOOK-05 (Must)** Categoria obrigatória: varejo, qualificado ou profissional. Na v1 não altera regra alguma.
 - **BOOK-06 (Must)** Declaração de vínculo obrigatória: vinculado ou não vinculado.
 - **BOOK-07 (Must)** Categoria e vínculo únicos por investidor em cada oferta: nova reserva de investidor com reserva ativa repete as declarações vigentes; declaração diferente é rejeitada.
-- **BOOK-08 (Must)** Oferta com distribuição parcial: opção obrigatória e pertencente ao conjunto aceito. Sem distribuição parcial: o pedido deve omitir a opção; se a informar, o registro é rejeitado. Reservas do mesmo investidor podem ter opções distintas.
+- **BOOK-08 (Must)** Oferta com distribuição parcial: opção obrigatória e pertencente ao conjunto aceito (OFF-29). Sem distribuição parcial: o pedido deve omitir a opção; se a informar, o registro é rejeitado. Reservas do mesmo investidor podem ter opções distintas.
 - **BOOK-09 (Must)** Rejeição informa todas as violações, com atributo e regra de cada uma.
 
 ### Alteração e cancelamento

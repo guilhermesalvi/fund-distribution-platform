@@ -18,13 +18,13 @@ O processamento é a etapa core do BookBuilding: é nele que as regras da CVM 16
 
 ## Target User / JTBD
 
-- Operador da corretora: fechar a oferta e ter um desfecho correto, explicável reserva a reserva e reprodutível, sem intervenção manual.
+- Operador da corretora: fechar o livro e ter um desfecho correto, explicável reserva a reserva e reprodutível, sem intervenção manual.
 - Investidor, indireto via livro: saber quantas cotas recebeu e por quê.
-- Offering: consome o desfecho para terminar o ciclo da oferta (OFF-31 a OFF-33) sem mantê-lo como estado (OFF-30). Cada reserva do livro recebe status e quantidade pelo resultado (BOOK-17).
+- Offering: consome o desfecho e o assume como estado final da oferta (OFF-31 a OFF-33). Cada reserva do livro recebe status e quantidade pelo resultado (BOOK-17).
 
 ## Proposed Solution
 
-O operador obtém o desfecho e os resultados por reserva a partir do livro fechado (ALLOC-01 a ALLOC-04, ALLOC-25, ALLOC-26). Formada e não formada são fatos deste contexto: a oferta não os carrega como estado (OFF-30). O diagrama indexa as decisões e a sequência de cálculo.
+O operador obtém o desfecho e os resultados por reserva a partir do livro fechado (ALLOC-01 a ALLOC-04, ALLOC-25, ALLOC-26). Formada e não formada são apurados aqui e assumidos pelo Offering como estado (OFF-31, OFF-32). O diagrama indexa as decisões e a sequência de cálculo.
 
 Notação usada em todo o documento: `B` quantidade base, `M` montante mínimo, `D` demanda total, `Dn` demanda das não vinculadas, `D'` demanda efetiva, `E` cotas efetivamente distribuídas, `q` quantidade reservada, `R` quantidade rateada, `Dr` demanda rateada.
 
@@ -67,7 +67,7 @@ Oferta, base (`B`), mínimo (`M`) e opções têm definição no [PRD 0001](0001
 | Demanda efetiva (`D'`) | Demanda após exclusões (ALLOC-08); base da formação, do condicionamento e do rateio; em colocação limitada é igual a `D`. |
 | Excesso superior a um terço | `D > B × 4/3`; fronteira da vedação em ALLOC-06 e ALLOC-07. |
 | Colocação limitada | Exceção do art. 56, §§ 1º, III, e 3º (ALLOC-07), executada por ALLOC-21. |
-| Formação | Desfecho determinado por ALLOC-09 e ALLOC-10; identificadores na tabela de ALLOC-26. É fato deste contexto, não estado da oferta (OFF-30). |
+| Formação | Desfecho determinado por ALLOC-09 e ALLOC-10; identificadores na tabela de ALLOC-26, os mesmos dos estados que a oferta assume (OFF-31, OFF-32). |
 | Cotas efetivamente distribuídas (`E`) | Quantidade apurada em ALLOC-10; numerador do proporcional de OFF-28, com denominador `B`; não é necessariamente a soma final alocada. |
 | Distribuição parcial | `M ≤ D' < B`; ramo de ALLOC-11 a ALLOC-14. |
 | Excesso de demanda | `D' > B`; ramo de ALLOC-16 a ALLOC-21. |
@@ -83,7 +83,7 @@ Cada requisito é uma condição verificável. Notação na Proposed Solution.
 
 ### Gatilho e entrada
 
-- **ALLOC-01 (Must)** O processamento inicia com o fechamento da oferta, quando o livro congela (BOOK-15), e usa como entrada exclusiva a definição publicada e o livro fechado (BOOK-16).
+- **ALLOC-01 (Must)** O processamento inicia com o fechamento do livro pelo operador (BOOK-22), quando o livro congela (BOOK-15), e usa como entrada exclusiva a definição publicada e o livro fechado (BOOK-16).
 - **ALLOC-02 (Must)** Cada oferta produz no máximo um `BookProcessed`. Depois de emitido, novo processamento é rejeitado. Processamento que terminou sem emitir (ALLOC-NFR-02) pode ser repetido e, por ALLOC-04, produz o mesmo resultado.
 - **ALLOC-03 (Must)** Se a oferta for revogada antes de o processamento concluir, ele é interrompido e nada é emitido. Revogação após a emissão não altera o resultado emitido; o efeito nas reservas é BOOK-18.
 - **ALLOC-04 (Must)** O processamento é determinístico: mesma oferta e mesmo livro fechado produzem exatamente o mesmo resultado.
@@ -154,7 +154,7 @@ Os identificadores dos ramos e dos motivos compostos são nomes descritivos do m
 
 ## Domain Events
 
-Produz `BookProcessed` (ALLOC-26), consumido pelo Offering (OFF-31 a OFF-33). Consome `OfferRevoked` (ALLOC-03). O gatilho do processamento é o fechamento do livro (BOOK-15), interno ao contexto, e a entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e a decisão delegada a ADR.
+Produz `BookProcessed` (ALLOC-26), consumido pelo Offering (OFF-31 a OFF-33). Consome `OfferRevoked` (ALLOC-03). O gatilho do processamento é o fechamento do livro (BOOK-22, BOOK-15), interno ao contexto, e a entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e a decisão delegada a ADR.
 
 ## Non-functional Requirements
 
@@ -191,7 +191,7 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 - **Um único critério de rateio, proporcional (ALLOC-16).** *Cost:* ofertas com outro critério não são representáveis. *Reason:* é o padrão de varejo; decisão do autor.
 - **Vedação antes da formação (ALLOC-06 a ALLOC-09).** *Cost:* nenhum sobre o resultado, porque a exceção do § 1º, III, impede que a exclusão leve `D'` abaixo de `B`; o cálculo passa a distinguir exclusão de colocação limitada. *Reason:* é a ordem da norma e evita excluir reservas de uma oferta que não vai se formar.
 - **`ScaledBack` como identificador do rateio (ALLOC-25).** *Cost:* atendida parcialmente vira dois status, `ScaledBack` e `PartiallyFilledByCondition`, e o operador precisa dos dois para explicar o resultado (BOOK-17). *Reason:* termo dos prospectos ("scale-back of oversubscriptions on a pro rata basis", comunicado da Euro Manganese); `ProRata` colidiria com a opção 3.
-- **Identificadores `Unconditional` e `Lapsed` para o desfecho (ALLOC-26).** *Cost:* `Unconditional` convive com as opções de condicionamento da reserva. *Reason:* par usado pela comunidade anglófona (UK Takeover Code, Rule 31.2; prospectos HKEX, "Structure of the Global Offering"); `Formed` e `NotFormed` seriam tradução literal.
+- **Identificadores `Unconditional` e `Lapsed` para o desfecho (ALLOC-26).** *Cost:* `Unconditional` convive com as opções de condicionamento da reserva. *Reason:* par usado pela comunidade anglófona (UK Takeover Code, Rule 31.2; prospectos HKEX, "Structure of the Global Offering"); `Formed` e `NotFormed` seriam tradução literal. O Offering usa o mesmo par como estado (OFF-31, OFF-32).
 - **Colocação limitada como sub-ramo do excesso (ALLOC-21).** *Cost:* o rateio ganha dois parâmetros, `R` e o conjunto rateado. *Reason:* em limitada `D' = D > B`, excesso por definição; reutiliza ALLOC-16 a ALLOC-18 e mantém ALLOC-19 como único invariante.
 
 ## Success Metrics
@@ -232,7 +232,7 @@ As relações compartilhadas estão no [PRD 0000](0000-platform-overview.md).
 
 | Item | Tipo | Impacto |
 |---|---|---|
-| Offering | Consumidor do desfecho | ALLOC-26 alimenta OFF-31 a OFF-33; a formação não vira estado da oferta (OFF-30). |
+| Offering | Consumidor do desfecho | ALLOC-26 alimenta OFF-31 a OFF-33, que assumem o desfecho como estado da oferta com os identificadores desta tabela. |
 | Critério do resto | Desenho | Pode divergir do plano de distribuição de uma oferta real. |
 | Ausência de revisão | Operação | Uma declaração errada no livro pode exigir revogar a oferta inteira. |
 

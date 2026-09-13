@@ -8,7 +8,7 @@ Requirement prefix: `BOOK`. Propósito da plataforma, mapa de contextos, catálo
 
 ## Executive Summary
 
-Pedidos incompatíveis com a oferta e mudanças tardias no livro comprometem a alocação. O BookBuilding permite registrar a intenção do investidor, acompanhar sua evolução e consultar o resultado por reserva, conforme BOOK-01 a BOOK-18, BOOK-20 e BOOK-21; o processamento do livro fechado é o [PRD 0003](0003-book-building-book-processing.md). A métrica primária é a ausência de reservas inválidas e de mudanças no pedido após o fechamento nos cenários de verificação.
+Pedidos incompatíveis com a oferta e mudanças tardias no livro comprometem a alocação. O BookBuilding permite registrar a intenção do investidor, acompanhar sua evolução, fechar o livro e consultar o resultado por reserva, conforme BOOK-01 a BOOK-18 e BOOK-20 a BOOK-22; o processamento do livro fechado é o [PRD 0003](0003-book-building-book-processing.md). A métrica primária é a ausência de reservas inválidas e de mudanças no pedido após o fechamento nos cenários de verificação.
 
 ## Context and Problem
 
@@ -19,11 +19,11 @@ Categoria e vínculo entram como declarações no pedido, sem cadastro verificad
 ## Target User / JTBD
 
 - Investidor (comitente): garantir participação com a quantidade e a condição que escolheu, e saber o que aconteceu com a reserva. Por decisão do autor, no MVP o operador registra em nome dele; não há acesso direto nem identidade de investidor.
-- Operador da corretora: livro consistente com a oferta e demanda acumulada para decidir o fechamento antecipado.
+- Operador da corretora: livro consistente com a oferta e demanda acumulada para decidir e executar o fechamento, inclusive antecipado.
 
 ## Proposed Solution
 
-Cada reserva é um pedido individual, e o livro da oferta é o conjunto das suas reservas; um investidor pode ter várias reservas ativas na mesma oferta, com limite sobre a soma e declarações iguais em todas (BOOK-04, BOOK-07). Após o processamento do livro fechado (PRD 0003), cada reserva recebe um status terminal e a quantidade alocada, sem alterar o pedido (BOOK-17). Registro e declarações são governados por BOOK-01 a BOOK-09; alterações e cancelamento, por BOOK-10 a BOOK-14, sujeitos à premissa em Open Questions. O fechamento e o resultado seguem BOOK-15 a BOOK-18. O operador acompanha a demanda e os resultados por BOOK-20 e BOOK-21.
+Cada reserva é um pedido individual, e o livro da oferta é o conjunto das suas reservas; um investidor pode ter várias reservas ativas na mesma oferta, com limite sobre a soma e declarações iguais em todas (BOOK-04, BOOK-07). Após o processamento do livro fechado (PRD 0003), cada reserva recebe um status terminal e a quantidade alocada, sem alterar o pedido (BOOK-17). Registro e declarações são governados por BOOK-01 a BOOK-09; alterações e cancelamento, por BOOK-10 a BOOK-14, sujeitos à premissa em Open Questions. O fechamento do livro é ação do operador (BOOK-22); o congelamento e o resultado seguem BOOK-15 a BOOK-18. O operador acompanha a demanda e os resultados por BOOK-20 e BOOK-21.
 
 ```mermaid
 stateDiagram-v2
@@ -45,7 +45,7 @@ stateDiagram-v2
 
 | Status | Identifier | Significado |
 |---|---|---|
-| Ativa | `Active` | Pedido aceito, aguardando fechamento ou resultado (BOOK-01, BOOK-15) |
+| Ativa | `Active` | Pedido aceito, aguardando fechamento ou resultado (BOOK-01, BOOK-22, BOOK-15) |
 | Cancelada pelo investidor | `Withdrawn` | Pedido retirado pelo investidor (BOOK-11); não entra no livro fechado |
 | Atendida | `Filled` | Atendimento integral (BOOK-17; ALLOC-12, ALLOC-15, ALLOC-21) |
 | Atendida parcialmente por proporcional | `PartiallyFilledByCondition` | Opção 3 em distribuição parcial (BOOK-17; ALLOC-13), inclusive com zero cotas (ALLOC-24) |
@@ -66,7 +66,8 @@ Definição da oferta, estados, período e opções pertencem ao [PRD 0001](0001
 | Categoria do investidor | Classificação declarada na reserva (BOOK-05, BOOK-07); valores na tabela abaixo. |
 | Pessoa vinculada | Condição declarada de vínculo com os participantes da oferta (BOOK-06, BOOK-07); declaração `IsRelatedParty`. |
 | Reserva | Pedido individual de cotas de uma oferta; pode coexistir com outros pedidos do investidor (BOOK-04, BOOK-08). Identificador `Bid`; decisão em Declared Trade-offs. |
-| Livro de reservas / livro fechado | Conjunto de pedidos de uma oferta; recorte congelado definido em BOOK-15 e descrito em BOOK-16. Identificador `Book`. |
+| Livro de reservas / livro fechado | Conjunto de pedidos de uma oferta; fechado pelo operador (BOOK-22), com o recorte congelado definido em BOOK-15 e descrito em BOOK-16. Identificador `Book`. |
+| Fechamento do livro | Ação do operador que congela o livro no mesmo instante (BOOK-22, BOOK-15); admite antecipação em relação ao fim do período. |
 | Posição do investidor | Soma de suas quantidades ativas na oferta, para aplicação de BOOK-04. |
 | Instante do registro | Momento de aceitação da reserva (BOOK-14). |
 | Ordem de registro | Posição total e imutável de aceitação no livro (BOOK-14); usada por ALLOC-17. |
@@ -89,7 +90,7 @@ Cada requisito é uma condição verificável. "Investidor" como ator significa 
 
 ### Registro
 
-- **BOOK-01 (Must)** Reserva só é aceita contra oferta Aberta e com instante do registro dentro do período de reserva (OFF-08; intervalo fechado em OFF-23).
+- **BOOK-01 (Must)** Reserva só é aceita contra oferta Aberta, com livro ainda não fechado (BOOK-22) e com instante do registro dentro do período de reserva (OFF-08; intervalo fechado em OFF-23).
 - **BOOK-02 (Must)** O investidor deve existir; este contexto não cria investidor.
 - **BOOK-03 (Must)** Quantidade reservada inteira e maior ou igual ao investimento mínimo por investidor.
 - **BOOK-04 (Must)** Posição do investidor, incluindo a reserva sendo registrada ou alterada, menor ou igual ao investimento máximo por investidor.
@@ -101,32 +102,33 @@ Cada requisito é uma condição verificável. "Investidor" como ator significa 
 
 ### Alteração e cancelamento
 
-- **BOOK-10 (Must)** Quantidade, declarações e opção de reserva ativa podem ser alteradas enquanto a oferta está Aberta e dentro do período, validadas pelas regras do registro. Alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, cada uma registrando a mudança no histórico. A permissão depende da premissa explicitada em Open Questions.
+- **BOOK-10 (Must)** Quantidade, declarações e opção de reserva ativa podem ser alteradas enquanto a oferta está Aberta, o livro não foi fechado (BOOK-22) e dentro do período, validadas pelas regras do registro. Alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, cada uma registrando a mudança no histórico. A permissão depende da premissa explicitada em Open Questions.
 - **BOOK-11 (Must)** Reserva ativa pode ser cancelada nas condições e sob a premissa de BOOK-10: passa a Cancelada pelo investidor e não entra no livro fechado; as demais reservas do investidor não são afetadas.
-- **BOOK-12 (Must)** Fora de oferta Aberta ou fora do período, alteração e cancelamento são rejeitados; a reserva é irrevogável a partir daí.
+- **BOOK-12 (Must)** Com o livro fechado (BOOK-22), fora de oferta Aberta ou fora do período, alteração e cancelamento são rejeitados; a reserva é irrevogável a partir daí.
 - **BOOK-13 (Must)** Toda alteração e cancelamento preserva o histórico: quem, quando e o que mudou.
 - **BOOK-14 (Must)** Instante e ordem do registro são imutáveis. A ordem é total no livro: duas reservas nunca compartilham a posição, ainda que aceitas no mesmo instante.
 
 ### Fechamento e resultado
 
-- **BOOK-15 (Must)** No fechamento da oferta o livro congela: as reservas ativas naquele instante formam o livro fechado; nenhuma entra, muda ou sai depois.
+- **BOOK-22 (Must)** Fechar o livro é ação explícita do operador sobre livro de oferta Aberta, permitida a qualquer instante maior ou igual ao início do período de reserva, o que admite fechamento antecipado; o fim do período não fecha o livro por si. Livro já fechado não é fechado de novo, e a ação não transita a oferta.
+- **BOOK-15 (Must)** No fechamento (BOOK-22) o livro congela no mesmo instante: as reservas ativas naquele instante formam o livro fechado; nenhuma entra, muda ou sai depois.
 - **BOOK-16 (Must)** O livro fechado é a entrada exclusiva do processamento (ALLOC-01): todas as reservas que o compõem segundo BOOK-15, cada uma identificável, com investidor, quantidade, declarações, opção, instante e ordem do registro.
 - **BOOK-17 (Must)** O resultado do processamento define o status terminal e a quantidade alocada de cada reserva do livro fechado: o status é o motivo do resultado (ALLOC-25), e Sem efeito quando a oferta não se forma (ALLOC-09). Quantidade reservada, declarações e opção não mudam.
 - **BOOK-18 (Must)** Quando a oferta é revogada, toda reserva que não esteja Cancelada pelo investidor passa a Sem efeito, qualquer que seja o status, inclusive um resultado já aplicado; reserva já Sem efeito permanece. A quantidade alocada vigente passa a zero e o resultado anterior fica no histórico (BOOK-13, BOOK-NFR-03). Oferta não formada chega pelo resultado (BOOK-17), não por evento próprio.
 
 ### Consulta
 
-- **BOOK-20 (Must)** O livro é consultável pelo operador a qualquer momento, com demanda acumulada e lista de reservas com status. É a base do fechamento antecipado (OFF-07).
+- **BOOK-20 (Must)** O livro é consultável pelo operador a qualquer momento, com demanda acumulada e lista de reservas com status. É a base do fechamento antecipado (BOOK-22).
 - **BOOK-21 (Should)** As reservas de um investidor são consultáveis pelo operador, com status e, após o processamento, quantidade alocada.
 
 ## Domain Events
 
-Consome `OfferPublished` (BOOK-01), `OfferClosed` (BOOK-15) e `OfferRevoked` (BOOK-18). Congelamento do livro, processamento e aplicação do resultado são internos ao contexto; o evento `BookProcessed`, que fecha o ciclo com o Offering, é declarado no [PRD 0003](0003-book-building-book-processing.md). Catálogo e fluxos estão no [PRD 0000](0000-platform-overview.md).
+Consome `OfferPublished` (BOOK-01) e `OfferRevoked` (BOOK-18). Fechamento do livro (BOOK-22), congelamento, processamento e aplicação do resultado são internos ao contexto; o evento `BookProcessed`, que fecha o ciclo com o Offering, é declarado no [PRD 0003](0003-book-building-book-processing.md). Catálogo e fluxos estão no [PRD 0000](0000-platform-overview.md).
 
 ## Non-functional Requirements
 
 - **BOOK-NFR-01** Registro, alteração e cancelamento são atômicos e validados contra a definição vigente da oferta; BOOK-04 e BOOK-07 leem as demais reservas ativas do investidor na mesma operação.
-- **BOOK-NFR-02** Congelamento consistente: não existe reserva aceita com instante posterior ao fechamento, e o processamento lê o livro idêntico ao congelado (BOOK-16).
+- **BOOK-NFR-02** Congelamento consistente: fechamento (BOOK-22) e congelamento (BOOK-15) são uma única operação atômica, não existe reserva aceita com instante posterior ao fechamento, e o processamento lê o livro idêntico ao congelado (BOOK-16).
 - **BOOK-NFR-03** Toda mudança de reserva e todo status aplicado registram origem e instante.
 - **BOOK-NFR-04** Dados do investidor não aparecem em rastros de execução; identificadores de reserva e oferta bastam.
 
@@ -141,6 +143,7 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 - CVM 160, art. 2º, X e XI, e CVM 30, arts. 11 e 12: profissional e qualificado atestam a condição por escrito → BOOK-05.
 - CVM 160, art. 75: parcial não se aplica a ofertas exclusivas para profissionais → BOOK-05. Sem distinção por categoria na v1.
 - CVM 160, arts. 69, § 1º, e 65, § 5º: desistência após o fechamento nasce de modificação ou divergência de prospectos → BOOK-12. Fora do escopo; modificação exigiria cancelamento com prazo mínimo de cinco dias úteis.
+- CVM 160, art. 76, II: encerramento quando a totalidade for colocada, antes do fim do prazo → BOOK-22. Sustenta o fechamento antecipado do livro; o anúncio de encerramento fica fora do escopo (PRD 0001, Non-goals).
 
 ## Non-goals
 
@@ -151,6 +154,7 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 
 ## Declared Trade-offs
 
+- **Fechamento explícito do livro, não derivado do fim do período (BOOK-22).** *Cost:* o livro fica aberto até o operador agir, e a recusa após o fim do período depende de OFF-08. *Reason:* o fechamento antecipado (art. 76, II) exige ação explícita, e a ação mora onde estão a demanda que a motiva (BOOK-20) e o congelamento que ela produz (BOOK-15); fechar no Offering exigiria um evento a mais e abriria uma janela entre o fechamento e o congelamento.
 - **Alteração e cancelamento livres até o fechamento (BOOK-10 a BOOK-12).** *Cost:* a demanda acumulada não é compromisso, o livro pode encolher antes do fechamento antecipado e a regra diverge da letra do art. 65, § 4º. *Reason:* a plataforma modela o livro da corretora, não o do coordenador; a irrevogabilidade que o processamento exige é a do livro fechado. Vinculada à premissa em Open Questions.
 - **Categoria e vínculo como declarações na reserva, únicas por investidor em cada oferta (BOOK-05 a BOOK-07).** *Cost:* categorias diferentes em ofertas diferentes; declaração falsa passa; alterar cascateia. *Reason:* é como a norma trata; evita cadastro; impede investidor metade vinculado.
 - **Várias reservas ativas por investidor, limite sobre a soma (BOOK-04).** *Cost:* o registro lê as demais reservas; fracionar aumenta as chances no resto do rateio. *Reason:* permite lotes com opções distintas; o limite sobre a posição preserva o teto do Offering.
@@ -184,11 +188,13 @@ Oferta Aberta dentro do período, investimento mínimo 10 e máximo 500, opçõe
 | Não formação | Desfecho não formada | Cada resultado zero, desfecho `Lapsed` | BOOK-17 | Reservas do livro fechado Sem efeito |
 | Revogação após resultado | Atendida 50/50; rateio 40/50; uma Withdrawn | Dois resultados vigentes | BOOK-18 | Duas Sem efeito com zero e histórico; Withdrawn preservada |
 | Consulta da demanda | Reservas ativas 50, 400 e 30 de investidores distintos | Soma 480 | BOOK-20 | Demanda 480 e três Ativas |
+| Fechamento antecipado | Período até amanhã; três ativas e uma Withdrawn; operador fecha hoje | Instante ≥ início do período | BOOK-22, BOOK-15 | Livro fechado com as três ativas; nova reserva rejeitada |
 
 - **Given** duas reservas ativas do investidor, **when** o operador muda categoria ou vínculo em uma, **then** ambas recebem a declaração e cada histórico registra a alteração (BOOK-07, BOOK-10).
-- **Given** oferta em Draft, Fechada ou Revogada, ou Aberta após o período, **when** se tenta reservar, **then** o pedido é rejeitado (BOOK-01).
-- **Given** oferta Fechada, **when** se tenta cancelar reserva, **then** a tentativa é rejeitada (BOOK-12).
-- **Given** um livro com reservas ativas e uma Withdrawn, **when** a oferta é fechada, **then** somente as ativas no fechamento compõem a entrada do processamento; reservas aceitas no mesmo instante têm ordens distintas (BOOK-14 a BOOK-16).
+- **Given** oferta em Draft ou Revogada, livro já fechado, ou oferta Aberta após o período, **when** se tenta reservar, **then** o pedido é rejeitado (BOOK-01, BOOK-22).
+- **Given** livro fechado, **when** se tenta cancelar reserva, **then** a tentativa é rejeitada (BOOK-12).
+- **Given** um livro com reservas ativas e uma Withdrawn, **when** o operador fecha o livro, **then** somente as ativas no fechamento compõem a entrada do processamento; reservas aceitas no mesmo instante têm ordens distintas (BOOK-14 a BOOK-16, BOOK-22).
+- **Given** livro já fechado, **when** o operador tenta fechá-lo de novo, **then** a tentativa é rejeitada (BOOK-22).
 - **Given** oferta Aberta com reservas ativas, **when** é revogada, **then** elas ficam Sem efeito (BOOK-18).
 
 ## Dependencies and Risks
@@ -197,7 +203,7 @@ O [PRD 0000](0000-platform-overview.md) apresenta as relações entre contextos.
 
 | Item | Tipo | Impacto |
 |---|---|---|
-| Offering | Fornecedor da definição e consumidor do desfecho | BOOK-01, BOOK-03, BOOK-04 e BOOK-08 dependem da definição publicada e do estado corrente (OFF-NFR-03); o desfecho do processamento (ALLOC-26) é consumido por OFF-31 a OFF-33. |
+| Offering | Fornecedor da definição e consumidor do desfecho | BOOK-01, BOOK-03, BOOK-04 e BOOK-08 dependem da definição publicada e do estado corrente (OFF-NFR-03); o fechamento do livro não depende dele (BOOK-22); o desfecho do processamento (ALLOC-26) é assumido como estado por OFF-31 a OFF-33. |
 | Investidores carregados por seed | Dados | A ausência de investidores impede registrar reservas por BOOK-02. |
 | Declarações não verificadas | Dados | Erro de vínculo altera a aplicação da vedação; a categoria não produz efeito na v1. |
 | Alteração antes do fechamento | Comportamento | A hipótese operacional de BOOK-10 a BOOK-12 depende de validação do autor. |
@@ -210,13 +216,13 @@ O [PRD 0000](0000-platform-overview.md) apresenta as relações entre contextos.
 
 A decisão de **permitir alteração e cancelamento até o fechamento, tratando a irrevogabilidade do art. 65, § 4º, como propriedade do livro fechado** (BOOK-10 a BOOK-12).
 
-*Vetor de ataque:* lido literalmente, o § 4º faz da reserva uma aceitação irrevogável. Com a alteração livre, a demanda acumulada deixa de ser compromisso e o fechamento antecipado (OFF-07) se apoia em um número que pode cair. A defesa é que o modelo representa o livro da corretora e o pedido formal ao coordenador é o consolidado; é a única premissa não verificada do PRD.
+*Vetor de ataque:* lido literalmente, o § 4º faz da reserva uma aceitação irrevogável. Com a alteração livre, a demanda acumulada deixa de ser compromisso e o fechamento antecipado (BOOK-22) se apoia em um número que pode cair. A defesa é que o modelo representa o livro da corretora e o pedido formal ao coordenador é o consolidado; é a única premissa não verificada do PRD.
 
 *Desafie antes de aprovar:* o caso de uso permite mexer na reserva até o fechamento, ou é uma janela curta de arrependimento seguida de irrevogabilidade? Se for a segunda, entra um instante de confirmação separado do registro e BOOK-10 a BOOK-12 mudam.
 
 ## References
 
-- [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 2º, X, XI e XVI, 56, 64, 65, 66, 69 e 75; lida em 2026-09-05.
+- [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 2º, X, XI e XVI, 56, 64, 65, 66, 69, 75 e 76; lida em 2026-09-05.
 - [Resolução CVM 30](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/001/resol030consolid.pdf) — arts. 11 e 12; lida em 2026-09-05.
 - [Lloyds TSB Group, placing announcement (Form 6-K, 2008)](https://www.sec.gov/Archives/edgar/data/0001160106/000119163808001657/lloy200809196k2.htm) — "the Bookbuild will establish a single price"; "bids may be scaled down"; lido em 2026-09-13.
 - [Argo Blockchain, placing announcement (Form 6-K, 2023)](https://www.sec.gov/Archives/edgar/data/1841675/000165495423009326/a4294g.htm) — "to bid in the Bookbuild"; "bids may be scaled down by the Agent"; lido em 2026-09-13.

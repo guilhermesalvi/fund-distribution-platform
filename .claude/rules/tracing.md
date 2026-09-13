@@ -28,8 +28,8 @@ O `<Ação>Consumer` (`program-composition.md`) segue a mesma regra do handler H
 - Sempre via `TraceAsync` do `ServiceDefaults`, que concentra `SetStatus(Error)` e `AddException`. O código de produção fica com uma linha:
 
 ```csharp
-var plan = await activitySource.TraceAsync("Allocation.Distribute",
-    ct => allocator.DistributeAsync(offer, ct), ct,
+var plan = await activitySource.TraceAsync("BookBuilding.Allocate",
+    ct => allocator.AllocateAsync(offer, ct), ct,
     tags: [new("app.fund.id", offer.FundId)]);
 ```
 

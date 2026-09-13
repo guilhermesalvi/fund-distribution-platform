@@ -2,25 +2,25 @@
 
 | | |
 |---|---|
-| **Originating Context** | Allocation; affects Offering, ReservationBook |
+| **Originating Context** | BookBuilding; affects Offering |
 
 Requirement prefix: `ALLOC`. Propósito da plataforma, mapa de contextos, catálogo de eventos e fluxos: [PRD 0000](0000-platform-overview.md).
 
 ## Executive Summary
 
-O fechamento do livro precisa produzir um resultado que o operador consiga explicar e os consumidores possam aplicar sem interpretações concorrentes. O Allocation consolida a demanda e aplica as etapas de vedação, formação e alocação, conforme ALLOC-01 a ALLOC-26. A métrica primária é a reprodução exata dos cenários, preservando os limites quantitativos em todos os ramos.
+O fechamento do livro precisa produzir um resultado que o operador consiga explicar e os consumidores possam aplicar sem interpretações concorrentes. O processamento do livro consolida a demanda e aplica as etapas de vedação, formação e alocação, conforme ALLOC-01 a ALLOC-26. A métrica primária é a reprodução exata dos cenários, preservando os limites quantitativos em todos os ramos.
 
 ## Context and Problem
 
 Sem processamento único e determinístico, cada leitura do livro dá um resultado diferente e nenhum contexto confia no desfecho. Sem regras precisas para vedação, formação, condicionamento e rateio, os casos de borda ficam a critério de quem implementa: exclusão que derruba a demanda abaixo da base, truncamento com resto, condição que cancela reservas depois da formação.
 
-O Allocation é o contexto core: é nele que as regras da CVM 160 sobre parcial, condicionamento e vinculadas produzem efeito por investidor. A apuração e o uso da demanda efetiva pertencem a ALLOC-08 e ALLOC-10; seus custos estão em Declared Trade-offs.
+O processamento é a etapa core do BookBuilding: é nele que as regras da CVM 160 sobre parcial, condicionamento e vinculadas produzem efeito por investidor. A apuração e o uso da demanda efetiva pertencem a ALLOC-08 e ALLOC-10; seus custos estão em Declared Trade-offs.
 
 ## Target User / JTBD
 
 - Operador da corretora: fechar a oferta e ter um desfecho correto, explicável reserva a reserva e reprodutível, sem intervenção manual.
 - Investidor, indireto via livro: saber quantas cotas recebeu e por quê.
-- Consumidores: ReservationBook aplica o resultado por reserva; Offering consome o desfecho para terminar o ciclo da oferta (OFF-31 a OFF-33) sem mantê-lo como estado (OFF-30).
+- Offering: consome o desfecho para terminar o ciclo da oferta (OFF-31 a OFF-33) sem mantê-lo como estado (OFF-30). Cada reserva do livro recebe status e quantidade pelo resultado (BOOK-17).
 
 ## Proposed Solution
 
@@ -53,15 +53,15 @@ flowchart TD
     scaleNode -->|ALLOC-26| resultNode
 ```
 
-Mecanismo de execução, forma de leitura do livro e transporte do resultado são downstream (PRD 0000, ADRs).
+Mecanismo de execução e transporte do desfecho são downstream (PRD 0000, ADR).
 
 ## Domain Glossary
 
-Oferta, base (`B`), mínimo (`M`) e opções têm definição no [PRD 0001](0001-offering-offer-lifecycle.md); investidor, reserva, quantidade pedida (`q`) e ordem de registro, no [PRD 0002](0002-reservation-book-reservation-lifecycle.md).
+Oferta, base (`B`), mínimo (`M`) e opções têm definição no [PRD 0001](0001-offering-offer-lifecycle.md); investidor, reserva, quantidade pedida (`q`) e ordem de registro, no [PRD 0002](0002-book-building-bid-lifecycle.md).
 
 | Termo | Definição |
 |---|---|
-| Livro fechado | Entrada congelada do ReservationBook (BOOK-15, BOOK-16); uma linha por reserva. |
+| Livro fechado | Entrada congelada do livro (BOOK-15, BOOK-16); uma linha por reserva. |
 | Demanda total (`D`) | Soma de pedidos do livro (ALLOC-05). |
 | Demanda das não vinculadas (`Dn`) | Parcela sem declaração de vínculo (ALLOC-05); determina ALLOC-06 ou ALLOC-07. |
 | Demanda efetiva (`D'`) | Demanda após exclusões (ALLOC-08); base da formação, do condicionamento e do rateio; em colocação limitada é igual a `D`. |
@@ -83,7 +83,7 @@ Cada requisito é uma condição verificável. Notação na Proposed Solution.
 
 ### Gatilho e entrada
 
-- **ALLOC-01 (Must)** O processamento inicia com o fechamento da oferta e usa como entrada exclusiva a definição publicada e o livro fechado.
+- **ALLOC-01 (Must)** O processamento inicia com o fechamento da oferta, quando o livro congela (BOOK-15), e usa como entrada exclusiva a definição publicada e o livro fechado (BOOK-16).
 - **ALLOC-02 (Must)** Cada oferta produz no máximo um `BookProcessed`. Depois de emitido, novo processamento é rejeitado. Processamento que terminou sem emitir (ALLOC-NFR-02) pode ser repetido e, por ALLOC-04, produz o mesmo resultado.
 - **ALLOC-03 (Must)** Se a oferta for revogada antes de o processamento concluir, ele é interrompido e nada é emitido. Revogação após a emissão não altera o resultado emitido; o efeito nas reservas é BOOK-18.
 - **ALLOC-04 (Must)** O processamento é determinístico: mesma oferta e mesmo livro fechado produzem exatamente o mesmo resultado.
@@ -125,7 +125,7 @@ Cada requisito é uma condição verificável. Notação na Proposed Solution.
 - **ALLOC-22 (Must)** Toda quantidade alocada é inteira e maior ou igual a zero.
 - **ALLOC-23 (Must)** Em qualquer ramo, a soma das quantidades alocadas é menor ou igual a `B`.
 - **ALLOC-24 (Must)** Investimento mínimo por reserva e máximo por posição valem no registro (BOOK-03, BOOK-04), não na alocação: rateio e proporcional podem alocar abaixo do mínimo, inclusive zero. O motivo é a regra aplicada, não a quantidade.
-- **ALLOC-25 (Must)** O resultado por reserva carrega quantidade alocada e um motivo entre: atendida integralmente, atendida parcialmente por proporcional, atendida parcialmente por rateio, não atendida por condicionamento, excluída por vinculação, oferta não formada.
+- **ALLOC-25 (Must)** O resultado por reserva carrega quantidade alocada e um motivo entre: atendida integralmente, atendida parcialmente por proporcional, atendida parcialmente por rateio, não atendida por condicionamento, excluída por vinculação, oferta não formada. O motivo é o status terminal da reserva (BOOK-17).
 - **ALLOC-26 (Must)** O desfecho carrega `D`, `Dn`, `D'`, `E`, o ramo aplicado (inclusive colocação limitada) e a lista identificável de resultados por reserva. Informa o desfecho de ALLOC-09 ou ALLOC-10 e é emitido como `BookProcessed`, sujeito a ALLOC-02. `E` só é apurado no caso de ALLOC-10; na não formação é não aplicável.
 
 | Desfecho (ALLOC-09, ALLOC-10) | Identifier |
@@ -140,7 +140,7 @@ Cada requisito é uma condição verificável. Notação na Proposed Solution.
 | Atendida parcialmente por rateio | `ScaledBack` |
 | Não atendida por condicionamento | `CancelledByCondition` |
 | Excluída por vinculação | `ExcludedRelatedParty` |
-| Oferta não formada | `OfferLapsed` |
+| Oferta não formada | `Void` |
 
 | Ramo (ALLOC-26) | Identifier | Requisitos |
 |---|---|---|
@@ -150,11 +150,11 @@ Cada requisito é uma condição verificável. Notação na Proposed Solution.
 | Rateio geral | `GeneralScaleBack` | ALLOC-16 a ALLOC-20 |
 | Colocação limitada | `LimitedPlacement` | ALLOC-21 |
 
-Os identificadores dos ramos e dos motivos compostos são nomes descritivos do modelo que espelham os conceitos em português. As fontes consultadas não estabelecem uma enumeração equivalente para esse recorte; `ScaledBack` usa o termo de mercado citado em Declared Trade-offs.
+Os identificadores dos ramos e dos motivos compostos são nomes descritivos do modelo que espelham os conceitos em português. As fontes consultadas não estabelecem uma enumeração equivalente para esse recorte; `ScaledBack` usa o termo de mercado citado em Declared Trade-offs. Os motivos são os status terminais da reserva, definidos na tabela de status do [PRD 0002](0002-book-building-bid-lifecycle.md).
 
 ## Domain Events
 
-Produz `BookProcessed` (ALLOC-26), consumido pelo Offering e pelo ReservationBook. Consome `OfferPublished` (definição para ALLOC-01), `OfferClosed` (ALLOC-01) e `OfferRevoked` (ALLOC-03). O contrato de entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e as decisões delegadas a ADR.
+Produz `BookProcessed` (ALLOC-26), consumido pelo Offering (OFF-31 a OFF-33). Consome `OfferRevoked` (ALLOC-03). O gatilho do processamento é o fechamento do livro (BOOK-15), interno ao contexto, e a entrada é BOOK-16; o [PRD 0000](0000-platform-overview.md) apresenta o catálogo e a decisão delegada a ADR.
 
 ## Non-functional Requirements
 
@@ -190,15 +190,15 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 - **Limites por investidor só no registro (ALLOC-24).** *Cost:* o investidor pode receber uma cota ou nenhuma com mínimo de dez. *Reason:* é o comportamento real do rateio; impor o mínimo é outro critério.
 - **Um único critério de rateio, proporcional (ALLOC-16).** *Cost:* ofertas com outro critério não são representáveis. *Reason:* é o padrão de varejo; decisão do autor.
 - **Vedação antes da formação (ALLOC-06 a ALLOC-09).** *Cost:* nenhum sobre o resultado, porque a exceção do § 1º, III, impede que a exclusão leve `D'` abaixo de `B`; o cálculo passa a distinguir exclusão de colocação limitada. *Reason:* é a ordem da norma e evita excluir reservas de uma oferta que não vai se formar.
-- **`ScaledBack` como identificador do rateio (ALLOC-25).** *Cost:* o livro mapeia proporcional e rateio no mesmo `PartiallyFilled` (BOOK-17); vocabulários distintos. *Reason:* termo dos prospectos ("scale-back of oversubscriptions on a pro rata basis", comunicado da Euro Manganese); `ProRata` colidiria com a opção 3.
+- **`ScaledBack` como identificador do rateio (ALLOC-25).** *Cost:* atendida parcialmente vira dois status, `ScaledBack` e `PartiallyFilledByCondition`, e o operador precisa dos dois para explicar o resultado (BOOK-17). *Reason:* termo dos prospectos ("scale-back of oversubscriptions on a pro rata basis", comunicado da Euro Manganese); `ProRata` colidiria com a opção 3.
 - **Identificadores `Unconditional` e `Lapsed` para o desfecho (ALLOC-26).** *Cost:* `Unconditional` convive com as opções de condicionamento da reserva. *Reason:* par usado pela comunidade anglófona (UK Takeover Code, Rule 31.2; prospectos HKEX, "Structure of the Global Offering"); `Formed` e `NotFormed` seriam tradução literal.
 - **Colocação limitada como sub-ramo do excesso (ALLOC-21).** *Cost:* o rateio ganha dois parâmetros, `R` e o conjunto rateado. *Reason:* em limitada `D' = D > B`, excesso por definição; reutiliza ALLOC-16 a ALLOC-18 e mantém ALLOC-19 como único invariante.
 
 ## Success Metrics
 
 - Leading: todo cenário dos Acceptance Criteria é reproduzido por teste com igualdade exata; em livros aleatórios, processar duas vezes dá resultado idêntico e ALLOC-18, ALLOC-19, ALLOC-22 e ALLOC-23 nunca são violados; em colocação limitada toda não vinculada recebe `q`.
-- Lagging: Offering e ReservationBook aplicam `BookProcessed` usando somente ALLOC-25 e ALLOC-26.
-- Guardrails: ninguém recebe mais do que reservou (ALLOC-18); nada fracionário (ALLOC-22); o contexto não altera o livro nem a definição.
+- Lagging: o Offering consome `BookProcessed` usando somente ALLOC-26, e o status de cada reserva deriva somente de ALLOC-25 (BOOK-17).
+- Guardrails: ninguém recebe mais do que reservou (ALLOC-18); nada fracionário (ALLOC-22); o processamento não altera o pedido nem a definição.
 
 ## Acceptance Criteria
 
@@ -228,12 +228,11 @@ Fontes: [CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolu
 
 ## Dependencies and Risks
 
-As relações compartilhadas e a decisão sobre a leitura da entrada estão no [PRD 0000](0000-platform-overview.md).
+As relações compartilhadas estão no [PRD 0000](0000-platform-overview.md).
 
 | Item | Tipo | Impacto |
 |---|---|---|
 | Offering | Consumidor do desfecho | ALLOC-26 alimenta OFF-31 a OFF-33; a formação não vira estado da oferta (OFF-30). |
-| ReservationBook | Consumidor dos resultados | ALLOC-25 fornece motivos e quantidades para BOOK-17; a reserva precisa ser identificável. |
 | Critério do resto | Desenho | Pode divergir do plano de distribuição de uma oferta real. |
 | Ausência de revisão | Operação | Uma declaração errada no livro pode exigir revogar a oferta inteira. |
 
@@ -251,4 +250,4 @@ A decisão de **processar automaticamente no fechamento e emitir o resultado sem
 - [Instrução CVM 400, revogada](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º; lida em 2026-09-05.
 - [Takeover Code, Rule 31.2](https://code.thetakeoverpanel.org.uk/tp/rules/rule-31/rule-31-2.html) — uso de `unconditional` e `lapse`; referência semântica registrada no commit 436b7c9, página inacessível em 2026-09-12.
 - [Euro Manganese: Completion of A$1.5M Security Purchase Plan](https://www.newsfilecorp.com/release/252189/Completion-of-A1.5M-Security-Purchase-Plan) — comunicado do emissor com uso de scale-back; lido em 2026-09-06.
-- [PRD 0000](0000-platform-overview.md), [PRD 0001](0001-offering-offer-lifecycle.md), [PRD 0002](0002-reservation-book-reservation-lifecycle.md).
+- [PRD 0000](0000-platform-overview.md), [PRD 0001](0001-offering-offer-lifecycle.md), [PRD 0002](0002-book-building-bid-lifecycle.md).

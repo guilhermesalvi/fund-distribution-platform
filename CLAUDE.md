@@ -68,10 +68,10 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 
 - `src/AppHost` — Aspire AppHost (SDK `Aspire.AppHost.Sdk`). Ponto de entrada para rodar a plataforma localmente.
 - `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP, health checks e validação do container. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`. Serviços de API chamam também `AddApiDefaults()` / `UseApiDefaults()`: versionamento, ProblemDetails e OpenAPI.
-- `src/Offering`, `src/ReservationBook`, `src/Allocation` — serviços ASP.NET Core minimal API, um por contexto de domínio.
+- `src/Offering`, `src/BookBuilding` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
-- `docs/prd` — PRDs, um por contexto mais o `0000` de visão geral, escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
+- `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
 - `.claude/rules`, `.claude/skills` — regras por área e skills do Claude Code (Uso com Claude Code).
 
 ### Arquivos no `.slnx`
@@ -96,7 +96,7 @@ dotnet test FundDistributionPlatform.slnx
 
 Valide os dois antes de encerrar qualquer mudança em código.
 
-A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do Allocation: cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
+A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
 ## Convenções de projeto
 
@@ -120,7 +120,7 @@ Princípios extraídos da mentoria de arquitetura de software do Elemar Jr. (202
 - **O glossário do PRD é a fonte dos nomes.** Cada PRD carrega o glossário do seu contexto: conceito, significado e, quando importa, as relações entre conceitos. As relações valem mais que a lista de conceitos. Nome de tipo, estado, evento ou campo no código nasce do glossário; se o código precisa de um conceito que o glossário não tem, o glossário muda primeiro.
 - **Do texto ao modelo em etapas.** Ao extrair modelo de uma conversa, transcrição ou norma: conceitos e significados → relações entre conceitos → instâncias e classes → atributos → restrições. Não salte da transcrição para o modelo de classes; cada etapa é validável com o especialista antes da seguinte.
 - **Operações com nome de negócio.** O modelo é tão anêmico quanto deixa de expressar os motivos de mudança de estado. Nada de `SetX`/`UpdateX`: a operação recebe o nome do que aconteceu no domínio (fechar o livro, revogar a oferta, processar o livro). Setters são privados por padrão. Evento de domínio é o reconhecimento de uma operação que mudou o estado e existe para informar outro contexto; não emita evento que ninguém consome.
-- **Contextos não compartilham persistência.** Cada contexto persiste a sua visão do conceito; integração entre contextos é por evento ou consulta ao dono, nunca por tabela ou modelo compartilhado. O contexto core (Offering) é upstream: mudança incompatível de contrato só é tolerada partindo dele.
+- **Contextos não compartilham persistência.** Cada contexto persiste a sua visão do conceito; integração entre contextos é por evento ou consulta ao dono, nunca por tabela ou modelo compartilhado. O Offering é upstream e o BookBuilding é o contexto core: mudança incompatível de contrato só é tolerada partindo do Offering.
 
 ## Decisões e complexidade
 

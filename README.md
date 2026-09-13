@@ -2,13 +2,12 @@
 
 Modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de fundo fechado a investidor final. Não há liquidação financeira nem integração externa; o investidor não acessa a plataforma, e o operador da corretora age em seu nome. O domínio está descrito nos PRDs de `docs/prd`, a partir da [visão geral](docs/prd/0000-platform-overview.md).
 
-Plataforma composta por três serviços, um por contexto de domínio, e um worker de migração de dados:
+Plataforma composta por dois serviços, um por contexto de domínio, e um worker de migração de dados:
 
 | Projeto | Tipo | Responsabilidade |
 | --- | --- | --- |
 | `Offering` | API | Definição imutável da oferta e sua máquina de estados ([PRD 0001](docs/prd/0001-offering-offer-lifecycle.md)) |
-| `ReservationBook` | API | Reservas contra oferta Aberta; livro congelado no fechamento; status por reserva ([PRD 0002](docs/prd/0002-reservation-book-reservation-lifecycle.md)) |
-| `Allocation` | API | Processamento único do livro fechado: vedação a vinculadas, formação, condicionamento e rateio ([PRD 0003](docs/prd/0003-allocation-book-processing.md)) |
+| `BookBuilding` | API | Reservas contra oferta Aberta, livro congelado no fechamento, processamento único do livro fechado (vedação a vinculadas, formação, condicionamento e rateio) e status por reserva ([PRD 0002](docs/prd/0002-book-building-bid-lifecycle.md), [PRD 0003](docs/prd/0003-book-building-book-processing.md)) |
 | `DataMigration` | Worker | Migração de dados. Não expõe HTTP. |
 
 ## Pré-requisitos
@@ -22,15 +21,14 @@ Plataforma composta por três serviços, um por contexto de domínio, e um worke
 aspire run --apphost src/AppHost/AppHost.csproj
 ```
 
-O comando compila a solução, sobe os quatro projetos e abre o dashboard do Aspire em `https://localhost:17150`. O dashboard mostra logs, traces e métricas de todos os serviços.
+O comando compila a solução, sobe os três projetos e abre o dashboard do Aspire em `https://localhost:17150`. O dashboard mostra logs, traces e métricas de todos os serviços.
 
 Portas dos serviços em desenvolvimento:
 
 | Serviço | URL |
 | --- | --- |
 | Offering | `http://localhost:5084` |
-| ReservationBook | `http://localhost:5129` |
-| Allocation | `http://localhost:5288` |
+| BookBuilding | `http://localhost:5129` |
 
 Cada API expõe, apenas em ambiente `Development`:
 
@@ -50,14 +48,13 @@ Os comandos de build e teste, e o momento de rodá-los, estão em [CLAUDE.md](CL
 │   ├── rules/                        # regras por área: composição do Program.cs, tracing
 │   └── skills/                       # skills do Claude Code (ver Skills)
 ├── docs/
-│   └── prd/                          # PRDs (prd), um por contexto + 0000 overview
+│   └── prd/                          # PRDs (prd): 0000 overview, 0001 Offering, 0002 e 0003 BookBuilding
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
 │   │                                 # versionamento, ProblemDetails, OpenAPI
 │   ├── Offering/                     # API
-│   ├── ReservationBook/              # API
-│   ├── Allocation/                   # API
+│   ├── BookBuilding/                 # API
 │   └── DataMigration/                # Worker
 ├── tests/
 │   ├── UnitTests/                    # xUnit

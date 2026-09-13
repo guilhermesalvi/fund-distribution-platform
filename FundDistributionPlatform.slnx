@@ -38,8 +38,8 @@
   <Folder Name="/docs/prd/">
     <File Path="docs/prd/0000-platform-overview.md" />
     <File Path="docs/prd/0001-offering-offer-lifecycle.md" />
-    <File Path="docs/prd/0002-reservation-book-reservation-lifecycle.md" />
-    <File Path="docs/prd/0003-allocation-book-processing.md" />
+    <File Path="docs/prd/0002-book-building-bid-lifecycle.md" />
+    <File Path="docs/prd/0003-book-building-book-processing.md" />
   </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
@@ -51,11 +51,10 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/Allocation/Allocation.csproj" />
     <Project Path="src/AppHost/AppHost.csproj" />
+    <Project Path="src/BookBuilding/BookBuilding.csproj" />
     <Project Path="src/DataMigration/DataMigration.csproj" />
     <Project Path="src/Offering/Offering.csproj" />
-    <Project Path="src/ReservationBook/ReservationBook.csproj" />
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">

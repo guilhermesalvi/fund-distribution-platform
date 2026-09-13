@@ -17,6 +17,9 @@
     <File Path=".claude/skills/prd/references/workflow.md" />
     <File Path=".claude/skills/prd/references/writing.md" />
   </Folder>
+  <Folder Name="/.claude/skills/prd/scripts/">
+    <File Path=".claude/skills/prd/scripts/check_prd.py" />
+  </Folder>
   <Folder Name="/.claude/skills/sdd/">
     <File Path=".claude/skills/sdd/SKILL.md" />
   </Folder>

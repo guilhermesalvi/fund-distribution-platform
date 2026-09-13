@@ -8,7 +8,7 @@
 
 ### Checar
 
-Leia o PRD gravado e confira cada item da lista abaixo. Corrija todo achado e releia o arquivo inteiro; são no máximo duas rodadas de correção. Se a segunda ainda terminar com achado, apresente o PRD e liste no chat cada achado remanescente com o motivo, sem declarar validação completa. Achado de forma exigido pelo pedido ou comprovado pela convenção fica como está, é informado no chat com a fonte, usando "mantido por pedido" ou "mantido por convenção", e não conta como rodada. Depois da checagem, faça a revisão de cinco itens (workflow.md, Revisão antes de apresentar).
+Execute `python .claude/skills/prd/scripts/check_prd.py` a partir da raiz do repositório: ele cobre os itens 1 a 9 da lista abaixo e imprime um achado por linha. Em seguida leia o PRD gravado para o item 10 e para a renderização dos diagramas, que o script não vê. Corrija todo achado e releia o arquivo inteiro; são no máximo duas rodadas de correção. Se a segunda ainda terminar com achado, apresente o PRD e liste no chat cada achado remanescente com o motivo, sem declarar validação completa. Achado de forma exigido pelo pedido ou comprovado pela convenção fica como está, é informado no chat com a fonte, usando "mantido por pedido" ou "mantido por convenção", e não conta como rodada. Depois da checagem, faça a revisão de cinco itens (workflow.md, Revisão antes de apresentar).
 
 1. **Numeração.** O número do arquivo é único na pasta: liste os `NNNN-*.md` sob `/docs/prd` e confira que nenhum outro usa o mesmo número (conventions.md, Caminho e numeração).
 2. **Header.** Título `#`, tabela de um campo com um dos rótulos aceitos, linha de prefixo na forma fixada e, quando existe PRD 0000, a frase que o aponta (conventions.md, Header).

@@ -247,7 +247,6 @@ A decisão de **processar automaticamente no fechamento e emitir o resultado sem
 
 ## References
 
-- Briefing `prd-briefings.md`, Briefing 3, fora do repositório: decisões, requisitos e cenários; consultado em 2026-09-12.
 - [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 49, 56, 65, 73, 74 e 75; lida em 2026-09-05.
 - [Instrução CVM 400, revogada](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/instrucoes/anexos/400/inst400.pdf) — art. 31, § 1º; lida em 2026-09-05.
 - [Takeover Code, Rule 31.2](https://code.thetakeoverpanel.org.uk/tp/rules/rule-31/rule-31-2.html) — uso de `unconditional` e `lapse`; referência semântica registrada no commit 436b7c9, página inacessível em 2026-09-12.

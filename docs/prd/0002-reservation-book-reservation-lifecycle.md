@@ -202,7 +202,7 @@ O [PRD 0000](0000-platform-overview.md) apresenta as relações entre contextos.
 
 ## Open Questions
 
-- **[ASSUMPTION] O pedido do cliente no livro interno da corretora pode ser ajustado até o fechamento, e a aceitação formal enviada ao coordenador é o consolidado; if false, BOOK-10 a BOOK-12 deixam de representar o caso de uso e será necessário distinguir registro de confirmação.** Origem: prd-briefings.md, Briefing 2. Dono: autor; validar em regulamento da corretora ou contrato de distribuição que permita essa operação e delimite quando ocorre a aceitação irrevogável.
+- **[ASSUMPTION] O pedido do cliente no livro interno da corretora pode ser ajustado até o fechamento, e a aceitação formal enviada ao coordenador é o consolidado; if false, BOOK-10 a BOOK-12 deixam de representar o caso de uso e será necessário distinguir registro de confirmação.** Dono: autor; validar em regulamento da corretora ou contrato de distribuição que permita essa operação e delimite quando ocorre a aceitação irrevogável.
 
 ## Weakest Point
 
@@ -214,7 +214,6 @@ A decisão de **permitir alteração e cancelamento até o fechamento, tratando 
 
 ## References
 
-- Briefing `prd-briefings.md`, Briefing 2, fora do repositório: decisões, requisitos e cenários; consultado em 2026-09-12.
 - [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf) — arts. 2º, X, XI e XVI, 56, 64, 65, 66, 69 e 75; lida em 2026-09-05.
 - [Resolução CVM 30](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/001/resol030consolid.pdf) — arts. 11 e 12; lida em 2026-09-05.
 - [PRD 0000](0000-platform-overview.md), [PRD 0001](0001-offering-offer-lifecycle.md), [PRD 0003](0003-allocation-book-processing.md).

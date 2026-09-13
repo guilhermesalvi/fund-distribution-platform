@@ -40,9 +40,9 @@ Layout dentro do serviço:
 
 ```
 src/<Serviço>/<Feature>/<Feature>Extensions.cs
-src/<Serviço>/<Feature>/Endpoints/<Ação>/<Ação>Endpoint.cs
-src/<Serviço>/<Feature>/Endpoints/<Ação>/<Ação>Request.cs      (quando houver corpo)
-src/<Serviço>/<Feature>/Endpoints/<Ação>/<Ação>Response.cs     (quando o retorno não for o agregado)
+src/<Serviço>/<Feature>/<Ação>/<Ação>Endpoint.cs
+src/<Serviço>/<Feature>/<Ação>/<Ação>Request.cs      (quando houver corpo)
+src/<Serviço>/<Feature>/<Ação>/<Ação>Response.cs     (quando o retorno não for o agregado)
 ```
 
 `<Feature>Extensions` é a única porta de entrada do módulo e expõe dois métodos:

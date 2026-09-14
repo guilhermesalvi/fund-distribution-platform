@@ -1,28 +1,30 @@
 ---
 name: sdd
-description: 'Especifica, projeta, planeja, implementa e verifica mudanças com requisitos técnicos rastreáveis (Specify, Design, Tasks, Execute, Verify). Use para "tech spec", "spec" de comportamento do sistema, "design da solução", "quebre em tasks", "implemente a spec", "verifique a implementação", "retome" uma mudança, "documente a spec do módulo X" e ao implementar feature não trivial mesmo sem citar spec; não para PRD, discovery, ADR isolada, code review sem spec ou refactor mecânico.'
+description: Especifica, planeja, implementa e verifica mudanças de comportamento técnico com requisitos rastreáveis. Use para specs e execução de capacidades com regras ou contratos; exclui PRDs, documentação geral e ajustes mecânicos.
 ---
 
-# Spec-Driven Development
+# Desenvolvimento orientado por especificação
 
-Esta skill transforma requisitos técnicos em uma mudança verificável: Specify define o quê, Design define como, Tasks define a ordem, Execute implementa uma task por vez e Verify prova a conformidade à spec e ao design. O PRD em `/docs/prd`, com IDs `<PREFIXO>-nn`, fornece as regras de negócio; este método começa onde ele termina.
+A especificação define o comportamento técnico; o design escolhe a solução; as tarefas organizam a execução; a verificação reúne evidências. Regras de negócio pertencem ao PRD.
 
-Use para especificação técnica ou de comportamento do sistema, design da solução, decomposição em tasks, implementação não trivial, verificação e retomada de uma mudança, incluindo “documente a spec do módulo X”. PRD/discovery, ADR isolada, code review sem spec e refactor mecânico ficam fora deste fluxo. Uma decisão de projeto identificada no Design usa a entrada ADR.
+## Escopo
 
-| Pedido | Entrada | Ler | Resultado desta entrada |
-|---|---|---|---|
-| Definir comportamento técnico; tech spec; documentar módulo existente | Specify | [specify.md](references/specify.md) | Spec |
-| Projetar solução; design da solução | Design | [design.md](references/design.md) | Design |
-| Decompor trabalho; quebrar em tasks | Tasks | [tasks.md](references/tasks.md) | Tasks |
-| Implementar; implementar a spec; feature não trivial | Execute | [execute.md](references/execute.md) | Tasks executadas e Verify ao fim da implementação autorizada |
-| Verificar a implementação | Verify | [verify.md](references/verify.md) | Relatório de evidência |
-| Retomar mudança | Roteamento de retomada | [execute.md — Retomar](references/execute.md#retomar) | Próxima entrada válida, determinada pelos pré-requisitos |
-| Registrar decisão de projeto descoberta no Design | ADR | [adr.md](references/adr.md) | ADR |
+Siga o pedido, o `CLAUDE.md` e as regras aplicáveis de `.claude/rules`. As autorizações e decisões delegadas na sessão prevalecem sobre os padrões desta skill. Caminhos iniciados por `/docs/` são relativos à raiz do repositório.
 
-Execute somente a entrada solicitada e os pré-requisitos necessários para ela. Um pedido de spec, design ou tasks não autoriza implementar código. Numa implementação autorizada, Specify precede Execute; terminar a implementação exige Verify. A aprovação exigida entre entradas continua valendo.
+Pedido de análise, spec, design ou plano termina na entrega solicitada. Implementação autorizada inclui correções e verificação dentro do escopo, sem aprovação ou commit obrigatório entre etapas. Consulte [workflow.md](references/workflow.md) para decisões, requisitos de entrada e limites.
 
-Antes de atuar, leia os pré-requisitos e autorizações pertinentes em [workflow.md](references/workflow.md). Autorização de commit é permissão da operação; cada artefato ainda exige aprovação de conteúdo (workflow.md, Aprovação e autorizações). Regras de negócio são resolvidas no PRD; dúvidas seguem (workflow.md, Tags e dúvidas). Teste ou validação não executados nunca contam como aprovação.
+## Escolha da etapa
 
-Para entrada nova, leia sua referência inteira e as dependências normativas. Para correção localizada, leia o trecho afetado, seus pré-requisitos, exceções e citadores; amplie a leitura quando surgir dependência. Retomada também lê o plano e os requisitos da mudança. Layout e comentários de máquina estão em (specify.md, Layout); o contrato de execução está em (execute.md, Ciclo por task) e (execute.md, Segurança).
+| Pedido | Leia | Entrega |
+|---|---|---|
+| Definir comportamento técnico ou documentar módulo existente | [specify.md](references/specify.md) | `spec.md` |
+| Projetar a solução | [design.md](references/design.md) | `design.md` |
+| Decompor uma mudança técnica | [tasks.md](references/tasks.md) | `tasks.md` |
+| Implementar uma capacidade ou spec | [execute.md](references/execute.md) | Alterações verificadas |
+| Verificar implementação contra spec | [verify.md](references/verify.md) | Evidências e pendências |
+| Retomar uma mudança SDD | [execute.md](references/execute.md), seção Retomada | Continuidade do escopo autorizado |
+| Registrar decisão de projeto identificada no design | [adr.md](references/adr.md) | ADR |
 
-Redação: [Convenções de escrita](references/prose.md#convenções-de-escrita), uma vez por versão do arquivo na sessão de escrita. Leia exemplos somente do artefato produzido ou para esclarecer um defeito editorial observado. Antes de apresentar artefato completo ou revisado, cumpra [validation.md](references/validation.md): leitura seletiva não dispensa checagem de forma nem revisão. Checagem de forma limpa comprova forma; a revisão confere conteúdo e não grava estado de validação no artefato.
+“Continuar” ou “planejar” isoladamente não ativa SDD: determine a natureza do trabalho pelo contexto. Revisão geral de código, ADR avulso e correção editorial não exigem abrir este fluxo.
+
+Leia a referência da etapa atual e apenas as dependências que a tarefa usar. Formato e rastreabilidade são conferidos em [validation.md](references/validation.md); redação em [prose.md](references/prose.md). Exemplos são didáticos e não definem contratos reais do repositório.

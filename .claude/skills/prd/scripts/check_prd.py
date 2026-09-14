@@ -1,15 +1,13 @@
-"""Form check for a folder of PRDs (workflow.md, Checar, items 1 to 9).
+"""Verifica a forma dos PRDs conforme references/workflow.md.
 
-Usage: python check_prd.py [<prd folder>]   (default: docs/prd)
+Uso: python check_prd.py [<pasta de PRDs>] (padrão: docs/prd).
+Retorna um achado por linha e saída 1 quando há achados. Não verifica
+significado de negócio, síntese das fontes nem renderização de Mermaid.
 
-Prints one line per finding and exits 1 when there is any. Item 10 (literal
-copies from discovery material) and the visual rendering of Mermaid blocks are
-not covered here and remain a manual read.
-
-The structure it reads is fixed in English (conventions.md, Idioma): headings,
-header labels, the prefix line, tags and form labels. Prose is not read, so it
-can be in any language. Requirement prefixes are the ones each PRD declares in
-its `Requirement prefix:` line; nothing about the repository is hard-coded.
+Títulos, campos, tags e rótulos lidos pelo script são contratos em inglês.
+A prosa pode estar em qualquer idioma. Os prefixos vêm de cada documento.
+Diagnósticos de linha de comando permanecem em inglês para compatibilidade;
+comentários e documentação do script são em português.
 """
 import glob
 import io
@@ -34,7 +32,7 @@ OVERVIEW = "<!-- prd: overview -->\n"
 
 
 def section(text, name):
-    """Return the body of a `## name` section, or "" when absent."""
+    """Retorna o corpo da seção `## name`, ou uma string vazia se ausente."""
     m = re.search(r"^## " + re.escape(name) + r"\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     return m.group(1) if m else ""
 
@@ -45,22 +43,25 @@ def without_mermaid(text):
 
 def check(folder):
     files = sorted(glob.glob(os.path.join(folder, "*.md")))
-    texts = {os.path.basename(f): io.open(f, encoding="utf-8").read() for f in files}
+    texts = {}
+    for file in files:
+        with io.open(file, encoding="utf-8") as stream:
+            texts[os.path.basename(file)] = stream.read()
     everything = "\n".join(texts.values())
     findings = []
 
-    # Prefixes come from the prefix lines; the id patterns derive from them.
+    # Os padrões de IDs derivam dos prefixos declarados nos documentos.
     prefixes = sorted(set(m.group(1) for m in PREFIX_LINE.finditer(everything)))
     prefix_rx = "(?:" + "|".join(prefixes) + ")" if prefixes else "(?!x)x"
     id_rx = prefix_rx + r"-(?:NFR-)?\d\d"
 
-    # 1. Numbering: unique NNNN per folder.
+    # 1. Numeração: NNNN único por pasta.
     numbers = [n[:4] for n in texts]
     for n in set(numbers):
         if numbers.count(n) > 1:
             findings.append(f"numbering: {n} used by more than one file")
 
-    # 4. IDs: defined once, FR with MoSCoW, NFR without, citations resolve.
+    # 4. IDs únicos, FR com MoSCoW, NFR sem prioridade e citações resolvidas.
     defined = {}
     for m in re.finditer(r"\*\*(" + id_rx + r")(?: \((Must|Should|Could|Won't)\))?\*\*", everything):
         defined.setdefault(m.group(1), 0)
@@ -84,7 +85,7 @@ def check(folder):
             if m.group(1) not in prefixes and m.group(1) not in ("FR", "NFR"):
                 findings.append(f"{name}: id with an undeclared prefix: {m.group(0)}")
 
-        # 6. Local links resolve.
+        # 6. Links locais precisam resolver.
         for m in re.finditer(r"\]\(([^)]+)\)", text):
             href = m.group(1).split("#")[0]
             if href.startswith("http"):
@@ -92,7 +93,7 @@ def check(folder):
             if not os.path.exists(os.path.join(folder, href)):
                 findings.append(f"{name}: local link does not resolve: {href}")
 
-        # 3. Sections: closed table, order, mandatory, nothing empty.
+        # 3. Seções permitidas, ordenadas, obrigatórias e preenchidas.
         headings = re.findall(r"^## (.+)$", text, re.M)
         table = SECTIONS_0000 if is_overview else SECTIONS
         positions = []
@@ -107,17 +108,17 @@ def check(folder):
         if positions != sorted(positions):
             findings.append(f"{name}: sections out of table order")
 
-        # 9. Tags and placeholders (Mermaid node labels are not brackets of prose).
+        # 9. Tags e placeholders; rótulos de nós Mermaid não são tags de prosa.
         prose = without_mermaid(text)
         for m in re.finditer(r"\[([^\]]+)\]", prose):
             inner = m.group(1)
             if inner in TAGS or prose[m.end():m.end() + 1] == "(":
-                continue  # tag, or markdown link text
+                continue  # tag ou texto de link Markdown
             findings.append(f"{name}: unexpected bracket [{inner}]")
         if re.search(r"\bTBD\b|\bTODO\b", text):
             findings.append(f"{name}: TBD/TODO placeholder")
 
-        # 8. Diagrams: closed fences, declared type, reserved words as aliases.
+        # 8. Diagramas: delimitadores, tipo e aliases reservados.
         if text.count("```") % 2:
             findings.append(f"{name}: unclosed code fence")
         for m in re.finditer(r"```mermaid\n(.*?)```", text, re.S):
@@ -134,7 +135,7 @@ def check(folder):
                 findings.append(f"{name}: stateDiagram-v2 without the identifier table beside it")
 
         if is_overview:
-            # 7. PRD 0000: marker, number, no requirement definition.
+            # 7. PRD 0000: marcador, número e ausência de requisitos definidos.
             if not name.startswith("0000-"):
                 findings.append(f"{name}: overview marker on a file that is not 0000")
             if re.search(r"\*\*" + id_rx + r"\b", text):
@@ -143,7 +144,7 @@ def check(folder):
                 findings.append(f"{name}: PRD 0000 header table missing or without the Scope label")
             continue
 
-        # 2. Header: title, one-field table, prefix line pointing to 0000.
+        # 2. Cabeçalho: título, campo e linha de prefixo com referência ao 0000.
         if not text.startswith("# "):
             findings.append(f"{name}: first line is not the title")
         if not re.search(r"^\| \*\*(" + "|".join(HEADER_LABELS) + r")\*\* \| .+ \|$", text, re.M):
@@ -166,7 +167,7 @@ def check(folder):
         if "Weakest Point" in headings and headings[-2:] != ["Weakest Point", "References"]:
             findings.append(f"{name}: Weakest Point must be followed only by References")
 
-        # 5. Forms per section.
+        # 5. Formatos específicos de cada seção.
         for line in section(text, "Declared Trade-offs").splitlines():
             if line.startswith("- ") and not ("*Cost:*" in line and "*Reason:*" in line):
                 findings.append(f"{name}: trade-off without Cost/Reason: {line[2:50]}")
@@ -175,7 +176,7 @@ def check(folder):
             findings.append(f"{name}: Success Metrics without a guardrail line")
         for line in section(text, "Regulatory Considerations").splitlines():
             if not line.startswith("- ") or line.startswith("- [GAP]"):
-                continue  # a norm not identified is a [GAP] bullet without id
+                continue  # norma não identificada é um item [GAP] sem ID
             if "→" not in line:
                 findings.append(f"{name}: regulatory line without → id: {line[2:50]}")
                 continue
@@ -201,11 +202,11 @@ def check(folder):
                 if ctx and not re.search(r"^\| " + re.escape(ctx) + r" \|", deps, re.M):
                     findings.append(f"{name}: affected context without a row in Dependencies and Risks: {ctx}")
 
-    # 7. PRD 0000 exists when there are two or more prefixes; each PRD links it (checked above).
+    # 7. Dois ou mais prefixos exigem PRD 0000; os links foram conferidos acima.
     if len(prefixes) >= 2 and not any(n.startswith("0000-") for n in texts):
         findings.append("folder: two or more prefixes without a PRD 0000")
 
-    # 9. Prose paragraph repeated across PRDs.
+    # 9. Parágrafo de prosa repetido entre PRDs.
     seen = {}
     for name, text in texts.items():
         for p in text.split("\n\n"):

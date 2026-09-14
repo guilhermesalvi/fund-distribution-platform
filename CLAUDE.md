@@ -6,19 +6,25 @@ Instruções para o Claude Code trabalhando neste repositório.
 
 Este arquivo é a entrada das convenções do projeto. Todos os caminhos abaixo são relativos à raiz do repositório; execute os comandos de build e validação a partir dela, inclusive quando a tarefa começar em um subdiretório.
 
-As regras por área ficam em `.claude/rules/` e carregam sozinhas quando um arquivo do padrão declarado no frontmatter `paths` de cada uma entra na tarefa; as duas se acumulam quando os padrões coincidem. Ao revisar código sem editá-lo, leia a regra da área antes:
+As regras do código de produção ficam em `.claude/rules/` e carregam sozinhas quando um arquivo do padrão declarado no frontmatter `paths` de cada uma entra na tarefa; as regras se acumulam quando os padrões coincidem. Ao revisar código em `src/` sem editá-lo, leia antes as regras da área:
 
-- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs` e `*Endpoint.cs` em `src/`.
+- [Convenções dos projetos de produção](.claude/rules/production-projects.md): qualquer arquivo em `src/`. Native AOT, versionamento de API e padrão de serviço novo.
+- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em `src/`.
 - [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
 
-As skills do repositório ficam em `.claude/skills/` e aparecem no menu `/`: `/prd` para requisitos de produto, `/sdd` para especificação, design, execução e verificação técnica. O Claude Code também carrega a skill sozinho quando a tarefa se enquadra na descrição dela; pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
+As skills [prd](.claude/skills/prd/SKILL.md) (requisitos de produto) e [sdd](.claude/skills/sdd/SKILL.md) (especificação, design, execução e verificação técnica) são versionadas em `.claude/skills` e aparecem no menu `/` como `/prd` e `/sdd`. O Claude Code também as carrega sozinho quando a descrição corresponde à tarefa. Pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
 
-Preserve a autorização e o escopo dados pelo usuário ao longo da tarefa; as convenções complementam o pedido, sem exigir nova aprovação para trabalho já autorizado.
+Preserve o escopo, as decisões delegadas e as autorizações da sessão. Um pedido de análise ou planejamento termina na entrega solicitada. Em implementação autorizada, decida as opções técnicas, registre custos relevantes e conclua as correções e verificações necessárias; apresentações intermediárias informam progresso. Aprovação de conteúdo e autorização de Git são distintas: commit registra uma versão e não é pré-requisito para usar ou verificar arquivos atuais. Commit, push, deploy e decisões de negócio seguem a autorização da mudança.
+
+Pergunte apenas quando faltar informação indispensável que o contexto não resolve. Se perguntas forem vedadas, registre a lacuna e conclua o trabalho independente, sem inventar uma decisão de negócio. Continue enquanto houver correção fundamentada ou nova evidência; repetir uma tentativa sem mudança nem hipótese não é progresso. Quando houver bloqueio real, informe a ação impedida, sua causa e a decisão ou recurso necessário. Se uma instrução local causar a pausa, confira sua precedência e cite o arquivo e a regra exata.
+
+Origem das skills, decisões da migração e verificação de descoberta: [docs/development/claude-code.md](docs/development/claude-code.md). Ao mudar instruções, regras, skills ou a estrutura da solução, execute `python scripts/check_repository.py`; ao alterar a skill `prd`, execute também `python .claude/skills/prd/scripts/check_prd.py docs/prd`. O Python precisa ser 3.10 ou superior. Depois, confirme a descoberta em uma nova sessão na raiz e em `src/Offering`, conforme o guia.
 
 ## Idioma
 
 - Código, identificadores, nomes de arquivos e diretórios, comentários, logs, mensagens de erro e mensagens de commit: **inglês**.
-- Texto de documentação (`.md`, ADRs, notas): **português** na prosa. Headings, rótulos, tags e campos dos artefatos das skills `prd` e `sdd` são fixos em **inglês**, porque a checagem de forma os lê por igualdade; a regra está na seção Idioma de cada skill.
+- Textos instrucionais das regras em `.claude/rules` e das skills em `.claude/skills`, com suas descrições e referências: **português do Brasil**. Comentários e docstrings dos scripts das skills também usam português; diagnósticos de linha de comando preservam o contrato existente em inglês.
+- Documentação (`.md`, ADRs, notas): **português** na prosa e nos títulos livres. Títulos, rótulos, tags e campos que são contratos de artefatos permanecem em **inglês**, conforme [conventions.md da prd](.claude/skills/prd/references/conventions.md) e [workflow.md da sdd](.claude/skills/sdd/references/workflow.md). Preserve IDs, palavras-chave EARS, código e identificadores técnicos.
 
 ## Convenção de commits
 
@@ -33,7 +39,7 @@ Regras:
 - Máximo de **60 caracteres** na linha inteira, incluindo `<type>: `. O GitHub trunca o título do commit a partir de 72 caracteres; 60 mantém folga sem afrouxar a disciplina.
 - Sem escopo — nada de `feat(api):`.
 - Sem ponto final.
-- Sem corpo (header) e sem rodapé (footer). A mensagem é uma única linha.
+- Sem corpo (body) e sem rodapé (footer). A mensagem é uma única linha.
 - Sem `!` para breaking changes — breaking changes são comunicados na descrição do pull request.
 - `<type>` em minúsculas; `<description>` em inglês, imperativo, minúscula inicial.
 
@@ -71,12 +77,14 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/Offering`, `src/BookBuilding` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
-- `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com a skill `prd` (`.claude/skills/prd/SKILL.md`). Spec, design e tasks de cada capability nascem da skill `sdd` (`.claude/skills/sdd/SKILL.md`) em `docs/specs`.
-- `.claude/rules`, `.claude/skills` — regras por área e skills do Claude Code (Uso com Claude Code).
+- `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com a skill local `prd`. Spec, design e tasks de cada capability nascem da skill local `sdd` em `docs/specs`.
+- `.claude/rules` — regras por área do código de produção, carregadas pelo padrão de arquivo (Uso com Claude Code).
+- `.claude/skills` — skills locais `prd` e `sdd`, com suas referências e o verificador de PRDs.
+- `scripts` — verificações reproduzíveis do repositório.
 
 ### Arquivos no `.slnx`
 
-Todo arquivo versionado entra no `.slnx`, espelhando o layout das pastas em disco. *Princípio:* o `.slnx` é a visão do repositório no Solution Explorer; artefato fora dele é invisível para quem navega pela IDE.
+Todo arquivo versionado aparece no Solution Explorer: arquivos internos a um projeto são exibidos pelo próprio projeto; os demais entram explicitamente no `.slnx`, espelhando o layout das pastas em disco. *Princípio:* o `.slnx` é a visão do repositório no Solution Explorer; artefato fora dele é invisível para quem navega pela IDE.
 
 - Cada diretório vira `<Folder Name="/caminho/completo/">`, com o caminho desde a raiz e barras no início e no fim. Diretório intermediário sem arquivo próprio é declarado vazio (`<Folder Name="/docs/" />`) antes dos filhos.
 - Arquivo não-projeto entra como `<File Path="caminho/relativo/arquivo.md" />` dentro da pasta que corresponde ao seu diretório.
@@ -94,39 +102,35 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
-Valide os dois antes de encerrar qualquer mudança em código.
+Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para scripts, execute as verificações pertinentes ao script; para documentação e instruções, use os validadores e a revisão dos exemplos. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
 
 A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
-## Convenções de projeto
+## Convenções de código
 
 - Propriedades comuns a todos os projetos (`TargetFramework`, `Nullable`, `ImplicitUsings`) ficam em `Directory.Build.props`; os csproj não as repetem.
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
-- Os serviços de API compilam com `PublishAot=true` e `InvariantGlobalization=true`. Evite reflection em runtime: serialização JSON usa `JsonSerializerContext` source-generated, declarado no módulo de feature que possui os tipos, e bibliotecas novas precisam ser compatíveis com AOT e trimming.
-- Versionamento de API via `Asp.Versioning.Http`, lido do segmento de URL, registrado por `AddApiDefaults()` do `ServiceDefaults`. Cada módulo de feature mapeia seu grupo em `NewVersionedApi("<Nome>").MapGroup("/api/v{version:apiVersion}/<recurso>").HasApiVersion(1, 0)`. Todo grupo declara sua versão; não há endpoint sem versão nem versão assumida por default.
-- `Program.cs` é composição pura: cada linha é uma chamada de extensão (`Add*` antes do `Build()`, `Use*`/`Map*` depois). Nenhum tipo, dado, endpoint, lambda, `if` ou `JsonSerializerContext` é declarado nele; o que é comum a todo serviço vive no `ServiceDefaults`.
-- `Asp.Versioning.OpenApi` não entra: depende de `Asp.Versioning.Mvc.ApiExplorer`, que não é compatível com AOT. O documento OpenAPI é o do `Microsoft.AspNetCore.OpenApi` puro.
-- Um serviço de API novo segue o padrão dos existentes: `Microsoft.NET.Sdk.Web`, `CreateSlimBuilder`, `AddServiceDefaults()` + `AddApiDefaults()`, projeto em `src/<Nome>`, registrado no `.slnx` dentro da pasta `/src/` e no AppHost. Um worker novo segue `src/DataMigration`.
+
+Para código de produção, siga as regras de `.claude/rules` (Uso com Claude Code): Native AOT, versionamento, composição, módulos e tracing.
 
 ## Linguagem do domínio
 
-Princípios extraídos da mentoria de arquitetura de software do Elemar Jr. (2026), na parte que se aplica a este repositório. Cada regra vem com o princípio que a justifica; quem conhece o princípio pode julgar quando a regra não cabe.
+Princípios da mentoria de arquitetura de Elemar Jr. (2026) aplicáveis ao projeto. Consulte-os ao definir conceitos, nomes e fronteiras.
 
-- **Conceito antes de termo.** O que se modela é o conceito: seu significado e suas relações com os outros conceitos. O termo é rótulo. Uma decisão de nome começa por fixar o significado; só depois se escolhe a palavra. *Princípio:* semântica pesa mais que sintaxe; a maior parte das discussões de nomenclatura erra por discutir a palavra sem fixar o significado.
-- **Um conceito, uma comunidade semântica por idioma.** Os PRDs falam a língua do mercado brasileiro de ofertas públicas (CVM, coordenadores, administradores); o código fala a língua da comunidade anglófona equivalente (prospectos, Takeover Code, Companies Act). O identificador em inglês não é tradução literal do termo em português: é o termo que aquela comunidade usa para o mesmo conceito, verificado em fonte primária (prospecto, norma, código de conduta), com a fonte citada na decisão. Exemplo: a oferta que não atinge o montante mínimo é `Lapsed`, termo dos prospectos, e não `NotFormed`. *Princípio:* DDD não se importa com o idioma, se importa com o conceito compartilhado; um termo que só faz sentido para quem leu o PRD em português não é linguagem ubíqua.
-- **Sem termo consagrado, espelhe o português e registre.** Quando a comunidade anglófona não tem um termo para o conceito, diga isso explicitamente, use o espelho do termo em português e registre a decisão com a lacuna. Não invente um termo que pareça idiomático mas carregue outro significado naquela comunidade.
-- **Colisão de significado é defeito.** Um termo que, na mesma comunidade, já tem outro sentido (ex.: "Cancelada" para mínimo não atingido, quando a CVM 160 usa cancelamento para ato da CVM por irregularidade) é defeito de nomenclatura, mesmo que o glossário o esclareça. Aponte e proponha o termo que não colide.
-- **Sinônimos e fronteiras.** Quando especialistas usam termos diferentes para o mesmo conceito, escolha um canônico e registre os demais como sinônimos no glossário. Quando usam o mesmo termo para conceitos diferentes, é indício de fronteira entre contextos: não unifique, e cheque se o contexto está bem delimitado. *Princípio:* um bounded context é o esforço de criar uma comunidade semântica; a fronteira aparece onde a linguagem muda.
-- **O glossário do PRD é a fonte dos nomes.** Cada PRD carrega o glossário do seu contexto: conceito, significado e, quando importa, as relações entre conceitos. As relações valem mais que a lista de conceitos. Nome de tipo, estado, evento ou campo no código nasce do glossário; se o código precisa de um conceito que o glossário não tem, o glossário muda primeiro.
-- **Do texto ao modelo em etapas.** Ao extrair modelo de uma conversa, transcrição ou norma: conceitos e significados → relações entre conceitos → instâncias e classes → atributos → restrições. Não salte da transcrição para o modelo de classes; cada etapa é validável com o especialista antes da seguinte.
-- **Operações com nome de negócio.** O modelo é tão anêmico quanto deixa de expressar os motivos de mudança de estado. Nada de `SetX`/`UpdateX`: a operação recebe o nome do que aconteceu no domínio (fechar o livro, revogar a oferta, processar o livro). Setters são privados por padrão. Evento de domínio é o reconhecimento de uma operação que mudou o estado e existe para informar outro contexto; não emita evento que ninguém consome.
-- **Contextos não compartilham persistência.** Cada contexto persiste a sua visão do conceito; integração entre contextos é por evento ou consulta ao dono, nunca por tabela ou modelo compartilhado. O Offering é upstream e o BookBuilding é o contexto core: mudança incompatível de contrato só é tolerada partindo do Offering.
+- **Conceito antes do termo.** Fixe significado e relações antes de escolher o nome: semântica pesa mais que sintaxe.
+- **Comunidade por idioma.** Os PRDs usam a linguagem brasileira de ofertas públicas; o código usa o termo da comunidade anglófona para o mesmo conceito. Verifique nomes novos em fonte primária e cite-a na decisão. Exemplo: `Lapsed` para oferta que não atinge o mínimo. Sem termo consagrado, espelhe o português e registre a lacuna, sem inventar falsa equivalência.
+- **Colisão é defeito.** Um termo com outro significado na mesma comunidade deve ser corrigido, mesmo com glossário explicativo. “Cancelada” para mínimo não atingido conflita com o uso regulatório citado nos PRDs.
+- **Sinônimos e fronteiras.** Dentro de um contexto, escolha um termo canônico e registre sinônimos. Termos iguais com regras distintas podem indicar fronteiras; não unifique contextos sem examinar significado e motivos de mudança.
+- **Glossário como fonte.** Tipos, estados, eventos e campos derivam do glossário do PRD. Se faltar um conceito necessário, atualize o glossário antes do código. Preserve relações, além da lista de nomes.
+- **Do texto ao modelo.** Extraia conceitos e significados, depois relações, instâncias/classes, atributos e restrições. Cada etapa deve ser verificável com as fontes e o especialista, respeitando a autonomia e a política de perguntas da sessão.
+- **Operações de negócio.** Nomeie operações pelo motivo da mudança de estado, como fechar o livro ou revogar a oferta; evite `SetX`/`UpdateX`. Setters são privados por padrão. Evento de domínio reconhece mudança relevante para outro contexto; não publique evento sem consumidor.
+- **Persistência por contexto.** Cada contexto persiste sua visão; integração ocorre por evento ou consulta ao dono, sem tabela ou modelo compartilhado. Offering é upstream e BookBuilding é core. Mudança incompatível de contrato só é tolerada partindo do Offering.
 
 ## Decisões e complexidade
 
-- **Toda decisão tem um lado ruim.** Uma decisão de arquitetura ou de modelo só está pronta quando seu custo está nomeado. Os PRDs registram decisões com *Custo* e *Razão*; mantenha esse formato. Se não há lado ruim identificado, a decisão não foi analisada.
+- **Toda decisão tem um lado ruim.** Uma decisão de arquitetura ou de modelo só está pronta quando seu custo está nomeado. Os PRDs usam os rótulos fixos `*Cost:*` e `*Reason:*`, com conteúdo em português. Se não há lado ruim identificado, a decisão não foi analisada.
 - **Regra tem princípio.** Toda instrução deste arquivo carrega o porquê. Antes de aplicar um padrão (camada, interface, abstração, mediator, repositório) pergunte qual necessidade concreta ele atende neste repositório. Sem necessidade, não entra: complexidade desnecessária é custo, e reduzir acoplamento além do necessário destrói coesão.
-- **Consciência situacional antes de julgar.** Antes de propor mudança em algo existente, leia o PRD, a decisão registrada e o histórico do git. Uma decisão que parece errada em geral tem um contexto que não está à vista. Substitua afirmações por perguntas até o contexto aparecer.
-- **Critérios, não instruções de como.** Ao pedir ou propor um design, explicite os critérios pelos quais a solução será avaliada; ao receber critérios, critique-os e aponte o que falta antes de propor. Em decisão de design, apresente mais de uma opção com os trade-offs e tome partido; uma única solução apresentada como "a resposta" é sinal de análise incompleta.
+- **Consciência situacional antes de julgar.** Para mudar comportamento, fronteira ou decisão existente, consulte o PRD, o ADR e o histórico pertinentes. Em edição localizada, leia o trecho e suas dependências; amplie a leitura se surgir uma restrição. Distinga fatos de hipóteses antes de concluir que uma decisão está errada.
+- **Critérios antes da solução.** Defina e critique os critérios do design antes de avaliar abordagens. Compare alternativas reais pelo mesmo escopo e critérios, escolha uma e registre os custos. Quando só houver uma alternativa viável, explique a restrição; não invente opções.
 - **Determinístico onde puder.** Verificação é build, teste e analisador estático, não leitura de código por IA. Onde há lógica de domínio há teste; getter e setter não se testa. Processo repetível vira script no repositório, não prompt repetido.
 - **Código para humanos.** O código gerado com IA segue as convenções deste arquivo e deve ser mantido sem IA, se preciso. Revise este arquivo quando instruções conflitarem entre si; instrução conflitante degrada o resultado mais que instrução faltando.

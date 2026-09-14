@@ -38,17 +38,22 @@ Cada API expõe, apenas em ambiente `Development`:
 
 ## Build e testes
 
-Os comandos de build e teste, e o momento de rodá-los, estão em [CLAUDE.md](CLAUDE.md), seção Build e testes.
+```bash
+dotnet build FundDistributionPlatform.slnx
+dotnet test FundDistributionPlatform.slnx
+```
 
 ## Estrutura do repositório
 
 ```text
 .
 ├── .claude/
-│   ├── rules/                        # regras por área: composição do Program.cs, tracing
-│   └── skills/                       # skills do Claude Code (ver Skills)
+│   ├── rules/                        # regras do código de produção: projetos, composição e tracing
+│   └── skills/                       # skills locais prd e sdd, com referências e validação
 ├── docs/
+│   ├── development/                  # uso do Claude Code e origem das skills
 │   └── prd/                          # PRDs (prd): 0000 overview, 0001 Offering, 0002 e 0003 BookBuilding
+├── scripts/                         # verificação da estrutura e das instruções
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
@@ -69,39 +74,4 @@ Os serviços de API compilam com Native AOT (`PublishAot=true`) e globalização
 
 ## Convenções
 
-As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). Regras específicas por área (composição do `Program.cs`, módulos de feature, tracing) estão em [.claude/rules](.claude/rules) e carregam sozinhas quando um arquivo do padrão delas entra na tarefa.
-
-## Desenvolvimento com Claude Code
-
-Abra a pasta do repositório no aplicativo Claude Code ou inicie o [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) na raiz. O projeto usa `CLAUDE.md` para instruções, `.claude/rules/` para as regras por área e `.claude/skills/` para as duas skills locais; nada precisa ser copiado para a configuração pessoal. Em uma sessão nova, `/prd` e `/sdd` aparecem no menu `/`, e o Claude Code também aciona a skill sozinho quando o pedido se enquadra na descrição dela. Consulte a documentação oficial de [CLAUDE.md](https://docs.claude.com/en/docs/claude-code/memory) e [skills](https://docs.claude.com/en/docs/claude-code/skills).
-
-Exemplos de pedidos na conversa:
-
-```text
-/prd escreva os requisitos de produto para a capability descrita abaixo: ...
-/sdd especifique tecnicamente a capability descrita abaixo: ...
-```
-
-Modelo, autenticação e preferências pessoais ficam na instalação do Claude Code e em `.claude/settings.local.json`, que não é versionado.
-
-Depois de mudar instruções ou skills, valide em sessões novas na raiz e em `src/Offering`: peça as convenções ativas e as regras aplicáveis a `Program.cs`, confirme as duas skills no menu `/` e experimente os pedidos acima com exemplos temporários. Um pedido de documentação geral não deve iniciar `prd` ou `sdd`.
-
-## Skills
-
-Duas skills de agente em `.claude/skills/` cobrem o caminho do problema ao código verificado, cada uma com `SKILL.md` (método) e `references/` (regras por etapa).
-
-| Skill | Quando usar | Produz |
-| --- | --- | --- |
-| [prd](.claude/skills/prd/SKILL.md) | Problema, usuário, capability, requisitos com ID, métricas e trade-offs de uma feature ou iniciativa | `docs/prd/NNNN-<domínio>-<feature>.md` |
-| [sdd](.claude/skills/sdd/SKILL.md) | A partir de um PRD (ou pedido rico): spec técnica (EARS), design, tasks, implementação e verificação com evidência | `docs/specs/<contexto>/<capability>/spec.md` (viva) e `NNNN-<slug>/` (`design.md`, `tasks.md`) quando a mudança pede |
-
-Os `SKILL.md` selecionam a entrada e as referências necessárias. Processo, formato e escrita têm fontes distintas dentro de cada pacote; uma correção localizada lê o trecho afetado, suas dependências e seus citadores. A leitura seletiva mantém as validações exigidas.
-
-| Pacote | Processo e convenções | Escrita e exemplos |
-| --- | --- | --- |
-| PRD | [workflow.md](.claude/skills/prd/references/workflow.md): geração, checagem e revisão; [conventions.md](.claude/skills/prd/references/conventions.md): gravação e idioma | [prose.md](.claude/skills/prd/references/prose.md): política editorial local; [writing.md](.claude/skills/prd/references/writing.md): regras e formas por seção; [example.md](.claude/skills/prd/references/example.md): PRD completo e reescrita didática |
-| SDD | [workflow.md](.claude/skills/sdd/references/workflow.md): pré-requisitos e autorizações; [validation.md](.claude/skills/sdd/references/validation.md): checagem de forma, ciclos e rubricas | [prose.md](.claude/skills/sdd/references/prose.md): política editorial local; cada referência de entrada traz seu perfil de escrita e os exemplos pertinentes |
-
-As políticas editoriais preservam IDs, tags, formatos, modalidades e significado. A revisão usa os ciclos existentes; exemplos parciais em blocos `text` ilustram a redação e não constituem evidência de execução. As referências de escrita dos dois pacotes são independentes.
-
-As skills não trazem scripts: toda checagem de forma é feita lendo o artefato, item a item, conforme a referência de validação de cada pacote. Scripts voltam a entrar quando uma verificação repetível justificar o custo de mantê-los.
+As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). As regras do código de produção (convenções dos projetos, composição do `Program.cs`, módulos de feature e tracing) estão em `.claude/rules`, com escopo por padrão de arquivo. As skills locais PRD e SDD usam português nas instruções e preservam os contratos técnicos em inglês. O [guia do Claude Code](docs/development/claude-code.md) descreve sua descoberta, as decisões de manutenção e a validação.

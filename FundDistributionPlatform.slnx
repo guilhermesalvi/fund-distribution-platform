@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/.claude/" />
   <Folder Name="/.claude/rules/">
+    <File Path=".claude/rules/production-projects.md" />
     <File Path=".claude/rules/program-composition.md" />
     <File Path=".claude/rules/tracing.md" />
   </Folder>
@@ -35,6 +36,9 @@
     <File Path=".claude/skills/sdd/references/workflow.md" />
   </Folder>
   <Folder Name="/docs/" />
+  <Folder Name="/docs/development/">
+    <File Path="docs/development/claude-code.md" />
+  </Folder>
   <Folder Name="/docs/prd/">
     <File Path="docs/prd/0000-platform-overview.md" />
     <File Path="docs/prd/0001-offering-offer-lifecycle.md" />

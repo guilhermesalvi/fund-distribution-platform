@@ -1,22 +1,22 @@
 # Modos condicionais
 
-Este arquivo é carregado só quando o pedido dispara um dos dois modos abaixo. As regras gerais de intake.md e de writing.md continuam valendo nos dois modos; aqui está só o que muda em relação a elas.
+Leia apenas o modo correspondente ao pedido. As regras de [writing.md](writing.md) e [intake.md](intake.md) continuam aplicáveis.
 
-## Modo reverse PRD
+## PRD de produto existente
 
-Use este modo quando o pedido for documentar o que já foi construído: "PRD do módulo X", "documente o que construímos". Como o material inclui código e telas, aplique o capability test a todas as seções do PRD (writing.md, Capability test). Neste modo, e só nele, a contagem de termos de mecanismo da revisão cobre toda seção do PRD (workflow.md, Revisão antes de apresentar).
+Documente comportamento observável, regras aplicadas e decisões que o sistema toma. Código, testes, documentos e telas são fontes de comportamento; a intenção de negócio precisa de evidência própria.
 
-- **O que pedir.** Peça comportamento observável, regras aplicadas e decisões que o sistema toma. Aceite o material em qualquer forma: código, docs, bullets, descrição livre.
-- **De onde derivar a intenção.** Derive a intenção a partir dos resultados, isto é, do que o usuário ou o negócio ganha, e não das operações que o sistema executa.
-- **Intenção inferida.** Toda intenção inferida é `[ASSUMPTION]`: intenção que não está escrita no material recebido (código comentado, doc, ticket, commit) leva a tag, porque intenção engenheirada em reverso é frágil.
-- **Comportamento sem justificativa.** Comportamento sem justificativa de negócio identificável é `[GAP]`. A tag expõe a feature órfã, que pode ser peso morto ou valor escondido.
-- **Intenções concorrentes.** Quando há múltiplas intenções plausíveis para o mesmo comportamento, elas vão para Open Questions (writing.md, Seções). Não fabrique coerência que não existe.
+Aplique o teste de capacidade a todas as seções: descreva os resultados para o negócio e cite mecanismos apenas quando forem parte do produto ou da interface pública.
 
-## Modo plataforma, infra, SDK ou API como produto
+- Intenção inferida recebe `[ASSUMPTION]`, com a origem.
+- Comportamento sem justificativa identificável recebe `[GAP]`.
+- Intenções concorrentes entram em `Open Questions`; não fabrique coerência.
+- Preserve a diferença entre comportamento observado e comportamento desejado.
 
-Dispara quando o produto do PRD é uma plataforma, infra, SDK ou API, isto é, algo consumido por outro time ou sistema.
+## Plataforma, infraestrutura, SDK ou API como produto
 
-- **Usuário-alvo.** O usuário é o time ou o sistema consumidor. JTBD continua funcionando para ele; exemplo: "integrar auth sem gerenciar estado de sessão".
-- **Métricas.** As métricas primárias são operacionais: percentis de latência, taxa de erro, adoção por consumidores, time-to-integration. Resultado de negócio é de segunda ordem, porque pertence aos consumidores.
-- **Acceptance Criteria.** Incluem o contrato: estabilidade da forma da API, SLA, janela de backward compatibility.
-- **Deprecação.** Quando o PRD substitui interface já publicada, deprecação entra em Declared Trade-offs quando alguma interface antiga deixa de ser coberta (há custo), dizendo qual interface e o que não será migrado; e em Non-goals quando nada publicado deixa de funcionar, dizendo o que não será migrado (writing.md, Seções). Nos dois casos, a entrada diz que o cronograma não está comprometido.
+O usuário é o time ou sistema consumidor. Expresse o trabalho que ele precisa realizar, como integrar autenticação sem administrar estado de sessão.
+
+Escolha métricas pertinentes ao consumo: percentis de latência, taxa de erro, adoção e tempo de integração, quando houver fonte. O resultado comercial pode pertencer ao consumidor.
+
+Critérios de aceitação incluem estabilidade do contrato, SLA e compatibilidade quando fizerem parte do pedido. Ao substituir uma interface publicada, registre o custo de descontinuação em `Declared Trade-offs`; exclusões sem quebra entram em `Non-goals`. Cite a interface afetada e a migração prevista. Não transforme uma sugestão de cronograma em compromisso.

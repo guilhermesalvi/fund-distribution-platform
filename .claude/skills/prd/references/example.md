@@ -1,187 +1,89 @@
-# Exemplo de PRD no formato-alvo
+# Exemplo de PRD
 
-Exemplo completo de PRD de um único contexto, sem PRD 0000. Leia a seção correspondente na primeira vez, nesta sessão, em que escrever uma seção da tabela de writing.md; não é template a copiar. As regras que ele aplica estão em writing.md. Os números (lead time, percentuais, prazos) são ilustrativos. As referências normativas foram lidas na data indicada; a Circular BCB aparece marcada como `[ASSUMPTION]` porque o artigo não foi conferido no texto.
+Exemplo didático de um único contexto, sem PRD 0000. Todos os números e comportamentos pertencem ao cenário fictício; não representam decisões deste repositório. Consulte apenas a seção necessária. O bloco pode ser extraído e validado como `0001-customer-onboarding-document-verification.md`.
 
 ````markdown
-# Verificação Assíncrona de Documentos para Onboarding
+# Verificação de documentos no cadastro
 
 | | |
 |---|---|
-| **Originating Context** | Customer Onboarding; affects Account Activation, Compliance Review |
+| **Originating Context** | Customer Onboarding |
 
-Requirement prefix: `ONB`. Contexto único, portanto não há PRD 0000.
+Requirement prefix: `ONB`. Exemplo com um único contexto.
 
 ## Executive Summary
 
-O onboarding de clientes PJ depende de troca de e-mails entre operações e compliance para verificar documentos, com lead time de 5 dias úteis e retrabalho recorrente por submissão fora do padrão. A proposta substitui essa troca por um caso de verificação com estado explícito: a submissão acontece sem depender da agenda de compliance, cada item é validado contra critério definido e a elegibilidade de ativação deriva do estado do caso. A métrica primária é o lead time da submissão completa à ativação em até 1 dia útil.
-
-## Strategic Alignment
-
-Time-to-revenue é o objetivo do trimestre. Concorrentes ativam em D+1 e o gargalo de verificação é a maior parcela do nosso lead time. Digitalizar o fluxo é pré-condição para o self-service de v2.
+A verificação depende de trocas manuais entre operação e análise. A capacidade proposta mantém um caso com documentos, estado e histórico consultáveis, permitindo acompanhar o resultado da revisão. A meta do cenário é concluir 90% das verificações em um dia útil após o envio completo.
 
 ## Context and Problem
 
-A verificação é manual, feita por e-mail e planilha entre operações e compliance. O lead time médio é de 5 dias úteis, e 30% dos casos voltam por documento fora do padrão.
-
-A ativação da conta só ocorre depois da aprovação de compliance, e hoje essa aprovação é uma mensagem de e-mail sem registro estruturado.
+Neste cenário fictício, a operação consulta mensagens para descobrir documentos pendentes. O histórico disperso dificulta identificar quem decidiu e qual critério foi aplicado.
 
 ## Target User / JTBD
 
-- Analista de compliance: validar cada documento contra critério definido, com rastro, sem coordenar por inbox.
-- Operador de onboarding: saber em que pé está cada cliente e o que falta, sem perguntar a compliance.
-- Account Activation (contexto consumidor): saber se o cliente está elegível para ativação sem interpretar e-mails.
+- Operador: enviar os documentos e acompanhar o resultado.
+- Analista: verificar cada documento pelo critério vigente e registrar a decisão.
 
 ## Proposed Solution
 
-Um caso de verificação por cliente, com itens (um por documento exigido) e uma máquina de estados explícita. Os rótulos das transições citam o requisito que governa cada uma.
+Um caso reúne os documentos e permite acompanhar a decisão. As transições são governadas por ONB-01 a ONB-04.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> AwaitingDocuments: convite (ONB-01)
-    AwaitingDocuments --> UnderReview: submissão completa (ONB-03)
-    UnderReview --> Approved: todos os itens aprovados (ONB-07)
-    UnderReview --> PendingResubmission: item rejeitado (ONB-06)
-    PendingResubmission --> UnderReview: reenvio (ONB-08)
-    UnderReview --> Declined: recusa (ONB-09)
-    PendingResubmission --> Declined: prazo esgotado (ONB-10)
+    [*] --> AwaitingDocuments: ONB-01
+    AwaitingDocuments --> UnderReview: ONB-02
+    UnderReview --> Approved: ONB-03
+    UnderReview --> Declined: ONB-04
 ```
 
 | Estado | Identifier | Significado |
 |---|---|---|
-| Aguardando documentos | `AwaitingDocuments` | Convite ativo; itens exigidos ainda não submetidos por completo |
-| Em análise | `UnderReview` | Todos os itens submetidos; compliance valida |
-| Com pendência | `PendingResubmission` | Pelo menos um item rejeitado; só esses aceitam reenvio |
-| Aprovado | `Approved` | Todos os itens aprovados; elegível para ativação; terminal |
-| Recusado | `Declined` | Recusa de compliance ou prazo esgotado; terminal |
+| Aguardando documentos | `AwaitingDocuments` | Caso iniciado conforme ONB-01 |
+| Em análise | `UnderReview` | Envio completo conforme ONB-02 |
+| Aprovado | `Approved` | Resultado de ONB-03 |
+| Recusado | `Declined` | Resultado de ONB-04 |
 
-Armazenamento de documentos, notificação, filas e desenho de tela são downstream.
+Armazenamento, transporte de mensagens e interface são decisões posteriores.
 
 ## Domain Glossary
 
 | Termo | Definição |
 |---|---|
-| Caso de verificação | Conjunto de itens exigidos de um cliente e o estado resultante. Um por cliente por onboarding. |
-| Item | Um documento exigido pelo checklist, com estado próprio: pendente, aprovado, rejeitado. |
-| Checklist | Lista de itens exigidos por tipo de cliente. Definida por compliance (ONB-05). |
-| Submissão completa | Instante em que todo item do checklist tem documento anexado (ONB-03). |
-| Elegibilidade de ativação | Propriedade derivada do estado do caso (ONB-11); não é decisão do operador. |
+| Caso | Conjunto de documentos e resultado de uma verificação |
+| Critério | Condição de análise definida para cada documento do caso |
 
 ## Functional Requirements
 
-Cada requisito é uma condição verificável.
-
-### Submissão
-
-- **ONB-01 (Must)** Todo caso nasce em Aguardando documentos a partir de um convite ativo; não há criação em outro estado.
-- **ONB-02 (Must)** Na v1 o operador de onboarding submete os documentos em nome do cliente, a qualquer momento enquanto o convite está ativo, independentemente da disponibilidade de compliance.
-- **ONB-03 (Must)** O caso passa a Em análise no instante em que todo item do checklist tem documento anexado.
-- **ONB-04 (Must)** O sistema rejeita no ato o item cujo formato ou tamanho não atende ao checklist e informa o critério violado.
-
-### Validação
-
-- **ONB-05 (Must)** O checklist por tipo de cliente é definido por compliance e versionado; o caso usa a versão vigente no convite.
-- **ONB-06 (Must)** Rejeição de item exige motivo entre os critérios do checklist e leva o caso a Com pendência.
-- **ONB-07 (Must)** O caso passa a Aprovado quando todo item está aprovado; Aprovado é terminal.
-- **ONB-08 (Must)** Em Com pendência, só itens rejeitados aceitam reenvio; o reenvio leva o caso a Em análise.
-- **ONB-09 (Must)** Compliance pode recusar o caso em Em análise com motivo registrado; Recusado é terminal.
-- **ONB-10 (Must)** Caso em Com pendência por mais de 10 dias úteis passa a Recusado com motivo "prazo esgotado".
-
-### Ativação e auditoria
-
-- **ONB-11 (Must)** Elegibilidade de ativação é verdadeira se e somente se o caso está Aprovado.
-- **ONB-12 (Must)** Toda submissão, validação e transição registra autor, instante e motivo, consultável por caso e por cliente.
-
-## Non-functional Requirements
-
-- **ONB-NFR-01** Submissão completa é refletida como Em análise em até 1 minuto.
-- **ONB-NFR-02** Documentos de caso Recusado são retidos por no máximo 30 dias após a recusa, salvo obrigação legal de guarda, que prevalece pelo prazo que ela fixar.
-- **ONB-NFR-03** Dados pessoais não aparecem em rastros de execução; identificadores de caso e de item bastam.
-
-## Regulatory Considerations
-
-Textos lidos em 2026-09-05.
-
-- [ASSUMPTION] Circular BCB 3.978/2020, art. 2º: identificação e qualificação do cliente antes do início do relacionamento → ONB-05, ONB-11. Validar com compliance se o checklist atual cobre a qualificação.
-- LGPD, art. 15, I: o tratamento termina quando a finalidade é alcançada → ONB-NFR-02.
-- LGPD, art. 16, I: conservação permitida para cumprimento de obrigação legal → exceção de ONB-NFR-02.
-- [GAP] Regulação setorial além de KYC e LGPD para o segmento PJ não foi levantada; validar com compliance.
-
-## Non-goals
-
-- Onboarding de outros segmentos (consumidor, enterprise com contrato customizado).
-- Assinatura digital de contrato.
-- Self-service do cliente para atualização contínua de cadastro.
-- Revisão do mérito das regras do checklist.
+- **ONB-01 (Must)** Um caso novo começa em `AwaitingDocuments`.
+- **ONB-02 (Must)** O caso passa para `UnderReview` quando todos os documentos exigidos foram enviados.
+- **ONB-03 (Must)** Em `UnderReview`, aprovar todos os documentos leva o caso a `Approved`, estado terminal.
+- **ONB-04 (Must)** Em `UnderReview`, o analista pode recusar o caso com um motivo registrado; o resultado é `Declined`, estado terminal.
+- **ONB-05 (Must)** Cada envio e decisão registra autor e instante, consultáveis por caso.
 
 ## Declared Trade-offs
 
-- **v1 sem self-service direto do cliente (ONB-02).** *Cost:* operações continua intermediária no upload; carga humana parcialmente preservada. *Reason:* validar o fluxo internamente antes de expor reduz risco reputacional e regulatório; self-service é v2.
-- **Checklist modelado a partir do processo atual, sem revisitar o mérito.** *Cost:* regra legada de baixo valor persiste no fluxo digital. *Reason:* revisitar mérito cruza a fronteira de compliance e expande escopo; é iniciativa separada depois da baseline digital.
-- **Prazo de pendência fixo em 10 dias úteis.** *Cost:* cliente lento é recusado e precisa de novo convite. *Reason:* caso aberto sem fim inflaria o lead time medido e o estoque de compliance.
+- **Envio intermediado pelo operador.** *Cost:* a operação mantém trabalho manual. *Reason:* o cenário prioriza validar o fluxo interno.
 
 ## Success Metrics
 
-- Leading: 80% dos onboardings iniciados pelo novo fluxo em 30 dias; resposta de compliance em até 4 h após Em análise.
-- Lagging: lead time da submissão completa à ativação em até 1 dia útil em 90% dos casos após 60 dias; zero retrabalho por documento fora do padrão.
-- Guardrails: taxa de rejeição em auditoria pós-onboarding no baseline ou abaixo; tickets de suporte abertos pelo cliente durante o onboarding no baseline ou abaixo; tempo efetivo de análise estável (o ganho vem de eliminar espera, não de acelerar análise).
+- Resultado: 90% dos casos concluídos em um dia útil após o envio completo.
+- Guardrail: a taxa de decisões corrigidas após revisão não supera a linha de base do cenário.
 
 ## Acceptance Criteria
 
-Os cenários assumem checklist com 3 itens e prazo de pendência de 10 dias úteis.
+| Caso | Entrada | Ramo | Resultado |
+|---|---|---|---|
+| Envio incompleto | Dois de três documentos enviados | ONB-02 | `AwaitingDocuments` |
+| Envio completo | Três de três documentos enviados | ONB-02 | `UnderReview` |
+| Aprovação completa | Três documentos aprovados em análise | ONB-03 | `Approved` |
 
-| Caso | Entrada | Intermediários | Ramo | Resultado |
-|---|---|---|---|---|
-| Submissão completa | 3 itens anexados às 10h00 | todos no padrão | ONB-03 | Em análise até 10h01 (ONB-NFR-01) |
-| Item fora do padrão | item 2 em formato não aceito | critério violado: formato | ONB-04 | item recusado no ato; caso segue Aguardando documentos |
-| Rejeição parcial | itens 1 e 3 aprovados, 2 rejeitado | motivo do checklist | ONB-06 | Com pendência; só o item 2 aceita reenvio (ONB-08) |
-| Reenvio parcial com dois rejeitados | itens 2 e 3 rejeitados, só o 2 reenviado | item 3 continua rejeitado | ONB-08 | caso vai a Em análise com o item 3 ainda rejeitado; o reenvio do item 1 (aprovado) não é aceito |
-| Aprovação | reenvio do item 2 aprovado | 3 de 3 aprovados | ONB-07 | Aprovado; elegibilidade verdadeira (ONB-11) |
-| Prazo esgotado | Com pendência há 11 dias úteis | sem reenvio | ONB-10 | Recusado, motivo "prazo esgotado"; elegibilidade falsa |
-
-- **Given** um cliente Aprovado, **when** um auditor consulta o histórico, **then** vê toda submissão, validação e transição com autor, instante e motivo (ONB-12).
-
-## Dependencies and Risks
-
-| Item | Tipo | Impacto |
-|---|---|---|
-| Definição do checklist por tipo de cliente | Dependência de negócio | Bloqueante: sem checklist não há caso |
-| Account Activation | Acoplamento entre contextos | Lê a elegibilidade; ONB-11 é o contrato, e mudança de estado sem aviso quebra a ativação |
-| Compliance Review | Acoplamento entre contextos | Recebe o caso em pendência; a revisão parte do estado que este contexto publica, e sem ele a fila de compliance não abre |
-| Migração de clientes em onboarding | Risco | Casos em curso precisam de estado inicial equivalente |
-
-## Open Questions
-
-- **[ASSUMPTION] O lead time é causado pela troca manual e pela espera, não pela complexidade da análise; if false, a análise continua custosa depois da digitalização, o ganho é marginal e a iniciativa não se paga.** Dono: operações. Resolve-se medindo o tempo efetivo de análise em 20 casos antes de aprovar.
-- Há regulação setorial além de KYC e LGPD para o segmento PJ que acrescente itens ao checklist (ONB-05)? É a `[GAP]` registrada em Regulatory Considerations. Dono: compliance. Resolve-se com parecer por escrito antes de aprovar.
-
-## Weakest Point
-
-A decisão de **modelar o checklist a partir do processo atual sem revisitar o mérito das regras**, registrada em Declared Trade-offs.
-
-*Vetor de ataque:* digitalizar um processo manual ruim entrega um processo digital ruim, mais rápido. Se uma fração relevante das rejeições atuais vem de regra legada dispensável, "zero retrabalho" não é alcançável sem tocar no mérito, e adiar a revisão para "iniciativa separada" protege a causa-raiz.
-
-*Desafie antes de aprovar:* há evidência de que o checklist atual é majoritariamente valor real e não cerimônia herdada? Sem ela, mova uma triagem mínima de mérito para a v1 ou rebaixe a meta de retrabalho até a baseline digital existir.
-
-## References
-
-- [Circular BCB 3.978/2020](https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Circular&numero=3978), art. 2º. Lida em 2026-09-05.
-- [Lei 13.709/2018 (LGPD)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm), arts. 15 e 16. Lida em 2026-09-05.
+- **Given** um caso aprovado, **when** o operador consulta o histórico, **then** vê autor e instante de cada envio e decisão (ONB-05).
 ````
 
-## Exemplo parcial de redação
+## Exemplo de revisão de prosa
 
-O fragmento didático a seguir demonstra estilo e não entra no PRD gerado.
+Antes: “Deverá ser realizada a gravação do autor e do instante de cada envio e decisão.”
 
-```text
-Exemplo didático de reescrita; as duas frases exprimem o mesmo comportamento.
+Depois: “Cada envio e decisão registra autor e instante.”
 
-Antes: Se for realizada a submissão de um item cujo formato ou tamanho não
-atenda ao checklist, deverá ser feita a rejeição no ato e a informação do
-critério que foi violado.
-
-Depois: O sistema rejeita no ato o item cujo formato ou tamanho não atende
-ao checklist e informa o critério violado.
-
-Preservado: condição de rejeição, momento da resposta e informação devolvida.
-A definição normativa do exemplo completo continua sendo ONB-04.
-```
+O fragmento ilustra voz direta. A obrigação completa de ONB-05 inclui a consulta por caso e deve ser preservada ao revisar o requisito inteiro.

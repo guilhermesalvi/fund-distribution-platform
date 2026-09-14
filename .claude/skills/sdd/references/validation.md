@@ -1,145 +1,66 @@
-# Validação da SDD
+# Validação dos artefatos SDD
 
-## Checagem de forma
+Verifique a forma e o conteúdo pertinentes ao artefato entregue. Não há verificador completo de SDD nesta skill; os checks abaixo exigem leitura, salvo os contratos que os scripts do repositório verificarem explicitamente.
 
-Antes de apresentar um artefato, leia o arquivo gravado e confira cada item da lista do seu tipo. Corrija todo achado e releia o arquivo inteiro; são no máximo duas rodadas de correção. Se a segunda ainda terminar com achado, apresente o artefato e liste no chat cada achado remanescente com o motivo, sem declarar validação completa. Achado de forma exigido pelo pedido ou comprovado pela convenção fica como está, é relatado no chat com a origem, usando "mantido por pedido" ou "mantido por convenção" (Forma mantida por pedido ou convenção), e não conta como rodada. Depois da checagem, faça a revisão de conteúdo (Revisão por entrada).
+Corrija problemas concretos dentro do escopo. Repita os checks afetados quando o conteúdo mudar. Continue enquanto houver progresso fundamentado; relate dependências que impeçam a correção. Não use pontuações de clareza nem limite fixo de rodadas.
 
-Artefato apresentado com achado remanescente listado não está aprovado nem abre a próxima entrada sem os pré-requisitos (workflow.md, Aprovação e autorizações). O gate do Execute tem protocolo próprio: execução inicial e até duas tentativas de correção, total de três execuções antes de parar (execute.md, Ciclo por task).
+## Regras comuns
 
-### Numeração
+- Destinos, comentários de máquina e caminhos seguem [specify.md](specify.md).
+- Numeração única por pasta; IDs não são reutilizados.
+- Seções e rótulos respeitam o contrato do artefato, com prosa em português.
+- Links resolvem; tags de incerteza são `[ASSUMPTION]` e `[GAP]`.
+- Exemplos e placeholders instrucionais não entram como fatos no documento entregue.
+- Uma forma exigida pelo pedido ou pela convenção escrita pode prevalecer; cite a origem e relate eventual divergência do verificador.
+- Incerteza explícita é informação. Diferencie-a de qualificadores vagos sem conteúdo.
 
-Antes de criar a pasta de uma mudança ou uma ADR, liste os filhos diretos da pasta, tome o maior `NNNN` e some 1; pasta sem item começa em 0001. O slug é kebab-case ASCII minúsculo. Antes de apresentar qualquer artefato numerado, confira que nenhum número se repete na pasta; a duplicata nasce quando dois branches alocam o mesmo número. Renumere o item cujo branch entra depois: mova-o para o próximo número livre, atualize quem o cita e confira de novo.
+## Spec
 
-### Spec
+Confira comentário, título, linha `Requirement prefix:`, `Context` e `Requirements`, sem duplicações. Cada requisito usa ID único, prefixo declarado, um padrão EARS e resultado observável. A linha `Retired:` explica IDs aposentados e saltos.
 
-- Comentário de máquina na primeira linha não vazia, na forma `<!-- sdd: spec | capability: <domínio>/<capability> [| prd: <path> | prd-rev: git:<hash>] -->` (specify.md, Comentário de máquina).
-- Linha de prefixo logo abaixo do título, na forma `Requirement prefix: \`RSV\`.`.
-- `## Context` e `## Requirements` presentes, sem seção duplicada; toda `##` na lista de Seções (specify.md, Seções), com a seção herdada do PRD como única tolerância.
-- Todo requisito com um `SHALL` por linha, num padrão EARS (WHEN, WHILE, WHERE, IF ou `The <system> SHALL`), na forma `- **PFX-NN** — texto`, sem termo vago.
-- Prefixo dos IDs igual ao declarado; ID único; ID aposentado (linha `Retired:`) não reutilizado; número pulado só quando consta dos aposentados.
-- Prefixo distinto de todo prefixo declarado em PRD e sem as duas primeiras letras em comum com algum deles.
-- Com `prd:`: o PRD existe; `prd-rev` igual a `git hash-object <prd>`; toda citação `X-nn` ou `X-NFR-nn` resolve para uma definição no PRD; `## Traceability` presente, com todo FR em escopo e todo cenário da tabela de Acceptance Criteria que cita FR em escopo, e só IDs EARS que existem na spec; linha só com IDs de PRD que nenhum requisito cita começa com `Design criterion:`.
-- Contexto com 3 a 5 linhas; Requisitos com subtítulos `###` a partir de 8 requisitos e sem eles abaixo disso.
-- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração; todo link Markdown local resolve.
+Com PRD, confira arquivo, `prd-rev` contra seu hash atual e prefixo técnico distinto. IDs citados resolvem; `Traceability` cobre requisitos e cenários em escopo nos dois sentidos. Itens sem EARS têm justificativa `Design criterion:` ou `Outside this capability:`.
 
-### Design
+Revise se o requisito realiza o comportamento de negócio sem redefini-lo, se hipóteses herdadas preservam origem e se alguma decisão de negócio foi inventada. A spec deve permitir derivar testes; “rápido” sem critério não basta.
 
-- Comentário de máquina `<!-- sdd: design | spec: ../spec.md [| scope: ...] -->` cujo `spec:` resolve para arquivo; todo ID em `scope:` existe na spec.
-- Toda `##` na lista de Seções, na ordem dela, sem seção vazia ou reduzida a "Nenhuma.", "None." ou "N/A" (design.md, Seções).
-- Sem `## Approaches`, a última linha de `## Evaluation Criteria` é `No real alternative: <motivo>`; com a seção, essa linha não existe.
-- Todo requisito `IF ... THEN` da spec (no escopo) citado em `## Error Handling`.
-- Seção com mais de dez linhas de corpo só quando o assunto dela aparece em `## Risks and Techniques`; em `## Components`, cada `- **Purpose:**` com uma frase e um propósito.
-- Todo bloco Mermaid lido linha a linha: fence fechado, sintaxe que renderiza, nenhuma palavra reservada como alias.
-- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
+## Design
 
-### Tasks
+Confira comentário, destino da spec e IDs de `scope:`. Títulos e ordem seguem [design.md](design.md).
 
-- Comentário de máquina `<!-- sdd: tasks | spec: ../spec.md [| design: ./design.md] [| scope: ...] -->` cujos destinos resolvem para arquivo.
-- Parágrafo "How this repository tests" antes de `## Gate Commands`, com a contagem-base de testes do gate Build.
-- `## Gate Commands`, `## Execution Plan` e `## Traceability` presentes; toda `##` na lista de Seções (tasks.md, Seções do `tasks.md`).
-- Tabela Gate Commands com linhas só entre `quick`, `full`, `build` e `Mutation`, nenhuma célula de comando vazia; a linha `Mutation` presente quando a tabela Risks and Techniques do design tem risco que obriga mutação (verify.md, Mutation); todo valor de `Gate` usado tem linha.
-- Cada task `### Tn:` ou `### TCn:` com ID único e os campos What, Where, Depends on, Requirement, Interfaces, Done when, Tests e Gate, uma vez cada e preenchidos (tasks.md, Campos).
-- `Done when` com o comando do gate da task entre crases, copiado da tabela, e ao menos um critério de comportamento; `Tests` e `Gate` na combinação que o campo `Gate` fixa; última task de cada fase com `build`.
-- Todo requisito da spec (no escopo) com task e toda task com ao menos um requisito existente; `## Traceability` coerente com os campos `Requirement` nos dois sentidos.
-- Dependências só para trás na ordem do plano, sem ciclo e sem `T` dependendo de `TC`; toda task citada no plano com corpo e toda task `T` com corpo citada no plano.
-- `What` com um entregável; `Where` com paths reconhecíveis; `Tests` `none` só quando todo path de `Where` é config, schema ou migration.
-- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
+Com `Approaches`, as alternativas são reais e comparáveis. Sem a seção, `Evaluation Criteria` termina com `No real alternative:` e razão.
 
-### ADR
+Cada requisito `IF ... THEN` em escopo aparece em `Error Handling`. Componentes declaram propósito, localização, interfaces, dependências e reuso. Diagramas precisam de sintaxe e representação coerentes.
 
-- Título `# ADR NNNN: título`; linha `Participants:` com nome antes da primeira `##`.
-- `## Context`, `## Decision`, `## Alternatives considered` e `## Consequences` presentes, nessa ordem, sem seção vazia; nenhuma `##` fora dessas e de `## Derived rules`, que quando existe é a última (adr.md, Template).
-- Alternativas consideradas com tabela preenchida: cada linha com alternativa e razão.
-- Consequências com a linha `- Negative: <texto>`.
-- `## Derived rules` com ao menos um bullet, cada um com o path do arquivo onde a regra vive entre crases (adr.md, Conformar e superseder).
-- `Supersedes: NNNN` e `Superseded by: NNNN` apontando para ADR existente na pasta, com a linha recíproca na outra ADR.
-- Tags só `[ASSUMPTION]` e `[GAP]`; nenhum placeholder, hedging ou meta-narração.
+Revise critérios e origem, riscos mitigados ou aceitos, custos, alternativas mais simples e conformidade aos ADRs. A extensão do texto deve servir à decisão; contagem de linhas não mede qualidade.
 
-### Forma mantida por pedido ou convenção
+## Tasks
 
-Pedido válido para manter um achado de forma nomeia literalmente a seção, o campo ou a forma de onde ele sai, por exemplo "inclua uma seção Plano de Rollout no design". Convenção válida é forma comprovada em pelo menos três artefatos commitados do mesmo tipo, ou escrita no CLAUDE.md do repositório. Diga o número de exemplares no chat.
+Confira comentário, spec, design opcional, escopo e descrição das verificações do projeto. As seções `Gate Commands`, `Execution Plan`, `Tasks` e `Traceability` são obrigatórias.
 
-Para reconhecer uma convenção por exemplos, use a versão dos arquivos presente em HEAD. Liste os arquivos com `git ls-tree -r --name-only HEAD -- docs/specs` e filtre os Markdown do tipo em análise: `spec.md`, `design.md` ou `tasks.md`, separadamente. Leia cada exemplo com `git show "HEAD:<caminho>"`. A convenção precisa aparecer em pelo menos três desses exemplos. Um arquivo apenas staged ou untracked não conta. Uma alteração local em arquivo já commitado também não altera a convenção de HEAD. Se HEAD não existir, não há convenção comprovada por exemplos; a convenção escrita no guia do repositório continua sendo uma fonte válida. Para ADR, aplique o diretório e a seleção de (adr.md, Arquivo).
+Na tabela de gates, nomes permitidos: `quick`, `full`, `build` e `Mutation`. Comandos são preenchidos; todo gate usado possui linha. `Mutation` aparece quando adotado pelo plano ou exigido pelo usuário.
 
-### Heurísticas de redação
+Cada `Tn` ou `TCn` tem ID único e os campos What, Where, Depends on, Requirement, Interfaces, Done when, Tests e Gate, preenchidos uma vez. `Done when` contém o comando exato do gate e critérios observáveis. `Tests: none` exige justificativa e outra evidência apropriada.
 
-Escreva de forma declarativa. Hedging, meta-narração, placeholder e tag fora de `[ASSUMPTION]` e `[GAP]` são achados da checagem de forma nos quatro artefatos. A revisão aplica (prose.md, Checklist editorial), sem novo ciclo de estilo.
+Confira ordem das dependências, ausência de ciclos, correspondência com o plano e rastreabilidade nos dois sentidos. A última tarefa de uma fase não exige gate mais amplo por posição. A conclusão da implementação inclui os checks finais do projeto.
 
-Checagem de forma limpa comprova o esqueleto; a revisão confere o conteúdo.
+Revise a coesão da entrega, contratos consumidos e produzidos, testes pertinentes e resultados esperados. Referências vagas a outras tarefas não substituem contratos.
 
-## Revisão por entrada
+## ADR
 
-Faça esta revisão antes de apresentar cada artefato, depois da checagem de forma. Vale para todas as entradas: nenhuma seção existe só para cumprir a forma.
+Confira título `ADR NNNN:`, participantes, seções e ordem de [adr.md](adr.md). `Consequences` inclui `Negative:` com custo concreto. Alternativas correspondem a escolhas avaliadas ou à explicação de inexistência de alternativa viável.
 
-A lista da entrada é fechada. Em Specify, Design, Tasks e ADR:
+Em `Derived rules`, cada regra tem caminho. `Supersedes:` e `Superseded by:` resolvem e são recíprocos.
 
-- percorra o artefato inteiro para cada item e dê ao item a nota `max(0, 100 - 20 × ocorrências)`; uma ocorrência já derruba o item, e a nota existe para registrar quantas;
-- item abaixo de 90 é reescrito; item com 90 ou mais fica como está;
-- reescreveu, dê nota de novo: são no máximo duas passadas por artefato;
-- item que continuar abaixo de 90 na segunda passada não segura o artefato: apresente e diga no chat qual item é, com a nota e o que falta.
+Revise se a decisão estabelece regra de projeto, se as razões sobrevivem ao código e se participantes, benefícios e custos têm fonte.
 
-Em Execute e Verify os itens são binários, atendido ou não: item não atendido se corrige dentro dos tetos do próprio ciclo (execute.md, Ciclo por task; verify.md, Gaps e tasks de correção).
+## Execução e verificação
 
-| Ocorrências | Nota | Ação |
-|---|---|---|
-| 0 | 100 | Item passa |
-| 1 | 80 | Corrigir o item |
-| 2 | 60 | Corrigir o item |
-| 3 | 40 | Corrigir o item |
-| 4 | 20 | Corrigir o item |
-| 5 ou mais | 0 | Corrigir o item |
+Use [execute.md](execute.md) e [verify.md](verify.md) para evidência de comportamento, checks finais, escopo e correções. Confirme que:
 
-### Revalidação após revisão
+- O plano precede a implementação.
+- Testes exercitam critérios reais.
+- A versão examinada está identificada, inclusive quando sem commit.
+- Spec e design têm evidências e ressalvas explícitas.
+- Falhas de ambiente não são confundidas com defeitos.
+- Um check não realizado não é apresentado como aprovado.
 
-A revisão vem depois da checagem de forma. Se alterou o artefato, repita a checagem de forma sobre os trechos alterados; corrija o que achar uma vez e releia para conferir. Se persistir, liste no chat. Essa passada extra não reabre indefinidamente a revisão. O checklist editorial (prose.md, Checklist editorial) concretiza a revisão existente, sem nota, seção ou ciclo adicional.
-
-### Specify
-
-- `SHALL`, ID único e padrão EARS já estão na checagem de forma; aqui: o padrão está correto, o valor de cada requisito é concreto e dá para escrever o teste que o afirma. Se não dá, reescreva o requisito.
-- Cada cenário dos Acceptance Criteria do PRD aparece na Traceability com os IDs EARS que o cobrem: a presença já está na checagem de forma quando o PRD os lista em tabela; aqui, os IDs listados de fato cobrem o cenário.
-- Requisito que vem do PRD cita o ID e não reescreve a regra.
-- Nenhuma regra de negócio foi decidida por premissa nova na spec; premissa herdada do PRD, com origem anotada, não conta.
-- Toda inferência está marcada.
-- Se o Design vai precisar decidir comportamento, a spec ficou incompleta.
-
-### Design
-
-- Profundidade proporcional ao risco: a checagem de forma marca a seção acima de dez linhas de corpo; aqui você decide, para cada seção marcada, se o assunto dela aparece em Risks and Techniques — se não aparece, é inflação e a seção encolhe. Risco sem técnica ou aceite é buraco.
-- Critérios fixados e criticados antes das abordagens; a quarta pergunta (existe forma mais barata ou menos arriscada de fazer o mesmo?) respondida.
-- Nenhum comportamento decidido aqui que devia estar na spec.
-- Interfaces com tipos; a cobertura de todo `IF/THEN` da spec no tratamento de erros já está na checagem de forma.
-- ADRs conformadas ou supersedidas (adr.md, Conformar e superseder).
-
-### Tasks
-
-- Cobertura requisito para task e task para requisito já está na checagem de forma; aqui: nenhuma task cita em `Requirement` um ID que ela não exercita.
-- `Consumes` e `Produces` consistentes entre as tasks e com o design, suficientes sem ler outra task; o executor também lê os requisitos citados e o trecho pertinente do design (tasks.md, Interfaces).
-- `Tests` coerente com a camada da task, com teste co-locado.
-- `Done when` com critério de comportamento que a spec define; a checagem de forma já exige que o comando entre crases seja o do gate da task e que exista critério além dele; o conteúdo do critério é você quem confere.
-
-### ADR
-
-Quatro itens, os que a checagem de forma não alcança porque são conteúdo, não forma:
-
-- A decisão fixa convenção, restrição ou padrão que features futuras seguem; decisão local à feature é ocorrência, e o destino dela é o design (adr.md, Quando a decisão é de projeto).
-- Cada linha de Alternativas consideradas é uma alternativa realmente avaliada, derrubada contra os mesmos critérios que sustentam a decisão; alternativa escrita para encher a tabela é ocorrência.
-- A linha `Negative` nomeia o custo aceito desta decisão; risco genérico, que qualquer decisão teria, é ocorrência.
-- Toda regra de projeto que a decisão cria ou altera está em Regras derivadas; o bullet e o path do arquivo já estão na checagem de forma (adr.md, Conformar e superseder), aqui: cada regra listada é mesmo criada ou alterada por esta decisão, e ADR que não cria regra não tem a seção.
-
-### Execute
-
-- Plano declarado antes do código.
-- Testes da spec falhando antes da implementação.
-- Implementação mínima.
-- Gate verde.
-- Tabela de evidência preenchida.
-- Nenhuma lacuna resolvida em silêncio.
-- Só os arquivos da task tocados.
-
-### Verify
-
-- Cobertura re-derivada com olhos frescos, com o grau de independência declarado no relatório.
-- Toda linha de evidência com `file:line` e assertion.
-- Lacuna de precisão reportada, nunca aprovada.
-- Os dois eixos percorridos: conformidade à spec e aderência ao design.
-- Gaps ordenados por severidade (verify.md, Relatório no chat) e convertidos em tasks de correção `TCn`.
+Aplique [prose.md](prose.md) durante a mesma revisão. Validade de formato não demonstra eficiência do modelo.

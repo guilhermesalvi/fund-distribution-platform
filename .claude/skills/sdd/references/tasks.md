@@ -1,188 +1,110 @@
-# Tasks
+# Planejamento das tarefas
 
-**Objetivo:** decompor o design em tasks atômicas, com dependências claras, teste co-locado e rastreabilidade até o requisito. O resultado é um plano que um executor sem contexto segue sem adivinhar.
+Decomponha a mudança em entregas coesas, verificáveis e rastreáveis. Use spec e design atuais; salve em `<capability>/NNNN-<change-slug>/tasks.md`, conforme [specify.md](specify.md). Sem design separado, explique a estrutura no início.
 
-## Pré-requisito e destino
+## Descoberta de testes
 
-- **Pré-requisito:** o da tabela de workflow.md, Abrir uma mudança.
-- **Destino:** grave o artefato em `<capability>/NNNN-<change-slug>/tasks.md` (specify.md, Layout).
-- **Sem design:** a estrutura da mudança (arquivos, componentes, o que reusa) vai num parágrafo no topo do `tasks.md`.
+Leia as instruções aplicáveis, configuração de projetos e comandos de CI pertinentes. Examine testes representativos das camadas alteradas, ampliando a amostra se houver padrões diferentes. Exemplos orientam estilo; não obrigam toda tarefa a executar os mesmos níveis de teste.
 
-## Como o repositório testa
+Sem testes existentes, escolha uma verificação adequada ao comportamento e ao ambiente dentro da autonomia da tarefa. Pergunte apenas se faltar decisão indispensável. Não invente framework, pacote ou comando.
 
-Antes de escrever qualquer task, descubra como este repositório testa; não presuma o ecossistema.
+Regras de domínio e caminhos de erro exigem evidência de comportamento. Configuração e documentação podem ser verificadas por build, analisador, renderização ou script apropriado. Build não prova regra de negócio.
 
-### Descoberta
+Registre antes de `Gate Commands` como o repositório testa, as fontes dos comandos e a linha de base observada, quando disponível. Uma contagem de testes ausente deve ser declarada como não medida.
 
-1. **Guias:** leia `CLAUDE.md`, `CONTRIBUTING.md` e todo arquivo em `docs/` com `test` no nome, além de thresholds em config de runner ou de CI. Guia encontrado manda: siga-o e cite o arquivo.
-2. **Amostra:** leia 5–10 arquivos de teste existentes e registre camada, nível (unit, integration, e2e), estilo, localização e framework. A amostra é piso, nunca teto: nenhuma task tem menos tipos de teste (unit, integration, e2e) que a amostra na mesma camada; o teto vem da spec.
-3. **Comandos:** extraia os comandos de manifests, config e CI (`*.csproj`/`*.slnx` + `dotnet test`, `package.json`, `Makefile`, `pyproject.toml`, workflows), incluindo lint, format e typecheck, porque o gate Build roda tudo isso.
+## Comandos de verificação
 
-### Sem teste ou sem guia
+O nome do gate é um contrato, com capitalização exata:
 
-- **Repositório sem teste algum:** pergunte ao usuário quais tipos de teste e quais comandos usar.
-- **Sem guia, vale o default forte:**
-  - domínio (aggregate, use case, serviço de domínio): todas as ramificações, 1:1 com os requisitos;
-  - adapter de entrada: happy path, cada edge case e os caminhos de erro;
-  - repositório: consultas principais e erro;
-  - config e schema: só o gate Build.
-- **Build não é evidência de comportamento:** Build prova que compila e integra; evidência de comportamento é assertion contra o resultado que a spec define.
-
-### Registro no `tasks.md`
-
-O resultado da descoberta entra no `tasks.md` de duas formas:
-
-- um parágrafo "How this repository tests", com guias, piso, camadas e o total de testes que o gate Build executa antes da mudança, a contagem-base que o Verify compara; a linha `Base: <hash>` entra nesse parágrafo só quando o Execute registra a base da verificação (execute.md, Antes da primeira task);
-- a tabela **Gate Commands**, com a coluna Quando copiada desta e a coluna Comando vinda do item 3 da Descoberta:
-
-| Gate | Quando | Comando |
-|---|---|---|
-| Quick | `Gate: quick` (Campos) | comando dos testes unitários |
-| Full | `Gate: full` (Campos) | comando de toda a suíte |
-| Build | `Gate: build` (Campos) | build + lint + todos os testes |
-| Mutation | mutação obrigatória ou pedida (verify.md, Mutation) | comando da ferramenta de mutação |
-
-A tabela dá o comando de cada gate; qual gate cada task recebe é a regra do campo `Gate` (Campos), e é lá que ela vive: a coluna Quando aponta para o campo e não repete a regra. O nome do gate na primeira coluna é um de `quick`, `full`, `build` e `Mutation`; qualquer outro nome de linha é achado da checagem de forma (validation.md, Checagem de forma).
-
-A linha `Mutation` é onde o comando de mutação da mudança fica declarado quando há `tasks.md`; sem ela, a mudança não roda mutação (verify.md, Mutation). Ela não é valor do campo `Gate` de task alguma. É opcional, exceto quando a tabela Risks and Techniques do design tem linha de um dos três riscos que obrigam mutação (verify.md, Mutation): aí a ausência é achado da checagem de forma, que lê o design pelo campo `design:` do comentário de máquina.
-
-## Task atômica
-
-Uma task é um entregável coeso, verificável e integrável: um componente, uma função, um endpoint, um handler, junto com o que ele precisa para ser verificado e integrado na mesma task (implementação, teste e o registro indispensável, como DI, rota ou migration). "Implementar autenticação" não é task; "criar `ReservationService.Place` com idempotência, testes e registro no módulo" é. Dois entregáveis independentes na mesma task se dividem em duas: se o campo `What` precisa de "e" para ligar dois entregáveis, são duas tasks; teste e registro do mesmo entregável não contam como segundo entregável.
-
-### Forma de escrita
-
-O título identifica o entregável. O campo Where distingue criação e modificação de arquivos. Interfaces identifica contratos consumidos e produzidos. Done when descreve resultados que podem ser conferidos e coloca o comando do gate em item próprio. Evite expressões que obriguem o executor a adivinhar a referência, como “o acima”, “o anterior” ou “similar à outra task”. Preserve todos os campos e os IDs. As especificações de comportamento e de interface já existentes continuam sendo a fonte dos valores esperados.
-
-### Teste co-locado
-
-- Task que cria ou modifica uma camada com tipo de teste exigido inclui escrever esses testes na mesma task. "Testado na task N" é adiamento.
-- Se o código só é testável depois de outra task (um controller antes do wiring, por exemplo), mova os testes para a task em que ficam executáveis (merge forward) ou absorva a dependência na task atual (merge backward).
-- Nenhuma task produz código não verificado.
-
-### Campos
-
-Toda task tem os campos abaixo:
-
-| Campo | Conteúdo |
+| Gate | Finalidade |
 |---|---|
-| **What** | Uma frase: o entregável exato |
-| **Where** | Paths reais de todos os arquivos a criar ou modificar, distinguindo cada caso em texto |
-| **Depends on** | IDs de task, ou `none`. A dependência aponta só para trás na ordem do Execution Plan (fase anterior ou task anterior da mesma fase); a checagem de forma acusa o contrário |
-| **Requirement** | IDs da spec que a task atende; task de refactor cita os IDs que preserva |
-| **Interfaces** | *Consumes* e *Produces*: nomes, parâmetros, tipos de retorno, erros e contratos externos relevantes definidos na spec/design (Interfaces) |
-| **Done when** | Critérios binários ligados a IDs: ao menos um de comportamento, com preparação, ação e resultado da spec quando exigir valores concretos; o comando do gate fica em item separado, entre crases e copiado caractere a caractere da linha que o campo `Gate` aponta na tabela de Gate Commands; a checagem de forma acusa o comando de outro gate, o item sem comando algum e o texto entre crases que não começa por um executável declarado naquela tabela |
-| **Tests** | `unit`, `integration`, `e2e` (um ou mais, em lista) ou `none` sozinho; os testes descritos na task são escritos e executados nela |
-| **Gate** | `quick`, `full` ou `build`, pelo valor de `Tests`, na ordem: a última task de cada fase exige `build`, seja qual for o `Tests`; `none` exige `build`; lista que tem `integration` ou `e2e` exige `full`; `unit` sozinho exige `quick`. Todo valor usado tem linha na tabela de Gate Commands, que dá o comando dele; a checagem de forma acusa toda combinação de `Tests` e `Gate` fora desta regra |
+| quick | Verificação focada no comportamento alterado |
+| full | Suíte abrangente pertinente à integração ou ao risco |
+| build | Build, analisadores e verificações finais exigidos pelo projeto |
+| Mutation | Mutation testing com escopo justificado; não é valor do campo Gate de tarefa |
 
-### Interfaces
+No artefato, use tabela `Gate | When | Command`, com comandos reais e completos. Inclua somente os gates necessários, mas todo `Gate` usado por uma tarefa precisa de linha correspondente.
 
-A task deve definir as interfaces que consome e produz sem depender da leitura de outras tasks. O executor lê também os requisitos que ela cita e o trecho pertinente do design. Esses documentos continuam sendo a fonte do comportamento e das decisões técnicas. Interface ausente nesses documentos não deve ser inventada.
+O campo `Tests` descreve testes escritos ou alterados; `Gate` descreve o comando executado. Escolha o gate pelo risco, pelos critérios de conclusão e pela convenção do projeto. A última tarefa de uma fase não exige repetição automática da suíte inteira. Na conclusão, execute as verificações finais ainda não comprovadas para a versão atual.
 
-### Sem placeholder
+Mutation testing solicitado ou escolhido como mitigação tem comando e escopo explícitos, conforme [verify.md](verify.md).
 
-Nenhum destes entra numa task:
+## Campos e coesão
 
-- "escrever testes para o acima" sem dizer quais testes;
-- "similar à T3": repita o conteúdo, porque o executor pode ler as tasks fora de ordem;
-- tipo ou método que nenhuma task nem o design define.
+Cada tarefa `Tn` inclui implementação, testes pertinentes e registro necessário para integrar a mesma entrega. Separe resultados independentes; mantenha juntas partes que precisam umas das outras para serem verificáveis.
 
-## Fases e dependências
+| Campo fixo | Conteúdo |
+|---|---|
+| What | Entrega concreta |
+| Where | Caminhos reais, distinguindo criação e alteração |
+| Depends on | IDs de tarefas anteriores no plano, ou `none` |
+| Requirement | IDs da spec satisfeitos ou preservados |
+| Interfaces | `Consumes` e `Produces`: contratos, tipos, erros e parâmetros pertinentes |
+| Done when | Critérios observáveis e comando do gate em item separado |
+| Tests | `unit`, `integration`, `e2e`, em lista, ou `none` com justificativa |
+| Gate | `quick`, `full` ou `build` |
 
-- **Fases por coesão e dependência**, não por tamanho: fundação, depois domínio, depois adapters, depois integração. As fases executam em sequência, e as tasks executam em ordem dentro da fase.
+Em `Done when`, copie o comando da linha do gate entre crases, sem substituir por outro comando. Critérios de comportamento citam o requisito e seus valores esperados; alterações sem comportamento têm critério estrutural apropriado.
 
-## Seções do `tasks.md`
+Uma tarefa não delega vagamente seus testes para “depois”. Se depender de integração futura para ser verificável, reorganize a entrega. Interfaces devem ser compreensíveis sem ler outras tarefas; spec e design continuam fontes do contrato.
 
-A lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). O heading é fixo em inglês seja qual for o idioma da prosa (workflow.md, Idioma).
+## Seções e dependências
 
-- **Gate Commands** dá o comando de cada gate (Registro no `tasks.md`).
-- **Execution Plan** lista as fases e a ordem das tasks.
-- **Tasks** tem o corpo de cada task.
-- **Traceability** mapeia cada requisito para as tasks que o atendem; obrigatória, e a checagem de forma confere a coerência com os campos `Requirement`.
-- **Deviations** só é criada no Execute, quando há desvio.
-- **Correction Tasks** recebe as tasks que o Verify gera: IDs `TCn` sob `## Correction Tasks`, fora do Execution Plan.
+Use estes títulos `##`:
 
-Fora da lista, no comentário de máquina: mudança que toca só parte dos requisitos da spec declara `scope:` nele (specify.md, Layout).
+- `Gate Commands`: tabela de comandos.
+- `Execution Plan`: fases coesas e tarefas em ordem de dependência.
+- `Tasks`: corpo das tarefas.
+- `Traceability`: requisitos mapeados às tarefas; correspondência nos dois sentidos.
+- `Deviations`: criada apenas quando houver desvio.
+- `Correction Tasks`: correções `TCn` identificadas na verificação, fora do plano original.
 
-Exemplo didático completo de formato: as dependências indicadas são pressupostas somente neste exemplo. Uma task real substitui os contratos ilustrativos pelos verificados na base e na spec aprovada, e os comandos de gate pelos descobertos no repositório (Descoberta); os comandos abaixo são os de um repositório .NET e não valem em outro. A contagem-base ilustrativa não é evidência de execução.
+Dependências apontam para trás, sem ciclos. Tarefa original não depende de correção posterior; correções podem depender das originais ou de correções anteriores. Todo requisito em escopo tem tarefa, e toda tarefa cita um requisito pertinente.
 
-## Template
+## Exemplo didático
+
+Este fragmento completo de formato usa QTY-01 e QTY-02 de [specify.md](specify.md). Os caminhos e comandos pressupõem o repositório fictício do exemplo; não são evidência de execução.
 
 ```markdown
-<!-- sdd: tasks | spec: ../spec.md | design: ./design.md -->
-# Reserva Parcial — Tasks
+<!-- sdd: tasks | spec: ../spec.md | design: ./design.md | scope: QTY-01, QTY-02 -->
+# Validação de quantidade — tarefas
 
-How this repository tests: `CLAUDE.md` manda xUnit em `tests/UnitTests` e `tests/IntegrationTests`; a amostra usa `[Fact]` + FluentAssertions, um arquivo por classe; domínio 1:1 com requisitos. O gate Build executa 212 testes antes desta mudança.
+O exemplo usa xUnit em `tests/UnitTests`. A contagem inicial não foi medida.
+A conclusão da implementação inclui os checks finais exigidos pelo repositório.
 
 ## Gate Commands
 
-| Gate | Quando | Comando |
+| Gate | When | Command |
 |---|---|---|
-| Quick | `Gate: quick` | `dotnet test tests/UnitTests` |
-| Full | `Gate: full` | `dotnet test FundDistributionPlatform.slnx` |
-| Build | `Gate: build` | `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx` |
+| quick | T1 | `dotnet test tests/UnitTests` |
 
 ## Execution Plan
 
-### Phase 1: Domínio
-T1 → T2
+T1
 
 ## Tasks
 
-### T1: Criar `PartialReservation` value object
-- **What:** value object com a quantidade reservada, validação contra o investimento mínimo (RSV-07) e seus testes unitários
-- **Where:** `src/ReservationBook/Reservations/PartialReservation.cs` — criar; `tests/UnitTests/Reservations/PartialReservationTests.cs` — criar
+### T1: Criar a validação de quantidade
+- **What:** validar quantidade inteira com testes de aceitação e erro.
+- **Where:** criar `src/Examples/QuantityValidator.cs` e `tests/UnitTests/QuantityValidatorTests.cs`.
 - **Depends on:** none
-- **Requirement:** RSV-07, RSV-08
+- **Requirement:** QTY-01, QTY-02
 - **Interfaces:**
-  - Consumes: `Quantity`, `InvestmentLimits`
-  - Produces: `PartialReservation.Create(Quantity amount, InvestmentLimits limits): Result<PartialReservation, ReservationError>`
+  - Consumes: `int quantity`
+  - Produces: `Validate(int quantity): QuantityResult`, que contém o valor aceito ou o erro.
 - **Done when:**
-  - [ ] `Create` rejeita quantidade abaixo do investimento mínimo com `ReservationError.MinInvestmentNotMet` (RSV-07)
-  - [ ] `Create` aceita quantidade dentro dos limites e preserva o valor (RSV-08)
-  - [ ] Gate passa: `dotnet test tests/UnitTests`
+  - [ ] Quantidade 1 retorna 1 (QTY-01).
+  - [ ] Quantidades 0 e -1 retornam `INVALID_QUANTITY` (QTY-02).
+  - [ ] Verificação aprovada: `dotnet test tests/UnitTests`.
 - **Tests:** unit
 - **Gate:** quick
 
-### T2: Integrar a validação de reserva ao caso de uso
-- **What:** integrar a validação de PartialReservation ao caso de uso de reserva e verificar os resultados definidos para investimento mínimo
-- **Where:** `src/ReservationBook/Reservations/ReservationService.cs` — modificar; `tests/UnitTests/Reservations/ReservationServiceTests.cs` — criar
-- **Depends on:** T1
-- **Requirement:** RSV-07, RSV-08
-- **Interfaces:**
-  - Consumes: `PartialReservation.Create(Quantity amount, InvestmentLimits limits): Result<PartialReservation, ReservationError>`
-  - Produces: `ReservationService.Place(PlaceReservation cmd, CancellationToken ct): Task<Result<Reservation, ReservationError>>`
-- **Done when:**
-  - [ ] Com limites de investimento preparados no teste, uma quantidade inferior ao mínimo resulta em ReservationError.MinInvestmentNotMet (RSV-07)
-  - [ ] Com os mesmos limites, uma quantidade válida é aceita e seu valor é preservado na reserva (RSV-08)
-  - [ ] Gate passa: `dotnet build FundDistributionPlatform.slnx && dotnet test FundDistributionPlatform.slnx`
-- **Tests:** unit
-- **Gate:** build
-
 ## Traceability
 
-| Requisito | Tasks |
+| Requirement | Tasks |
 |---|---|
-| RSV-07 | T1, T2 |
-| RSV-08 | T1, T2 |
+| QTY-01 | T1 |
+| QTY-02 | T1 |
 ```
 
-## Antes de apresentar
-
-Faça a checagem de forma (validation.md, Checagem de forma) e a revisão da entrada; depois apresente e espere.
-
-### Exemplo didático parcial de reescrita
-
-Fragmento de escrita; não é um artefato completo nem evidência de uma execução real.
-
-```text
-Antes: Escrever testes para validar corretamente a rejeição e garantir
-que tudo funciona.
-
-Depois: Preparar limites de investimento no teste e chamar Create com
-quantidade inferior ao mínimo. Conferir o resultado
-ReservationError.MinInvestmentNotMet, conforme RSV-07.
-
-Origem do resultado: o contrato usado no template didático de Tasks.
-Na task real, o valor deve vir da spec efetivamente aprovada.
-```
+Revise a consistência com [validation.md](validation.md) e entregue conforme o escopo e a autorização em [workflow.md](workflow.md).

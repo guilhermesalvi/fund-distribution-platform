@@ -5,6 +5,8 @@ paths:
 
 # Traces e spans
 
+Aplica-se a todo arquivo `.cs` em qualquer subdiretório de `src/`, inclusive em revisões sem edição.
+
 A instrumentação automática do `ServiceDefaults` (ASP.NET Core, HttpClient e, quando houver, EF Core/SqlClient) já cobre requisições, chamadas HTTP de saída e banco. O consumo de evento é coberto pelo transporte escolhido no ADR (PRD 0000, Decisões delegadas a ADR), na forma da seção Consumers de evento. Código de produção não repete o que a instrumentação faz.
 
 ## Handlers HTTP
@@ -15,7 +17,7 @@ A instrumentação automática do `ServiceDefaults` (ASP.NET Core, HttpClient e,
 
 ## Consumers de evento
 
-O `<Ação>Consumer` (`program-composition.md`) segue a mesma regra do handler HTTP: o span vem de fora, e a exceção sobe.
+O `<Ação>Consumer` ([program-composition.md](program-composition.md)) segue a mesma regra do handler HTTP: o span vem de fora, e a exceção sobe.
 
 - O span de consumo (`ActivityKind.Consumer`) é aberto pelo transporte, não pelo handler: pela instrumentação do mecanismo escolhido no ADR ou, na falta dela, por um único ponto no `ServiceDefaults` que extrai o contexto de propagação da mensagem e cria o span com os atributos `messaging.*` da semconv. O handler `<Ação>Async` roda dentro desse span e não recebe `ActivitySource`.
 - Handler não faz `try/catch` para registrar exceção nem para decidir retentativa ou dead-letter. A exceção sobe para o pipeline do transporte, que grava a exceção no span e aplica a política de reprocessamento; é o equivalente do `UseExceptionHandler` para mensagens.

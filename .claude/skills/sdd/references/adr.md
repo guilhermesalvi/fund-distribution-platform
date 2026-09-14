@@ -1,91 +1,56 @@
-# ADR
+# Registro de decisão arquitetural
 
-**Objetivo:** registrar uma decisão de projeto com o contexto, as alternativas consideradas e as consequências, para que o porquê sobreviva ao código, ao diagrama e ao turnover.
+Registre o contexto, a escolha, as alternativas e os custos de uma decisão que estabelece uma convenção para futuras mudanças. Decisão local à capacidade pertence ao design.
 
-## Quando a decisão é de projeto
+## Destino e conteúdo
 
-Uma decisão é **de projeto** quando fixa convenção, restrição ou padrão que features futuras devem seguir. Exemplos:
+Use o formato e diretório já estabelecidos no projeto. Na ausência, salve em `docs/adr/NNNN-<slug>.md`, com o próximo número da pasta e slug em inglês kebab-case.
 
-- estilo arquitetural;
-- transporte de eventos;
-- forma de persistência compartilhada;
-- política de versionamento.
+Consulte os ADRs pertinentes e a convenção escrita. Exemplos existentes ajudam a manter consistência, mesmo quando há poucos; não exija uma quantidade mínima para adotar seu formato.
 
-Decisão local à feature não vira ADR; quem fixa o destino dela é o design (design.md, Technical Decisions).
+Registre participantes reais, incluindo quem decidiu e quem foi consultado. Quando desconhecidos, use `[GAP]`; não atribua autoria ou consulta fictícia. A decisão pode ser tomada dentro da autonomia técnica da tarefa, conforme [workflow.md](workflow.md).
 
-Gatilhos explícitos do usuário que pedem uma ADR: "registre essa decisão", "isso é decisão de projeto", "daqui em diante sempre…".
+## Modelo
 
-## O que a ADR guarda
-
-- **O porquê.** A ADR guarda o que código e diagrama não guardam: a razão da decisão.
-- **Alternativas consideradas e consequências.** Sem elas, a IA re-propõe caminhos já descartados e o time re-litiga o que já foi pago.
-- **Participantes.** Decisão de arquitetura raramente é de uma pessoa; o nome de quem decidiu e de quem foi consultado é o que responde "por que fizemos assim?" depois do turnover. É conteúdo da decisão, não campo de autoria do arquivo (specify.md, Versionamento).
-
-### Forma de escrita
-
-No Contexto, indique o problema e as restrições. Na Decisão, declare a escolha em ordem direta. Nas alternativas, explique por que cada opção realmente avaliada foi descartada usando os critérios da decisão. Nas consequências, descreva benefícios e custos concretos. Preserve participantes, referências de substituição e paths das regras derivadas. Não acrescente alternativa fictícia nem custo genérico para completar o formato.
-
-## Arquivo
-
-Grave em `docs/adr/NNNN-<slug>.md`. Obtenha `NNNN` listando `docs/adr` e somando 1 ao maior número (validation.md, Numeração).
-
-Projeto que já tem formato ou diretório de ADR mantém o seu; esta entrada não cria formato paralelo. O formato do projeto é convenção quando aparece em pelo menos três ADRs commitadas ou está escrito no guia do repositório (validation.md, Forma mantida por pedido ou convenção). Os achados de forma que decorrem dela se mantêm e são relatados.
-
-Para reconhecer uma convenção por exemplos, use a versão dos arquivos presente em HEAD. Liste os arquivos com `git ls-tree -r --name-only HEAD -- docs/adr` (ou o diretório efetivamente convencionado) e filtre os Markdown que são ADRs. Leia cada exemplo com `git show "HEAD:<caminho>"`. A convenção precisa aparecer em pelo menos três desses exemplos. Um arquivo apenas staged ou untracked não conta. Uma alteração local em arquivo já commitado também não altera a convenção de HEAD. Se HEAD não existir, não há convenção comprovada por exemplos; a convenção escrita no guia do repositório continua sendo uma fonte válida.
-
-Com uma ou duas ADRs em formato próprio e sem convenção escrita, pergunte qual formato vale antes de gravar; sem resposta, grave no formato desta entrada. Pedido da sessão que nomeia literalmente a seção, o campo ou a forma isenta do mesmo modo, sem contagem (validation.md, Forma mantida por pedido ou convenção).
-
-Template completo com campos substituíveis: preencha-os com a decisão real. Participantes, alternativas e custos desconhecidos não devem ser inventados; um campo instrucional deste template não é um placeholder permitido no artefato entregue.
-
-### Template
+Substitua os campos explicativos pelos fatos da decisão. Os títulos e rótulos técnicos ficam em inglês.
 
 ```markdown
-# ADR 0007: Eventos de domínio saem por outbox transacional
+# ADR 0007: Publicação de eventos por outbox transacional
 
-Participants: [quem decidiu]; [quem foi consultado].
+Participants: [GAP] Participantes ainda não informados.
 
 ## Context
-[Situação e restrições que forçaram a decisão; o que estava em jogo.]
+
+Descreva o problema e as restrições que justificam a decisão.
 
 ## Decision
-[Uma frase: o que faremos.]
+
+Declare a escolha e seu alcance.
 
 ## Alternatives considered
-| Alternativa | Por que rejeitada |
+
+| Alternativa | Motivo de rejeição |
 |---|---|
-| [alternativa avaliada] | [o que a derrubou, contra os mesmos critérios] |
+| Alternativa realmente avaliada | Critério que favoreceu a escolha |
 
 ## Consequences
-- Positive: [o que a decisão compra]
-- Negative: [o custo aceito; ADR sem consequência negativa é decisão não examinada]
+
+- Positive: benefício concreto.
+- Negative: custo aceito.
 
 ## Derived rules
-- [regra que existe por causa desta ADR] — `CLAUDE.md`
+
+- Regra estabelecida pela decisão — `CLAUDE.md` ou `.claude/rules`
 ```
 
-As seções da ADR são as do template, e a lista é fechada: a checagem de forma acusa a seção `##` fora dela (validation.md, Checagem de forma). Os headings são fixos em inglês seja qual for o idioma da prosa (workflow.md, Idioma).
+O título e a escolha do exemplo não indicam adoção pelo projeto. No artefato real, não invente alternativa ou custo para preencher a forma. Se não houver alternativa viável, explique o motivo em `Alternatives considered`, sem tabela artificial.
 
-## Antes de apresentar
+`Context`, `Decision`, `Alternatives considered` e `Consequences` são obrigatórias, nessa ordem. `Derived rules` entra por último apenas quando a decisão criar ou mudar regras; cada item indica o caminho onde a regra vive.
 
-Faça a checagem de forma (validation.md, Checagem de forma); depois percorra a lista fechada da entrada ADR (validation.md, Revisão por entrada) e apresente.
+## Conformidade e substituição
 
-## Conformar e superseder
+Um ADR ativo é restrição para o design pertinente. Se conflitar com a solução escolhida, siga-o ou registre sua substituição dentro da autorização disponível.
 
-- **Ler antes de projetar.** Todo Design lê as ADRs ativas antes de projetar; decisão ativa é restrição. Quando o melhor para a feature conflita com uma ADR ativa, a saída é conformar ou superseder, nunca ignorar.
-- **Como superseder.** Crie uma ADR nova com a linha `Supersedes: NNNN` abaixo do título. Na ADR antiga, adicione `Superseded by: NNNN` no mesmo lugar (abaixo do título) e não altere mais nada nela. Nunca apague uma ADR.
-- **Regra derivada cita a ADR.** Regra de projeto que a mudança cria ou altera (em CLAUDE.md ou .claude/rules) cita a ADR ou o princípio que a justifica. Regra sem porquê é seguida cegamente ou ignorada.
-- **Regra derivada tem path.** Cada regra da seção `## Derived rules` é um bullet e traz, entre crases, o path do arquivo onde a regra vive — `CLAUDE.md`, `.claude/rules/tracing.md`. Regra sem path não é localizável e não é seguida; a checagem de forma acusa a seção sem bullet e o bullet sem path. A seção existe só quando a decisão cria ou altera regra.
+Para substituir, crie outro ADR com `Supersedes: NNNN` abaixo do título. No anterior, acrescente `Superseded by: NNNN` no mesmo local e preserve o restante. As referências são recíprocas; não apague o histórico.
 
-### Exemplo didático parcial de reescrita
-
-Fragmento de escrita; não é um artefato completo nem evidência de uma execução real.
-
-```text
-Antes: Foi tomada a decisão de que a publicação dos eventos de domínio
-será realizada por meio de outbox transacional.
-
-Depois: Os eventos de domínio serão publicados por outbox transacional.
-
-Preservado: a escolha demonstrada no título do template existente.
-O par não afirma que essa ADR foi adotada pelo projeto.
-```
+Regras derivadas em `CLAUDE.md` ou em `.claude/rules` citam o ADR ou princípio que as justifica. Revise conforme [validation.md](validation.md).

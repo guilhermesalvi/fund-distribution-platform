@@ -35,6 +35,10 @@
     <File Path=".claude/skills/sdd/references/verify.md" />
     <File Path=".claude/skills/sdd/references/workflow.md" />
   </Folder>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/ci.yml" />
+  </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/development/">
     <File Path="docs/development/claude-code.md" />
@@ -56,6 +60,7 @@
     <File Path="CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">

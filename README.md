@@ -12,7 +12,7 @@ Plataforma composta por dois serviços, um por contexto de domínio, e um worker
 
 ## Pré-requisitos
 
-- .NET SDK 10 (desenvolvido com 10.0.400)
+- .NET SDK 10.0.400 ou feature band mais recente do .NET 10, conforme `global.json` (`rollForward: latestFeature`)
 - Aspire CLI 13.5 (`aspire --version`)
 
 ## Como rodar
@@ -43,6 +43,8 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
+A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-latest` em push e pull request na `main`, com o SDK do `global.json`.
+
 ## Estrutura do repositório
 
 ```text
@@ -50,6 +52,7 @@ dotnet test FundDistributionPlatform.slnx
 ├── .claude/
 │   ├── rules/                        # regras do código de produção: projetos, composição e tracing
 │   └── skills/                       # skills locais prd e sdd, com referências e validação
+├── .github/workflows/                # CI: build e testes
 ├── docs/
 │   ├── development/                  # uso do Claude Code e origem das skills
 │   └── prd/                          # PRDs (prd): 0000 overview, 0001 Offering, 0002 e 0003 BookBuilding
@@ -67,6 +70,7 @@ dotnet test FundDistributionPlatform.slnx
 ├── CLAUDE.md                         # entrada das instruções do Claude Code e convenções do repositório
 ├── Directory.Build.props             # propriedades comuns a todos os projetos
 ├── Directory.Packages.props          # versões de pacote (Central Package Management)
+├── global.json                       # versão do SDK .NET
 └── FundDistributionPlatform.slnx
 ```
 

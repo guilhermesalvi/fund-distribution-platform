@@ -102,7 +102,7 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
-Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para scripts, execute as verificações pertinentes ao script; para documentação e instruções, use os validadores e a revisão dos exemplos. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
+A CI em `.github/workflows/ci.yml` executa os mesmos comandos em push e pull request na `main`, com o SDK fixado em `global.json`; um comando novo na CI entra também aqui e no README. Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para scripts, execute as verificações pertinentes ao script; para documentação e instruções, use os validadores e a revisão dos exemplos. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
 
 A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 

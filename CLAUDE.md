@@ -103,12 +103,13 @@ dotnet test FundDistributionPlatform.slnx
 
 A CI em `.github/workflows/ci.yml` executa os mesmos comandos em push e pull request na `main`, com o SDK fixado em `global.json`, e publica as APIs com Native AOT (`dotnet publish -c Release -r linux-x64`), a única verificação que o build não cobre; um comando novo na CI entra também aqui e no README. Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para documentação e instruções, use a revisão dos exemplos e a conferência do `.slnx`; não há validador de estrutura nem de formato de documentos, por decisão registrada no guia. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
 
-A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
+A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste nomeado pelo caso da tabela, traduzido para inglês no formato da convenção de nomes (Convenções de código), com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
 ## Convenções de código
 
 - Propriedades comuns a todos os projetos (`TargetFramework`, `Nullable`, `ImplicitUsings`) ficam em `Directory.Build.props`; os csproj não as repetem.
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
+- Nome de teste em snake_case, em inglês, descrevendo o comportamento verificado no formato `Sujeito_condição_resultado`, como `Failing_operation_records_error_and_exception_then_rethrows`. Sem prefixo `Test`, sem `Should` e sem `Given/When/Then`: o nome é a especificação legível na saída do runner, e o formato fixo evita que cada arquivo invente o seu.
 
 Para código de produção, siga as regras de `.claude/rules` (Uso com Claude Code): Native AOT, versionamento, composição, módulos e tracing.
 

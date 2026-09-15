@@ -109,7 +109,7 @@ A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do pro
 
 - Propriedades comuns a todos os projetos (`TargetFramework`, `Nullable`, `ImplicitUsings`) ficam em `Directory.Build.props`; os csproj não as repetem.
 - Versões de pacote são centralizadas em `Directory.Packages.props` (Central Package Management). `PackageReference` nos csproj **não leva `Version`**; pacote novo entra como `PackageVersion` no props e como `PackageReference` sem versão no csproj.
-- Nome de teste em snake_case, em inglês, descrevendo o comportamento verificado no formato `Sujeito_condição_resultado`, como `Failing_operation_records_error_and_exception_then_rethrows`. Sem prefixo `Test`, sem `Should` e sem `Given/When/Then`: o nome é a especificação legível na saída do runner, e o formato fixo evita que cada arquivo invente o seu.
+- Nome de teste em snake_case, em inglês, como um texto objetivo que diz o comportamento verificado, por exemplo `Failing_operation_records_error_and_exception_then_rethrows`. O nome é a especificação legível na saída do runner.
 
 Para código de produção, siga as regras de `.claude/rules` (Uso com Claude Code): Native AOT, versionamento, composição, módulos e tracing.
 

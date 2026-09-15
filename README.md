@@ -50,13 +50,11 @@ A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-
 ```text
 .
 ├── .claude/
-│   ├── rules/                        # regras do código de produção: projetos, composição e tracing
-│   └── skills/                       # skills locais prd e sdd, com referências e validação
+│   └── rules/                        # regras do código de produção: projetos, composição e tracing
 ├── .github/workflows/                # CI: build e testes
 ├── docs/
-│   ├── development/                  # uso do Claude Code e origem das skills
+│   ├── development/                  # uso do Claude Code e do plugin de skills
 │   └── prd/                          # PRDs (prd): 0000 overview, 0001 Offering, 0002 e 0003 BookBuilding
-├── scripts/                         # verificação da estrutura e das instruções
 ├── src/
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
 │   ├── ServiceDefaults/              # OpenTelemetry, service discovery, resiliência, health checks,
@@ -78,4 +76,4 @@ Os serviços de API compilam com Native AOT (`PublishAot=true`) e globalização
 
 ## Convenções
 
-As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). As regras do código de produção (convenções dos projetos, composição do `Program.cs`, módulos de feature e tracing) estão em `.claude/rules`, com escopo por padrão de arquivo. As skills locais PRD e SDD usam português nas instruções e preservam os contratos técnicos em inglês. O [guia do Claude Code](docs/development/claude-code.md) descreve sua descoberta, as decisões de manutenção e a validação.
+As convenções de código, commits e estrutura estão em [CLAUDE.md](CLAUDE.md). As regras do código de produção (convenções dos projetos, composição do `Program.cs`, módulos de feature e tracing) estão em `.claude/rules`, com escopo por padrão de arquivo. As skills PRD e SDD vêm do plugin `claude-skills`, instalado na conta do Claude Code; o [guia do Claude Code](docs/development/claude-code.md) descreve a instalação, as decisões de layout e a validação.

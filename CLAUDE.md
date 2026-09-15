@@ -12,19 +12,19 @@ As regras do código de produção ficam em `.claude/rules/` e carregam sozinhas
 - [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em `src/`.
 - [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
 
-As skills [prd](.claude/skills/prd/SKILL.md) (requisitos de produto) e [sdd](.claude/skills/sdd/SKILL.md) (especificação, design, execução e verificação técnica) são versionadas em `.claude/skills` e aparecem no menu `/` como `/prd` e `/sdd`. O Claude Code também as carrega sozinho quando a descrição corresponde à tarefa. Pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
+As skills `prd` (requisitos de produto) e `sdd` (especificação, design, execução e verificação técnica) vêm do plugin `claude-skills`, instalado na conta e não no repositório, e aparecem no menu `/` como `/claude-skills:prd` e `/claude-skills:sdd`. O Claude Code também as carrega sozinho quando a descrição corresponde à tarefa. As skills dão precedência às convenções deste arquivo sobre seus defaults; o que o repositório fixa está em Idioma e em Estrutura da solução. Pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.
 
 Preserve o escopo, as decisões delegadas e as autorizações da sessão. Um pedido de análise ou planejamento termina na entrega solicitada. Em implementação autorizada, decida as opções técnicas, registre custos relevantes e conclua as correções e verificações necessárias; apresentações intermediárias informam progresso. Aprovação de conteúdo e autorização de Git são distintas: commit registra uma versão e não é pré-requisito para usar ou verificar arquivos atuais. Commit, push, deploy e decisões de negócio seguem a autorização da mudança.
 
 Pergunte apenas quando faltar informação indispensável que o contexto não resolve. Se perguntas forem vedadas, registre a lacuna e conclua o trabalho independente, sem inventar uma decisão de negócio. Continue enquanto houver correção fundamentada ou nova evidência; repetir uma tentativa sem mudança nem hipótese não é progresso. Quando houver bloqueio real, informe a ação impedida, sua causa e a decisão ou recurso necessário. Se uma instrução local causar a pausa, confira sua precedência e cite o arquivo e a regra exata.
 
-Origem das skills, decisões da migração e verificação de descoberta: [docs/development/claude-code.md](docs/development/claude-code.md). Ao mudar instruções, regras, skills ou a estrutura da solução, execute `python scripts/check_repository.py`; ao alterar a skill `prd`, execute também `python .claude/skills/prd/scripts/check_prd.py docs/prd`. O Python precisa ser 3.10 ou superior. Depois, confirme a descoberta em uma nova sessão na raiz e em `src/Offering`, conforme o guia.
+Instalação do plugin, decisões de layout e verificação de descoberta: [docs/development/claude-code.md](docs/development/claude-code.md). Ao mudar instruções, regras ou a estrutura da solução, confira o `.slnx` (Arquivos no `.slnx`) e confirme a descoberta em uma nova sessão na raiz e em `src/Offering`, conforme o guia.
 
 ## Idioma
 
 - Código, identificadores, nomes de arquivos e diretórios, comentários, logs, mensagens de erro e mensagens de commit: **inglês**.
-- Textos instrucionais das regras em `.claude/rules` e das skills em `.claude/skills`, com suas descrições e referências: **português do Brasil**. Comentários e docstrings dos scripts das skills também usam português; diagnósticos de linha de comando preservam o contrato existente em inglês.
-- Documentação (`.md`, ADRs, notas): **português** na prosa e nos títulos livres. Títulos, rótulos, tags e campos que são contratos de artefatos permanecem em **inglês**, conforme [conventions.md da prd](.claude/skills/prd/references/conventions.md) e [workflow.md da sdd](.claude/skills/sdd/references/workflow.md). Preserve IDs, palavras-chave EARS, código e identificadores técnicos.
+- Textos instrucionais das regras em `.claude/rules`: **português do Brasil**.
+- Documentação (`.md`, ADRs, notas): **português** na prosa e nos títulos livres. Títulos, rótulos, tags e campos que são contratos de artefatos permanecem em **inglês**, como as skills `prd` e `sdd` definem (estrutura em inglês, prosa na língua do artefato). A prosa em português é convenção deste repositório e prevalece sobre o default de idioma das skills. Preserve IDs, palavras-chave EARS, código e identificadores técnicos.
 
 ## Convenção de commits
 
@@ -77,10 +77,8 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/Offering`, `src/BookBuilding` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
 - `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
-- `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com a skill local `prd`. Spec, design e tasks de cada capability nascem da skill local `sdd` em `docs/specs`.
+- `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com `/claude-skills:prd`. Spec, design e tasks de cada capability nascem de `/claude-skills:sdd` em `docs/specs`.
 - `.claude/rules` — regras por área do código de produção, carregadas pelo padrão de arquivo (Uso com Claude Code).
-- `.claude/skills` — skills locais `prd` e `sdd`, com suas referências e o verificador de PRDs.
-- `scripts` — verificações reproduzíveis do repositório.
 
 ### Arquivos no `.slnx`
 
@@ -102,7 +100,7 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
-A CI em `.github/workflows/ci.yml` executa os mesmos comandos em push e pull request na `main`, com o SDK fixado em `global.json`; um comando novo na CI entra também aqui e no README. Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para scripts, execute as verificações pertinentes ao script; para documentação e instruções, use os validadores e a revisão dos exemplos. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
+A CI em `.github/workflows/ci.yml` executa os mesmos comandos em push e pull request na `main`, com o SDK fixado em `global.json`; um comando novo na CI entra também aqui e no README. Valide os dois antes de encerrar mudanças em código de produção ou testes .NET. Para documentação e instruções, use a revisão dos exemplos e a conferência do `.slnx`; não há validador de estrutura nem de formato de documentos, por decisão registrada no guia. Uma execução aprovada serve para a mesma versão quando arquivos, configuração, comando e dependências relevantes não mudaram. Amplie ou repita checks somente quando a mudança, uma falha ou uma incerteza justificar.
 
 A tabela de Acceptance Criteria do PRD 0003 é a fonte dos casos de teste do processamento do livro (BookBuilding): cada linha vira um teste com o mesmo nome, com o livro, `D`, `Dn`, `D'`, `E`, o ramo e a alocação por reserva exatamente como a tabela diz. Mudança na tabela ou em ALLOC-05 a ALLOC-21 atualiza os testes no mesmo commit; a divergência entre PRD e teste é defeito.
 
@@ -132,5 +130,5 @@ Princípios da mentoria de arquitetura de Elemar Jr. (2026) aplicáveis ao proje
 - **Regra tem princípio.** Toda instrução deste arquivo carrega o porquê. Antes de aplicar um padrão (camada, interface, abstração, mediator, repositório) pergunte qual necessidade concreta ele atende neste repositório. Sem necessidade, não entra: complexidade desnecessária é custo, e reduzir acoplamento além do necessário destrói coesão.
 - **Consciência situacional antes de julgar.** Para mudar comportamento, fronteira ou decisão existente, consulte o PRD, o ADR e o histórico pertinentes. Em edição localizada, leia o trecho e suas dependências; amplie a leitura se surgir uma restrição. Distinga fatos de hipóteses antes de concluir que uma decisão está errada.
 - **Critérios antes da solução.** Defina e critique os critérios do design antes de avaliar abordagens. Compare alternativas reais pelo mesmo escopo e critérios, escolha uma e registre os custos. Quando só houver uma alternativa viável, explique a restrição; não invente opções.
-- **Determinístico onde puder.** Verificação é build, teste e analisador estático, não leitura de código por IA. Onde há lógica de domínio há teste; getter e setter não se testa. Processo repetível vira script no repositório, não prompt repetido.
+- **Determinístico onde puder.** Verificação é build, teste e analisador estático, não leitura de código por IA. Onde há lógica de domínio há teste; getter e setter não se testa. Processo repetível sobre o código vira script ou CI no repositório, não prompt repetido; a forma de documentos e instruções é conferida na revisão.
 - **Código para humanos.** O código gerado com IA segue as convenções deste arquivo e deve ser mantido sem IA, se preciso. Revise este arquivo quando instruções conflitarem entre si; instrução conflitante degrada o resultado mais que instrução faltando.

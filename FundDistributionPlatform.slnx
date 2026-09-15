@@ -5,36 +5,6 @@
     <File Path=".claude/rules/program-composition.md" />
     <File Path=".claude/rules/tracing.md" />
   </Folder>
-  <Folder Name="/.claude/skills/" />
-  <Folder Name="/.claude/skills/prd/">
-    <File Path=".claude/skills/prd/SKILL.md" />
-  </Folder>
-  <Folder Name="/.claude/skills/prd/references/">
-    <File Path=".claude/skills/prd/references/conventions.md" />
-    <File Path=".claude/skills/prd/references/example.md" />
-    <File Path=".claude/skills/prd/references/intake.md" />
-    <File Path=".claude/skills/prd/references/modes.md" />
-    <File Path=".claude/skills/prd/references/prose.md" />
-    <File Path=".claude/skills/prd/references/workflow.md" />
-    <File Path=".claude/skills/prd/references/writing.md" />
-  </Folder>
-  <Folder Name="/.claude/skills/prd/scripts/">
-    <File Path=".claude/skills/prd/scripts/check_prd.py" />
-  </Folder>
-  <Folder Name="/.claude/skills/sdd/">
-    <File Path=".claude/skills/sdd/SKILL.md" />
-  </Folder>
-  <Folder Name="/.claude/skills/sdd/references/">
-    <File Path=".claude/skills/sdd/references/adr.md" />
-    <File Path=".claude/skills/sdd/references/design.md" />
-    <File Path=".claude/skills/sdd/references/execute.md" />
-    <File Path=".claude/skills/sdd/references/prose.md" />
-    <File Path=".claude/skills/sdd/references/specify.md" />
-    <File Path=".claude/skills/sdd/references/tasks.md" />
-    <File Path=".claude/skills/sdd/references/validation.md" />
-    <File Path=".claude/skills/sdd/references/verify.md" />
-    <File Path=".claude/skills/sdd/references/workflow.md" />
-  </Folder>
   <Folder Name="/.github/" />
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/ci.yml" />
@@ -48,10 +18,6 @@
     <File Path="docs/prd/0001-offering-offer-lifecycle.md" />
     <File Path="docs/prd/0002-book-building-bid-lifecycle.md" />
     <File Path="docs/prd/0003-book-building-book-processing.md" />
-  </Folder>
-  <Folder Name="/scripts/">
-    <File Path="scripts/check_repository.py" />
-    <File Path="scripts/test_repository_checks.py" />
   </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />

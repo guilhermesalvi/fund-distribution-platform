@@ -15,7 +15,7 @@ O que já existe e roda: AppHost do Aspire com os três projetos, `ServiceDefaul
 ## Pré-requisitos
 
 - .NET SDK 10.0.400 ou feature band mais recente do .NET 10, conforme `global.json` (`rollForward: latestFeature`)
-- Aspire CLI 13.5 (`aspire --version`)
+- Aspire CLI 13.5.3 (`aspire --version`); o AppHost usa o bundle da CLI, inclusive nos testes de integração
 
 ## Como rodar
 
@@ -45,7 +45,7 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
-A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-latest` em push e pull request na `main`, com o SDK do `global.json`.
+A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-latest` em push e pull request na `main`, com o SDK do `global.json` e a Aspire CLI instalada pelo script oficial.
 
 ## Estrutura do repositório
 
@@ -65,8 +65,8 @@ A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-
 │   ├── BookBuilding/                 # API
 │   └── DataMigration/                # Worker
 ├── tests/
-│   ├── UnitTests/                    # xUnit
-│   └── IntegrationTests/             # xUnit
+│   ├── UnitTests/                    # xUnit: ServiceDefaults e, por contexto, o domínio
+│   └── IntegrationTests/             # xUnit + Aspire.Hosting.Testing: sobe o AppHost
 ├── CLAUDE.md                         # entrada das instruções do Claude Code e convenções do repositório
 ├── Directory.Build.props             # propriedades comuns a todos os projetos
 ├── Directory.Packages.props          # versões de pacote (Central Package Management)

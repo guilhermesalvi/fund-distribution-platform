@@ -21,5 +21,7 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+      # The AppHost uses the Aspire CLI bundle (AspireUseCliBundle=true); the integration tests need it to start the app.
+      - run: curl -sSL https://aspire.dev/install.sh | bash -s -- --version 13.5.3
       - run: dotnet build FundDistributionPlatform.slnx
       - run: dotnet test FundDistributionPlatform.slnx

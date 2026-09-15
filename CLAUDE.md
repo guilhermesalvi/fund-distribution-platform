@@ -76,7 +76,8 @@ Solução `FundDistributionPlatform.slnx`, .NET 10, orquestrada com .NET Aspire.
 - `src/ServiceDefaults` — projeto compartilhado do Aspire: OpenTelemetry, service discovery, resiliência HTTP, health checks e validação do container. Todo serviço deve referenciá-lo e chamar `AddServiceDefaults()`. Serviços de API chamam também `AddApiDefaults()` / `UseApiDefaults()`: versionamento, ProblemDetails e OpenAPI.
 - `src/Offering`, `src/BookBuilding` — serviços ASP.NET Core minimal API, um por contexto de domínio.
 - `src/DataMigration` — Worker Service (`Microsoft.NET.Sdk.Worker`) para migração de dados. Não expõe HTTP e não compila com AOT.
-- `tests/UnitTests`, `tests/IntegrationTests` — xUnit.
+- `tests/UnitTests` — xUnit; referencia `ServiceDefaults` e testa lógica sem host (`TraceAsync`, writer de health checks). Os testes de domínio de cada contexto entram aqui, em pasta por contexto, junto com a implementação.
+- `tests/IntegrationTests` — xUnit com `Aspire.Hosting.Testing`; sobe o AppHost e verifica que cada recurso inicia e responde `/health`. Exige a Aspire CLI instalada, porque o AppHost usa o bundle da CLI (`AspireUseCliBundle`).
 - `docs/prd` — PRDs, um por capability mais o `0000` de visão geral: `0001` do Offering, `0002` e `0003` do BookBuilding. O prefixo de requisito é por PRD e único na pasta, então um contexto pode ter mais de um (`BOOK` e `ALLOC`); essa convenção do repositório prevalece sobre o default "um prefixo por contexto" da skill. Escritos e revisados com `/claude-skills:prd`. Spec, design e tasks de cada capability nascem de `/claude-skills:sdd` em `docs/specs`.
 - `.claude/rules` — regras por área do código de produção, carregadas pelo padrão de arquivo (Uso com Claude Code).
 

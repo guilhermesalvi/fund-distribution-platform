@@ -37,7 +37,7 @@ As duas skills declaram a mesma precedência: pedido da sessão, depois convenç
 | `CLAUDE.md` na raiz concentra as convenções do repositório; não há `CLAUDE.md` em subdiretórios nem `AGENTS.md` | Outras ferramentas de agente não leem o arquivo; manter um segundo arquivo de entrada duplicaria a fonte |
 | Três regras em `.claude/rules` com frontmatter `paths`: convenções dos projetos de produção, composição e tracing, cada uma com o escopo que declara | A regra só entra no contexto quando um arquivo do padrão é lido ou editado; revisão sem leitura de arquivo exige abrir a regra pelo link do `CLAUDE.md` |
 | Skills `prd` e `sdd` só no plugin, fora do repositório | O repositório depende de uma revisão que não controla e quem clona sem o plugin não tem as skills; os overrides do repositório precisam viver no `CLAUDE.md` |
-| Sem scripts de verificação de estrutura, instruções ou documentos | Inventário do `.slnx`, links e contratos dos PRDs só são conferidos em revisão; a CI verifica apenas o código de produção |
+| Sem scripts de verificação de estrutura, instruções ou documentos | Inventário do `.slnx`, links e contratos dos PRDs só são conferidos em revisão; a CI verifica apenas build, testes e publicação AOT do código de produção |
 | Exclusões de `CLAUDE.local.md`, `.claude/settings.local.json` e `.claude/worktrees/` no Git | Overrides e configurações locais ficam fora do versionamento e podem alterar as instruções da máquina |
 
 Não há hooks, servidores MCP, agentes personalizados ou configuração de execução versionados. Não foi criado `.claude/settings.json`: fixar modelo, permissões ou variáveis compartilhadas substituiria escolhas do ambiente sem necessidade. Se o projeto vier a precisar de configuração própria, use o [formato oficial de settings](https://code.claude.com/docs/en/settings).
@@ -59,7 +59,10 @@ Os comandos abaixo partem da raiz e são os mesmos da CI em [ci.yml](../../.gith
 ```bash
 dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
+dotnet publish src/Offering/Offering.csproj -c Release -r linux-x64
 ```
+
+Os testes de integração sobem o AppHost e exigem a Aspire CLI instalada. A publicação AOT vale para `Offering` e `BookBuilding`; no Windows, use `-r win-x64` com o Build Tools do Visual Studio instalado.
 
 Mudanças apenas em instruções e documentação usam a revisão dos exemplos e a conferência do `.slnx` descrita no `CLAUDE.md`; não há validador de estrutura nem de formato de documentos. Build e testes .NET são exigidos quando o código correspondente muda.
 

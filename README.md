@@ -45,7 +45,11 @@ dotnet build FundDistributionPlatform.slnx
 dotnet test FundDistributionPlatform.slnx
 ```
 
-A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-latest` em push e pull request na `main`, com o SDK do `global.json` e a Aspire CLI instalada pelo script oficial.
+A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-latest` em push e pull request na `main`, com o SDK do `global.json` e a Aspire CLI instalada pelo script oficial. Um segundo job publica `Offering` e `BookBuilding` com Native AOT para `linux-x64`:
+
+```bash
+dotnet publish src/Offering/Offering.csproj -c Release -r linux-x64
+```
 
 ## Estrutura do repositório
 
@@ -53,7 +57,7 @@ A CI ([ci.yml](.github/workflows/ci.yml)) executa os mesmos comandos no `ubuntu-
 .
 ├── .claude/
 │   └── rules/                        # regras do código de produção: projetos, composição e tracing
-├── .github/workflows/                # CI: build e testes
+├── .github/workflows/                # CI: build, testes e publicação AOT
 ├── docs/
 │   ├── development/                  # uso do Claude Code e do plugin de skills
 │   └── prd/                          # PRDs (prd): 0000 overview, 0001 Offering, 0002 e 0003 BookBuilding

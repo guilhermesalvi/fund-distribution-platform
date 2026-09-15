@@ -1,11 +1,17 @@
 @BookBuilding_HostAddress = http://localhost:5129
 
-GET {{BookBuilding_HostAddress}}/todos/
+# These routes are mapped only in the Development environment.
+GET {{BookBuilding_HostAddress}}/health
 Accept: application/json
 
 ###
 
-GET {{BookBuilding_HostAddress}}/todos/1
+GET {{BookBuilding_HostAddress}}/alive
+Accept: application/json
+
+###
+
+GET {{BookBuilding_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###

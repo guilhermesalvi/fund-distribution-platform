@@ -1,11 +1,17 @@
 @Offering_HostAddress = http://localhost:5084
 
-GET {{Offering_HostAddress}}/todos/
+# These routes are mapped only in the Development environment.
+GET {{Offering_HostAddress}}/health
 Accept: application/json
 
 ###
 
-GET {{Offering_HostAddress}}/todos/1
+GET {{Offering_HostAddress}}/alive
+Accept: application/json
+
+###
+
+GET {{Offering_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###

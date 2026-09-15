@@ -2,13 +2,15 @@
 
 Modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de fundo fechado a investidor final. Não há liquidação financeira nem integração externa; o investidor não acessa a plataforma, e o operador da corretora age em seu nome. O domínio está descrito nos PRDs de `docs/prd`, a partir da [visão geral](docs/prd/0000-platform-overview.md).
 
-Plataforma composta por dois serviços, um por contexto de domínio, e um worker de migração de dados:
+Plataforma composta por dois serviços, um por contexto de domínio, e um worker de migração de dados. O comportamento de negócio ainda não está implementado: os serviços são o esqueleto de composição (`Program.cs` com `ServiceDefaults`), sem endpoints nem regras de domínio, e o worker é o modelo do template. O que cada projeto fará está nos PRDs:
 
-| Projeto | Tipo | Responsabilidade |
+| Projeto | Tipo | Responsabilidade prevista |
 | --- | --- | --- |
 | `Offering` | API | Definição imutável da oferta e sua máquina de estados ([PRD 0001](docs/prd/0001-offering-offer-lifecycle.md)) |
 | `BookBuilding` | API | Reservas contra oferta Aberta, livro congelado no fechamento, processamento único do livro fechado (vedação a vinculadas, formação, condicionamento e rateio) e status por reserva ([PRD 0002](docs/prd/0002-book-building-bid-lifecycle.md), [PRD 0003](docs/prd/0003-book-building-book-processing.md)) |
 | `DataMigration` | Worker | Migração de dados. Não expõe HTTP. |
+
+O que já existe e roda: AppHost do Aspire com os três projetos, `ServiceDefaults` (OpenTelemetry, service discovery, resiliência HTTP, health checks, versionamento de API, ProblemDetails e OpenAPI) e os endpoints de diagnóstico listados abaixo.
 
 ## Pré-requisitos
 

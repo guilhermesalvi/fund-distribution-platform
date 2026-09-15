@@ -9,7 +9,7 @@ Este arquivo é a entrada das convenções do projeto. Todos os caminhos abaixo 
 As regras do código de produção ficam em `.claude/rules/` e carregam sozinhas quando um arquivo do padrão declarado no frontmatter `paths` de cada uma entra na tarefa; as regras se acumulam quando os padrões coincidem. Ao revisar código em `src/` sem editá-lo, leia antes as regras da área:
 
 - [Convenções dos projetos de produção](.claude/rules/production-projects.md): qualquer arquivo em `src/`. Native AOT, versionamento de API e padrão de serviço novo.
-- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em `src/`.
+- [Composição do serviço e módulos de feature](.claude/rules/program-composition.md): `Program.cs`, `AppHost.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em `src/`.
 - [Traces e spans](.claude/rules/tracing.md): todo `.cs` em `src/`.
 
 As skills `prd` (requisitos de produto) e `sdd` (especificação, design, execução e verificação técnica) vêm do plugin `claude-skills`, instalado na conta e não no repositório, e aparecem no menu `/` como `/claude-skills:prd` e `/claude-skills:sdd`. O Claude Code também as carrega sozinho quando a descrição corresponde à tarefa. As skills dão precedência às convenções deste arquivo sobre seus defaults; o que o repositório fixa está em Idioma e em Estrutura da solução. Pedidos gerais de documentação e mudanças mecânicas não exigem abrir um fluxo de produto ou SDD.

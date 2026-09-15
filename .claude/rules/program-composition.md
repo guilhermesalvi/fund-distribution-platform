@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/**/Program.cs"
+  - "src/**/AppHost.cs"
   - "src/**/*Extensions.cs"
   - "src/**/*Endpoint.cs"
   - "src/**/*Consumer.cs"
@@ -8,7 +9,7 @@ paths:
 
 # Composição do serviço e módulos de feature
 
-Aplica-se a `Program.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em qualquer subdiretório de `src/`, inclusive em revisões sem edição. Os caminhos nos exemplos partem da raiz do repositório.
+Aplica-se a `Program.cs`, `AppHost.cs`, `*Extensions.cs`, `*Endpoint.cs` e `*Consumer.cs` em qualquer subdiretório de `src/`, inclusive em revisões sem edição. Os caminhos nos exemplos partem da raiz do repositório.
 
 ## Program.cs
 

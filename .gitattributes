@@ -1,0 +1,12 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+*.cs text
+
+# Binary files (without diff/merge)
+*.png            binary
+*.jpg            binary
+*.ico            binary
+*.dll            binary
+
+# Ignore exported files (git archive)
+docs/**          export-ignore

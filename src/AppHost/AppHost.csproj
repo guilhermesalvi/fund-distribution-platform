@@ -9,4 +9,12 @@
     <UserSecretsId>e65f197c-cc3f-4882-a687-c4d7291983a7</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Allocation\Allocation.csproj" />
+    <ProjectReference Include="..\DataMigration\DataMigration.csproj" />
+    <ProjectReference Include="..\DemandConsolidation\DemandConsolidation.csproj" />
+    <ProjectReference Include="..\Offering\Offering.csproj" />
+    <ProjectReference Include="..\ReservationBook\ReservationBook.csproj" />
+  </ItemGroup>
+
 </Project>

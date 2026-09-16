@@ -7,11 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Allocation\Allocation.csproj" />
+    <ProjectReference Include="..\BookBuilding\BookBuilding.csproj" />
     <ProjectReference Include="..\DataMigration\DataMigration.csproj" />
-    <ProjectReference Include="..\DemandConsolidation\DemandConsolidation.csproj" />
     <ProjectReference Include="..\Offering\Offering.csproj" />
-    <ProjectReference Include="..\ReservationBook\ReservationBook.csproj" />
   </ItemGroup>
 
 </Project>

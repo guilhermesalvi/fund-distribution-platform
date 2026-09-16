@@ -1,0 +1,11 @@
+@Offering_HostAddress = http://localhost:5084
+
+GET {{Offering_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{Offering_HostAddress}}/todos/1
+Accept: application/json
+
+###

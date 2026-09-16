@@ -3,5 +3,20 @@
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Allocation/Allocation.csproj" />
+    <Project Path="src/AppHost/AppHost.csproj" />
+    <Project Path="src/DataMigration/DataMigration.csproj" />
+    <Project Path="src/DemandConsolidation/DemandConsolidation.csproj" />
+    <Project Path="src/Offering/Offering.csproj" />
+    <Project Path="src/ReservationBook/ReservationBook.csproj" />
+    <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IntegrationTests/IntegrationTests.csproj" />
+    <Project Path="tests/UnitTests/UnitTests.csproj" />
   </Folder>
 </Solution>

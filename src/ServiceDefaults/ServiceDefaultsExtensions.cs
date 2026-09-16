@@ -16,6 +16,13 @@ public static class ServiceDefaultsExtensions
 
         builder.Services.AddServiceDiscovery();
 
+        // Fail fast on misregistered services in every environment, not only in Development.
+        builder.ConfigureContainer(new DefaultServiceProviderFactory(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        }));
+
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default

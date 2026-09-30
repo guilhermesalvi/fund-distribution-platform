@@ -35,8 +35,6 @@ Ficam fora:
 ## Assumptions
 
 - **Enquanto a lacuna de autenticação e autorização do operador estiver aberta, a API aceita toda chamada como feita pelo operador, sem identidade individual, e o registro de OFF-31 identifica o autor só como operador ou contexto.** Nenhum serviço em `src` configura autenticação. Choice: o comportamento provisório que mantém o estado atual do código. If false: as operações passam a exigir identidade, e OFF-31 passa a registrar a identidade autenticada. Confirmed? n
-- **Enquanto a lacuna do tratamento dos espaços nas bordas estiver aberta, a publicação que informa a identificação das cotas com espaços nas bordas é rejeitada (OFF-05).** Rejeitar preserva o Draft e o dado informado; remover os espaços alteraria o dado sem decisão. Choice: rejeitar a publicação, com a violação listada por OFF-16. If false: a publicação passa a remover os espaços, e a violação deixa de existir. Confirmed? n
-- **Enquanto a lacuna do conjunto de opções informado em oferta que não admite distribuição parcial estiver aberta, a publicação que informa um conjunto não vazio nesse caso é rejeitada (OFF-13).** Rejeitar preserva o Draft e não descarta o que o operador informou; é também o tratamento da opção fora da condição na reserva (BID-09). Choice: rejeitar a publicação, com a violação listada por OFF-16. If false: a publicação passa a ignorar o conjunto, e a definição levada por `OfferPublished` sai sem opções. Confirmed? n
 - **A API do operador responde em JSON com os identificadores do Glossary e sinaliza rejeições com ProblemDetails: 400 para violação de validação, 404 para oferta inexistente e 409 para operação não permitida no estado corrente.** Nenhuma decisão de produto fixa o formato das respostas nem os códigos; os serviços já registram ProblemDetails (`src/ServiceDefaults/ApiDefaultsExtensions.cs:23`) e versionamento por segmento de URL (`src/ServiceDefaults/ApiDefaultsExtensions.cs:19`). Choice: esses códigos, com as violações de OFF-16 listadas no corpo, e `v1` como primeira versão, com mudança incompatível publicada em nova versão. If false: mudam os códigos e o corpo das respostas antes de existir consumidor da API. Confirmed? n
 - **A lista de ofertas do operador (OFF-20) inclui todos os estados, segue a ordem de criação e é vazia quando não há ofertas.** Nenhuma decisão de produto define a apresentação da lista; o operador precisa ver os Drafts para editá-los (OFF-02). Choice: todos os estados, em ordem de criação. If false: muda só a apresentação da consulta. Confirmed? n
 - **Os identificadores em inglês do Glossary são propostas.** Nenhum tipo de domínio em `src/Offering` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
@@ -45,9 +43,6 @@ Ficam fora:
 
 | Gap | Affects | Owner |
 | --- | --- | --- |
-| Tratamento dos espaços nas bordas da identificação das cotas: removê-los na publicação ou rejeitar a publicação | OFF-05; a validação da publicação (OFF-15, OFF-16) e a definição levada por `OfferPublished` | Autor |
-| Comparação entre identificações das cotas: se alguma operação as compara e, nesse caso, com ou sem distinção de caixa | Nenhum requisito atual; define o comportamento de uma futura busca ou conferência de duplicidade | Autor |
-| Conjunto de opções informado em oferta que não admite distribuição parcial: rejeitar a publicação ou ignorar o conjunto; o caso com opções vazias já está definido | OFF-13; a validação da publicação e a definição levada por `OfferPublished` | Autor |
 | Autenticação e autorização do operador: quem pode criar, editar, publicar, revogar e consultar ofertas, e que identidade é registrada como autor das transições | OFF-01, OFF-02, OFF-15, OFF-20, OFF-22, OFF-31 | Autor |
 
 ## Glossary
@@ -109,7 +104,7 @@ Os requisitos desta seção e da seguinte são as regras que a publicação vali
 
 - **OFF-03** — O nome está presente e não é vazio.
 - **OFF-04** — A identificação das cotas está presente: fundo, classe e número da emissão são obrigatórios, e a subclasse é opcional.
-- **OFF-05** — A identificação das cotas de uma oferta publicada não tem espaços nas bordas. A publicação que os informa é rejeitada, comportamento provisório da premissa "Enquanto a lacuna do tratamento dos espaços nas bordas estiver aberta…".
+- **OFF-05** — A identificação das cotas de uma oferta publicada não tem espaços nas bordas. A publicação que os informa é rejeitada.
 - **OFF-06** — A publicação não exige que o nome nem a identificação das cotas sejam únicos entre as ofertas e não valida a identificação contra cadastro.
 - **OFF-07** — O preço por cota está presente, é estritamente positivo e é decimal exato com até 8 casas.
 - **OFF-08** — A quantidade base está presente, é inteira e é maior ou igual a 1.
@@ -120,7 +115,7 @@ Os requisitos desta seção e da seguinte são as regras que a publicação vali
 ### Distribuição parcial e opções
 
 - **OFF-12** — O montante mínimo está presente, é inteiro, maior ou igual a 1 e menor ou igual à quantidade base.
-- **OFF-13** — Com montante mínimo igual à quantidade base, a oferta não admite distribuição parcial e o conjunto de opções não se aplica. A publicação que informa um conjunto não vazio nesse caso é rejeitada, comportamento provisório da premissa "Enquanto a lacuna do conjunto de opções informado…".
+- **OFF-13** — Com montante mínimo igual à quantidade base, a oferta não admite distribuição parcial e o conjunto de opções não se aplica. A publicação que informa um conjunto não vazio nesse caso é rejeitada.
 - **OFF-14** — Em oferta que admite distribuição parcial, o conjunto de opções aceitas contém obrigatoriamente as opções 1 e 2 e, a critério do ofertante, a 3. Conjunto sem a 1 ou sem a 2 é rejeitado.
 
 O efeito de cada opção na alocação pertence ao [Processamento do Livro](../book-processing/spec.md).

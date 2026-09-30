@@ -13,7 +13,7 @@ O operador da corretora fecha o livro e precisa de um desfecho correto, explicá
 
 As regras definem os casos de borda: demanda das não vinculadas abaixo da base, truncamento com resto e condicionamento que reduz a alocação depois da formação. O critério de sucesso é reproduzir exatamente os cenários de aceitação e respeitar os limites quantitativos em todos os ramos.
 
-A entrada vem de duas capabilities: a definição publicada da oferta, do [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md), e o livro fechado, do [Livro de Reservas](../bid-lifecycle/spec.md). O processamento acontece dentro do BookBuilding, e o resultado de cada reserva é aplicado pelo Livro de Reservas (BID-17).
+A entrada vem de duas capabilities: a definição publicada da oferta, do [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md), e o livro fechado, do [Livro de Reservas](../bid-lifecycle/spec.md). O processamento acontece dentro do BookBuilding, e o resultado de cada reserva é aplicado pelo Livro de Reservas (BID-18).
 
 O contrato consolida as decisões de produto do autor e a leitura das normas listadas em References. O serviço `src/BookBuilding` ainda não implementa comportamento de negócio.
 
@@ -39,10 +39,10 @@ Oferta, quantidade base, montante mínimo e opções aceitas são definidos no [
 
 | Term | Identifier | Definition |
 | --- | --- | --- |
-| Quantidade base (`B`) | `BaseQuantity` | Definida em OFF-18 |
-| Montante mínimo (`M`) | `MinimumQuantity` | Definido em OFF-19 |
+| Quantidade base (`B`) | `BaseQuantity` | Definida em OFF-06 |
+| Montante mínimo (`M`) | `MinimumQuantity` | Definido em OFF-10 |
 | Quantidade reservada (`q`) | `Quantity` | Cotas pedidas na reserva (BID-03) |
-| Livro fechado | — | Entrada congelada do livro (BID-15, BID-16), uma linha por reserva |
+| Livro fechado | — | Entrada congelada do livro (BID-16, BID-17), uma linha por reserva |
 | Demanda total (`D`) | `TotalDemand` | Soma dos pedidos do livro fechado (ALLOC-05) |
 | Demanda das não vinculadas (`Dn`) | `NonRelatedDemand` | Parcela da demanda sem declaração de vínculo (ALLOC-05); decide entre ALLOC-06 e ALLOC-07 |
 | Demanda efetiva (`D'`) | `EffectiveDemand` | Demanda depois das exclusões (ALLOC-08); base da formação, do condicionamento e do rateio; em colocação limitada é igual a `D` |
@@ -52,7 +52,7 @@ Oferta, quantidade base, montante mínimo e opções aceitas são definidos no [
 | Cotas efetivamente distribuídas (`E`) | `DistributedQuantity` | Quantidade apurada em ALLOC-10; numerador do proporcional de ALLOC-13, com denominador `B`; não é necessariamente a soma final alocada |
 | Distribuição parcial | `PartialDistribution` | `M ≤ D' < B`; ramo de ALLOC-11 a ALLOC-14 |
 | Excesso de demanda | — | `D' > B`; ramo de ALLOC-16 a ALLOC-21 |
-| Condicionamento | `ConditionOption` | Opção declarada na reserva (BID-08) entre as aceitas pela oferta (OFF-25); efeito e motivo em ALLOC-11 a ALLOC-13 |
+| Condicionamento | `ConditionOption` | Opção declarada na reserva (BID-08) entre as aceitas pela oferta (OFF-12); efeito e motivo em ALLOC-11 a ALLOC-13 |
 | Rateio proporcional | — | Divisão definida em ALLOC-16 |
 | Quantidade rateada (`R`) | `ScaleBackQuantity` | Cotas divididas pelo rateio (ALLOC-16, ALLOC-21) |
 | Demanda rateada (`Dr`) | `ScaleBackDemand` | Soma de `q` do conjunto rateado (ALLOC-16, ALLOC-21) |
@@ -63,7 +63,7 @@ Oferta, quantidade base, montante mínimo e opções aceitas são definidos no [
 
 ## Requirements
 
-O fechamento do livro (BID-22, BID-15) dispara o processamento dentro do BookBuilding. O cálculo consolida a demanda, determina a vedação aplicável, apura a formação, calcula a alocação e emite o resultado completo como `BookProcessed`.
+O fechamento do livro (BID-15, BID-16) dispara o processamento dentro do BookBuilding. O cálculo consolida a demanda, determina a vedação aplicável, apura a formação, calcula a alocação e emite o resultado completo como `BookProcessed`.
 
 ```mermaid
 flowchart TD
@@ -92,7 +92,7 @@ flowchart TD
 
 ### Gatilho e entrada
 
-- **ALLOC-01** O processamento inicia com o fechamento do livro pelo operador (BID-22), quando o livro congela (BID-15), e usa como entrada exclusiva a definição publicada da oferta e o livro fechado (BID-16).
+- **ALLOC-01** O processamento inicia com o fechamento do livro pelo operador (BID-15), quando o livro congela (BID-16), e usa como entrada exclusiva a definição publicada da oferta e o livro fechado (BID-17).
 - **ALLOC-02** Cada oferta produz no máximo um `BookProcessed`. Depois de emitido, novo processamento é rejeitado. Um processamento que terminou sem emitir (ALLOC-28) pode ser repetido e, por ALLOC-04, produz o mesmo resultado.
 - **ALLOC-03** Se a oferta for revogada antes de o processamento concluir, ele é interrompido e nada é emitido. Revogação depois da emissão não altera o resultado emitido.
 - **ALLOC-04** O processamento é determinístico: a mesma oferta e o mesmo livro fechado produzem exatamente o mesmo resultado.
@@ -172,7 +172,7 @@ Os identificadores dos ramos e dos motivos compostos são nomes descritivos do m
 
 | Event | Trigger | Content | Consumers |
 | --- | --- | --- | --- |
-| `BookProcessed` | Conclusão do processamento (ALLOC-26), no máximo uma vez por oferta (ALLOC-02) e nunca depois de revogação em curso (ALLOC-03) | Oferta, desfecho (`Unconditional` ou `Lapsed`), instante da conclusão, `D`, `Dn`, `D'`, `E` quando apurado, ramo e resultado de cada reserva (ALLOC-25) | [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md), que assume o desfecho como estado da oferta (OFF-31 a OFF-33); um evento emitido antes de uma revogação pode chegar depois dela, e a oferta o descarta (OFF-33) |
+| `BookProcessed` | Conclusão do processamento (ALLOC-26), no máximo uma vez por oferta (ALLOC-02) e nunca depois de revogação em curso (ALLOC-03) | Oferta, desfecho (`Unconditional` ou `Lapsed`), instante da conclusão, `D`, `Dn`, `D'`, `E` quando apurado, ramo e resultado de cada reserva (ALLOC-25) | [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md), que assume o desfecho como estado da oferta (OFF-20 a OFF-22); um evento emitido antes de uma revogação pode chegar depois dela, e a oferta o descarta (OFF-22) |
 
 O processamento consome `OfferRevoked` (ALLOC-03), definido no [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md).
 
@@ -207,16 +207,16 @@ O processamento consome `OfferRevoked` (ALLOC-03), definido no [Ciclo de Vida da
 | Surface or dimension | Landing |
 | --- | --- |
 | Evento `BookProcessed` | ALLOC-26 e Domain Events |
-| Consulta do resultado | Pelo [Livro de Reservas](../bid-lifecycle/spec.md): status e quantidade alocada por reserva (BID-17, BID-20, BID-21) |
+| Consulta do resultado | Pelo [Livro de Reservas](../bid-lifecycle/spec.md): status e quantidade alocada por reserva (BID-18, BID-20, BID-21) |
 | Validação e limites | ALLOC-18, ALLOC-22, ALLOC-23 e ALLOC-24 |
 | Falha e falha parcial | ALLOC-28; repetição depois de falha (ALLOC-02, ALLOC-04) |
 | Idempotência e duplicação | ALLOC-02 e ALLOC-04 |
 | Concorrência e ordenação | Revogação durante o processamento (ALLOC-03); desempate pela ordem de registro (ALLOC-17) |
-| Transições de estado | O processamento não tem estado próprio; o desfecho segue ALLOC-09 e ALLOC-10, e os status das reservas, BID-17 |
-| Consistência entre capabilities | Entrada exclusiva (ALLOC-01), com a definição sujeita a OFF-36 e o livro fechado de BID-16; desfecho assumido pela oferta (OFF-31 a OFF-33) |
+| Transições de estado | O processamento não tem estado próprio; o desfecho segue ALLOC-09 e ALLOC-10, e os status das reservas, BID-18 |
+| Consistência entre capabilities | Entrada exclusiva (ALLOC-01), com a definição sujeita a OFF-25 e o livro fechado de BID-17; desfecho assumido pela oferta (OFF-20 a OFF-22) |
 | Observabilidade | ALLOC-29 e ALLOC-30 |
-| Ciclo de vida dos dados | O resultado fica nas reservas (BID-17) e, depois de revogação, no histórico delas (BID-18) |
-| `n/a` | API, tela, autorização e limite de taxa: o processamento não expõe operação própria e é disparado pelo fechamento (BID-22); falha de dependência externa: sem integração externa |
+| Ciclo de vida dos dados | O resultado fica nas reservas (BID-18) e, depois de revogação, no histórico delas (BID-19) |
+| `n/a` | API, tela, autorização e limite de taxa: o processamento não expõe operação própria e é disparado pelo fechamento (BID-15); falha de dependência externa: sem integração externa |
 
 ## Trade-offs
 

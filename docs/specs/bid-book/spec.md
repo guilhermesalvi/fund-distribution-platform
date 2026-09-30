@@ -30,10 +30,11 @@ Ficam fora:
 
 ## Assumptions
 
-- **A reserva no livro interno da corretora pode ser ajustada até o fechamento, e a aceitação formal enviada ao coordenador é o consolidado.** O art. 65, § 4º, da CVM 160 torna a reserva irrevogável salvo modificação ou revogação da oferta; a permissão de BID-12 a BID-14 depende de distinguir a reserva interna da aceitação formal. Se for falsa, será preciso distinguir registro e confirmação, criar um instante de confirmação e revisar BID-12 a BID-15, e a demanda usada no fechamento antecipado deixa de poder diminuir. O autor verifica com a prática de uma corretora ou com um contrato de distribuição de referência. Confirmed? n
-- **Os identificadores em inglês do Glossary são propostas, exceto `Bid`, justificado em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Escolha: os identificadores da tabela. Se um for rejeitado, o nome muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
-- **A API do operador responde em JSON com os identificadores do Glossary e sinaliza rejeições com ProblemDetails: 400 para violação dos dados da reserva (BID-11), 404 para oferta, reserva ou investidor inexistente e 409 para operação não permitida no estado corrente da oferta, do livro ou da reserva.** Nenhuma decisão de produto fixa o formato das respostas nem os códigos; os serviços já registram ProblemDetails (`src/ServiceDefaults/ApiDefaultsExtensions.cs:23`) e versionamento por segmento de URL (`src/ServiceDefaults/ApiDefaultsExtensions.cs:19`). Escolha: esses códigos e `v1` como primeira versão, com mudança incompatível publicada em nova versão. Se for falsa, mudam os códigos e o corpo das respostas antes de existir consumidor da API. Confirmed? n
-- **A consulta de um livro sem reservas devolve demanda zero e lista vazia; depois do fechamento, a demanda acumulada é a do livro fechado; as listas de reservas seguem a ordem de registro.** Nenhuma decisão de produto define o estado vazio, a demanda depois do fechamento nem a ordenação de BID-26 e BID-27; a ordem de registro é a que o processamento usa no desempate. Se for falsa, muda só a apresentação da consulta. Confirmed? n
+- **A reserva no livro interno da corretora pode ser ajustada até o fechamento, e a aceitação formal enviada ao coordenador é o consolidado.** O art. 65, § 4º, da CVM 160 torna a reserva irrevogável salvo modificação ou revogação da oferta; a permissão de BID-12 a BID-14 depende de distinguir a reserva interna da aceitação formal. If false: será preciso distinguir registro e confirmação, criar um instante de confirmação e revisar BID-12 a BID-15, e a demanda usada no fechamento antecipado deixa de poder diminuir. Verified by: o autor, com a prática de uma corretora ou com um contrato de distribuição de referência. Confirmed? n
+- **Enquanto a lacuna de autenticação e autorização do operador estiver aberta, a API aceita toda chamada como feita pelo operador, sem identidade individual, e o histórico (BID-16, BID-31) identifica o autor só como operador.** Nenhum serviço em `src` configura autenticação. Choice: o comportamento provisório que mantém o estado atual do código. If false: as operações passam a exigir identidade, e o histórico passa a registrar a identidade autenticada. Confirmed? n
+- **A API do operador responde em JSON com os identificadores do Glossary e sinaliza rejeições com ProblemDetails: 400 para violação dos dados da reserva (BID-11), 404 para oferta, reserva ou investidor inexistente e 409 para operação não permitida no estado corrente da oferta, do livro ou da reserva.** Nenhuma decisão de produto fixa o formato das respostas nem os códigos; os serviços já registram ProblemDetails (`src/ServiceDefaults/ApiDefaultsExtensions.cs:23`) e versionamento por segmento de URL (`src/ServiceDefaults/ApiDefaultsExtensions.cs:19`). Choice: esses códigos e `v1` como primeira versão, com mudança incompatível publicada em nova versão. If false: mudam os códigos e o corpo das respostas antes de existir consumidor da API. Confirmed? n
+- **A consulta de um livro sem reservas devolve demanda zero e lista vazia; depois do fechamento, a demanda acumulada é a do livro fechado; as listas de reservas seguem a ordem de registro.** Nenhuma decisão de produto define o estado vazio, a demanda depois do fechamento nem a ordenação de BID-26 e BID-27; a ordem de registro é a que o processamento usa no desempate. Choice: demanda zero e lista vazia, demanda do livro fechado e ordem de registro. If false: muda só a apresentação da consulta. Confirmed? n
+- **Os identificadores em inglês do Glossary são propostas, exceto `Bid`, justificado em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
 
 ## Gaps
 
@@ -99,62 +100,58 @@ stateDiagram-v2
 
 ### Registro
 
-- **BID-01** A reserva só é aceita contra oferta disponível, com livro ainda não fechado (BID-18) e com instante do registro dentro do período de reserva, intervalo fechado definido em OFF-11. Terminado o período, a oferta não aceita mais reservas, ainda que o livro não tenha sido fechado.
-- **BID-02** O investidor deve existir no conjunto carregado previamente por seed; esta capability não cria investidor.
-- **BID-03** A quantidade reservada é inteira e maior ou igual ao investimento mínimo por investidor.
-- **BID-04** A posição do investidor, incluindo a reserva sendo registrada ou alterada, é menor ou igual ao investimento máximo por investidor.
-- **BID-05** A categoria é obrigatória: varejo, qualificado ou profissional. Nenhuma regra depende dela.
-- **BID-06** A declaração de vínculo é obrigatória: vinculado ou não vinculado.
-- **BID-07** Categoria e vínculo são únicos por investidor em cada oferta: a nova reserva de investidor com reserva ativa repete as declarações vigentes, e declaração diferente é rejeitada.
-- **BID-08** Em oferta que admite distribuição parcial, cada reserva declara exatamente uma opção, pertencente ao conjunto aceito pela oferta (OFF-14), independentemente das opções das demais reservas do investidor. A opção é sempre declarada porque a opção 2 é também o efeito de não condicionar.
-- **BID-09** Em oferta que não admite distribuição parcial, a reserva omite a opção; se a informar, o registro é rejeitado.
-- **BID-10** Oferta indisponível, livro fechado ou instante fora do período (BID-01) e investidor inexistente (BID-02) rejeitam o registro sem validar os dados da reserva.
-- **BID-11** A rejeição por dados da reserva informa todas as violações de BID-03 a BID-09, com o atributo e a regra de cada uma.
+- **BID-01** — A reserva só é aceita contra oferta disponível, com livro ainda não fechado (BID-18) e com instante do registro dentro do período de reserva, intervalo fechado definido em OFF-11. Terminado o período, a oferta não aceita mais reservas, ainda que o livro não tenha sido fechado.
+- **BID-02** — O investidor deve existir no conjunto carregado previamente por seed; esta capability não cria investidor.
+- **BID-03** — A quantidade reservada é inteira e maior ou igual ao investimento mínimo por investidor.
+- **BID-04** — A posição do investidor, incluindo a reserva sendo registrada ou alterada, é menor ou igual ao investimento máximo por investidor.
+- **BID-05** — A categoria é obrigatória: varejo, qualificado ou profissional. Nenhuma regra depende dela.
+- **BID-06** — A declaração de vínculo é obrigatória: vinculado ou não vinculado.
+- **BID-07** — Categoria e vínculo são únicos por investidor em cada oferta: a nova reserva de investidor com reserva ativa repete as declarações vigentes, e declaração diferente é rejeitada.
+- **BID-08** — Em oferta que admite distribuição parcial, cada reserva declara exatamente uma opção, pertencente ao conjunto aceito pela oferta (OFF-14), independentemente das opções das demais reservas do investidor. A opção é sempre declarada porque a opção 2 é também o efeito de não condicionar.
+- **BID-09** — Em oferta que não admite distribuição parcial, a reserva omite a opção; se a informar, o registro é rejeitado.
+- **BID-10** — Oferta indisponível, livro fechado ou instante fora do período (BID-01) e investidor inexistente (BID-02) rejeitam o registro sem validar os dados da reserva.
+- **BID-11** — A rejeição por dados da reserva informa todas as violações de BID-03 a BID-09, com o atributo e a regra de cada uma.
 
 ### Alteração e cancelamento
 
-A permissão de alterar e cancelar depende da premissa de ajuste da reserva registrada em Assumptions.
+A permissão de alterar e cancelar depende da premissa "A reserva no livro interno da corretora pode ser ajustada até o fechamento…".
 
-- **BID-12** Quantidade, declarações e opção de reserva ativa podem ser alteradas enquanto a oferta está disponível, o livro não foi fechado (BID-18) e o instante está dentro do período. A alteração é validada pelas regras do registro, exceto BID-07, substituída pela propagação de BID-13.
-- **BID-13** A alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, e cada uma registra a mudança no histórico.
-- **BID-14** A reserva ativa pode ser cancelada enquanto a oferta está disponível, o livro não foi fechado (BID-18) e o instante está dentro do período: passa a `Withdrawn` e não entra no livro fechado; as demais reservas do investidor não são afetadas.
-- **BID-15** Alteração e cancelamento são rejeitados com o livro fechado, com a oferta indisponível, fora do período ou em reserva que não esteja `Active`; a reserva é irrevogável a partir do fechamento.
-- **BID-16** Toda alteração e todo cancelamento preservam o histórico: quem, quando e o que mudou.
-- **BID-17** Instante e ordem do registro são imutáveis. A ordem é total no livro: duas reservas nunca compartilham a posição, ainda que aceitas no mesmo instante.
+- **BID-12** — Quantidade, declarações e opção de reserva ativa podem ser alteradas enquanto a oferta está disponível, o livro não foi fechado (BID-18) e o instante está dentro do período. A alteração é validada pelas regras do registro, exceto BID-07, substituída pela propagação de BID-13.
+- **BID-13** — A alteração de categoria ou vínculo se aplica a todas as reservas ativas do investidor na oferta, e cada uma registra a mudança no histórico.
+- **BID-14** — A reserva ativa pode ser cancelada enquanto a oferta está disponível, o livro não foi fechado (BID-18) e o instante está dentro do período: passa a `Withdrawn` e não entra no livro fechado; as demais reservas do investidor não são afetadas.
+- **BID-15** — Alteração e cancelamento são rejeitados com o livro fechado, com a oferta indisponível, fora do período ou em reserva que não esteja `Active`; a reserva é irrevogável a partir do fechamento.
+- **BID-16** — Toda alteração e todo cancelamento preservam o histórico: quem, quando e o que mudou.
+- **BID-17** — Instante e ordem do registro são imutáveis. A ordem é total no livro: duas reservas nunca compartilham a posição, ainda que aceitas no mesmo instante.
 
 ### Fechamento
 
-- **BID-18** Fechar o livro é ação explícita do operador, permitida com a oferta disponível e em qualquer instante maior ou igual ao início do período de reserva, o que admite fechamento antecipado; o fim do período não fecha o livro por si. Fora dessas condições, o fechamento é rejeitado.
-- **BID-19** A tentativa de fechar livro já fechado é rejeitada.
-- **BID-20** No fechamento o livro congela no mesmo instante: as reservas ativas naquele instante formam o livro fechado, e nenhuma entra, muda ou sai depois.
-- **BID-21** O livro fechado entrega ao processamento todas as reservas que o compõem, cada uma identificável, com investidor, quantidade, declarações, opção, instante e ordem do registro.
+- **BID-18** — Fechar o livro é ação explícita do operador, permitida com a oferta disponível e em qualquer instante maior ou igual ao início do período de reserva, o que admite fechamento antecipado; o fim do período não fecha o livro por si. Fora dessas condições, o fechamento é rejeitado.
+- **BID-19** — A tentativa de fechar livro já fechado é rejeitada.
+- **BID-20** — No fechamento o livro congela no mesmo instante: as reservas ativas naquele instante formam o livro fechado, e nenhuma entra, muda ou sai depois.
+- **BID-21** — O livro fechado entrega ao processamento todas as reservas que o compõem, cada uma identificável, com investidor, quantidade, declarações, opção, instante e ordem do registro.
 
 ### Resultado
 
-- **BID-22** Cada reserva do livro fechado recebe do processamento o status resultante e a quantidade alocada; o status é o motivo do resultado (ALLOC-27). Quantidade reservada, declarações e opção não mudam.
+- **BID-22** — Cada reserva do livro fechado recebe do processamento o status resultante e a quantidade alocada; o status é o motivo do resultado (ALLOC-27). Quantidade reservada, declarações e opção não mudam.
 
 ### Eventos da oferta
 
-- **BID-23** Quando o BookBuilding recebe `OfferRevoked`, toda reserva que não esteja `Withdrawn` passa a `Void`, qualquer que seja o status, inclusive um resultado já aplicado; reserva já `Void` permanece. A quantidade alocada vigente passa a zero, e o resultado anterior fica no histórico (BID-16, BID-31).
-- **BID-24** Se `OfferRevoked` chegar antes de `OfferPublished` da mesma oferta, o BookBuilding registra a oferta como revogada, e o `OfferPublished` que chegar depois é descartado e registrado como descartado.
-- **BID-25** Um `OfferPublished` de oferta já recebida é descartado e registrado como descartado, sem alterar a definição conhecida nem as reservas.
+- **BID-23** — Quando o BookBuilding recebe `OfferRevoked`, toda reserva que não esteja `Withdrawn` passa a `Void`, qualquer que seja o status, inclusive um resultado já aplicado; reserva já `Void` permanece. A quantidade alocada vigente passa a zero, e o resultado anterior fica no histórico (BID-16, BID-31).
+- **BID-24** — Se `OfferRevoked` chegar antes de `OfferPublished` da mesma oferta, o BookBuilding registra a oferta como revogada, e o `OfferPublished` que chegar depois é descartado e registrado como descartado.
+- **BID-25** — Um `OfferPublished` de oferta já recebida é descartado e registrado como descartado, sem alterar a definição conhecida nem as reservas.
 
 ### Consulta
 
-- **BID-26** O operador consulta o livro a qualquer momento, com a demanda acumulada, a lista de reservas com status, se o livro está fechado, a situação do processamento depois do fechamento (ALLOC-01) e, depois da conclusão, o desfecho com `D`, `Dn`, `D'`, `E` e o ramo (ALLOC-28).
-- **BID-27** O operador consulta as reservas de um investidor, com status e, depois do processamento, quantidade alocada.
+- **BID-26** — O operador consulta o livro a qualquer momento, com a demanda acumulada, a lista de reservas com status, se o livro está fechado, a situação do processamento depois do fechamento (ALLOC-01) e, depois da conclusão, o desfecho com `D`, `Dn`, `D'`, `E` e o ramo (ALLOC-28).
+- **BID-27** — O operador consulta as reservas de um investidor, com status e, depois do processamento, quantidade alocada.
 
 ### Integridade e rastreabilidade
 
-- **BID-28** Registro, alteração e cancelamento são atômicos e aplicados um de cada vez por oferta: cada operação é validada contra a definição da oferta recebida e contra todas as reservas aceitas antes dela.
-- **BID-29** Fechamento e congelamento são uma única operação atômica: não existe reserva aceita com instante posterior ao fechamento.
-- **BID-30** A recepção de `OfferPublished` ou `OfferRevoked` que falha é repetida até o evento ser aplicado ou descartado (BID-23 a BID-25).
-- **BID-31** Toda mudança de reserva, todo status aplicado e todo evento descartado registram origem e instante.
-- **BID-32** Dados do investidor não aparecem em rastros de execução; identificadores de reserva e de oferta bastam.
-
-## Domain Events
-
-Esta capability não produz eventos. Ela consome `OfferPublished` (BID-01, BID-24, BID-25) e `OfferRevoked` (BID-23, BID-24), definidos no [Ciclo de Vida da Oferta](../offer-lifecycle/spec.md), que podem chegar repetidos e fora de ordem (OFF-28). Fechamento, processamento e aplicação do resultado acontecem dentro do BookBuilding; o evento `BookProcessed`, que leva o desfecho ao Offering, é definido no [Processamento do Livro](../book-processing/spec.md).
+- **BID-28** — Registro, alteração e cancelamento são atômicos e aplicados um de cada vez por oferta: cada operação é validada contra a definição da oferta recebida e contra todas as reservas aceitas antes dela.
+- **BID-29** — Fechamento e congelamento são uma única operação atômica: não existe reserva aceita com instante posterior ao fechamento.
+- **BID-30** — A recepção de `OfferPublished` ou `OfferRevoked` que falha é repetida até o evento ser aplicado ou descartado (BID-23 a BID-25).
+- **BID-31** — Toda mudança de reserva, todo status aplicado e todo evento descartado registram origem e instante.
+- **BID-32** — Dados do investidor não aparecem em rastros de execução; identificadores de reserva e de oferta bastam.
 
 ## Acceptance Scenarios
 
@@ -196,19 +193,19 @@ Oferta disponível dentro do período, investimento mínimo 10 e máximo 500 e o
 | Surface or dimension | Landing |
 | --- | --- |
 | API do operador: operações | Registrar (BID-01), alterar (BID-12), cancelar (BID-14), fechar o livro (BID-18), consultar o livro (BID-26) e as reservas de um investidor (BID-27) |
-| API do operador: formato da resposta, do erro e códigos | Premissa do contrato HTTP; precedência e conteúdo das rejeições em BID-10 e BID-11 |
-| API do operador: versionamento e compatibilidade | Premissa do contrato HTTP |
-| Consulta: estado vazio e ordenação | Premissa de consulta em Assumptions |
-| Autorização | Lacuna de autenticação e autorização do operador |
-| Validação e limites | BID-01 a BID-11; a alteração reaplica as regras do registro (BID-12) |
-| Transições de estado | Diagrama; BID-12 a BID-15, BID-18, BID-19, BID-22 e BID-23 |
-| Falha e falha parcial | BID-28 a BID-30 |
-| Idempotência e duplicação | Fechamento repetido é rejeitado (BID-19); `OfferRevoked` repetido mantém `Void` (BID-23); `OfferPublished` repetido é descartado (BID-25); reenvio do registro é lacuna |
-| Concorrência e ordenação | BID-17, BID-28 e BID-29; eventos da oferta fora de ordem (BID-24) |
-| Consistência entre capabilities | Eventos da oferta (BID-23 a BID-25, BID-30), com entrega ao menos uma vez (OFF-28); resultado pelo processamento (BID-22) |
-| Observabilidade | BID-16, BID-31 e BID-32 |
-| Ciclo de vida dos dados | Histórico preservado (BID-16, BID-31); quantidade reservada, declarações, opção, instante e ordem nunca mudam por resultado ou revogação (BID-17, BID-22, BID-23); investidores carregados previamente (BID-02) |
-| `n/a` | Tela: o operador usa a API; limite de taxa: plataforma demonstrativa operada só pela corretora; falha de dependência externa: sem integração externa |
+| API do operador: formato da resposta, do erro e códigos | Premissa "A API do operador responde em JSON…"; precedência e conteúdo das rejeições em BID-10 e BID-11 |
+| API do operador: versionamento e compatibilidade | Premissa "A API do operador responde em JSON…" |
+| Consulta: estado vazio e ordenação | Premissa "A consulta de um livro sem reservas devolve demanda zero e lista vazia…" |
+| Authorization | Lacuna "Autenticação e autorização do operador"; comportamento provisório na premissa "Enquanto a lacuna de autenticação e autorização do operador estiver aberta…" |
+| Validation and limits | BID-01 a BID-11; a alteração reaplica as regras do registro (BID-12) |
+| State transitions | Diagrama; BID-12 a BID-15, BID-18, BID-19, BID-22 e BID-23 |
+| Failure and partial failure | BID-28 a BID-30 |
+| Idempotency and duplication | Fechamento repetido é rejeitado (BID-19); `OfferRevoked` repetido mantém `Void` (BID-23); `OfferPublished` repetido é descartado (BID-25); lacuna "Reenvio da mesma requisição de registro" |
+| Concurrency and ordering | BID-17, BID-28 e BID-29; eventos da oferta fora de ordem (BID-24) |
+| Cross-capability consistency | Eventos da oferta (BID-23 a BID-25, BID-30), com entrega ao menos uma vez (OFF-28); resultado pelo processamento (BID-22) |
+| Observability | BID-16, BID-31 e BID-32 |
+| Data lifecycle | Histórico preservado (BID-16, BID-31); quantidade reservada, declarações, opção, instante e ordem nunca mudam por resultado ou revogação (BID-17, BID-22, BID-23); investidores carregados previamente (BID-02) |
+| `n/a` | Rate limiting: plataforma demonstrativa operada só pela corretora; External dependency failure: sem integração externa |
 
 ## Trade-offs
 
@@ -226,6 +223,6 @@ Oferta disponível dentro do período, investimento mínimo 10 e máximo 500 e o
 
 ## References
 
-- [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf), lida em 2026-09-05. Art. 65, § 4º: a reserva é irrevogável salvo modificação ou revogação (BID-12, BID-14, BID-15); a alteração até o fechamento é decisão do autor, sujeita à premissa de ajuste da reserva. Art. 65, § 6º, II e V: o pedido contém as condições da distribuição parcial e identifica a pessoa vinculada (BID-06, BID-08, BID-09). Art. 66: reservas não se aplicam a profissionais (BID-05), sem efeito no modelo. Art. 2º, XVI, e art. 56: a pessoa vinculada é declarada na reserva para a vedação em excesso de demanda (BID-06). Art. 2º, X e XI: profissional e qualificado atestam a condição por escrito (BID-05). Art. 75: a distribuição parcial não se aplica a ofertas exclusivas para profissionais (BID-05), sem distinção por categoria no modelo. Arts. 69, § 1º, e 65, § 5º: a desistência depois do fechamento nasce de modificação ou divergência de prospectos (BID-15); fica fora do Scope, porque a modificação exigiria cancelamento com prazo mínimo de cinco dias úteis. Art. 76, II: encerramento quando a totalidade é colocada antes do fim do prazo (BID-18), base do fechamento antecipado; o anúncio de encerramento fica fora do Scope. Art. 68: a revogação torna ineficazes as aceitações (BID-23). Art. 64 delimita o Scope.
+- [Resolução CVM 160](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/100/resol160consolid.pdf), lida em 2026-09-05. Art. 65, § 4º: a reserva é irrevogável salvo modificação ou revogação (BID-12, BID-14, BID-15); a alteração até o fechamento é decisão do autor, sujeita à premissa "A reserva no livro interno da corretora pode ser ajustada até o fechamento…". Art. 65, § 6º, II e V: o pedido contém as condições da distribuição parcial e identifica a pessoa vinculada (BID-06, BID-08, BID-09). Art. 66: reservas não se aplicam a profissionais (BID-05), sem efeito no modelo. Art. 2º, XVI, e art. 56: a pessoa vinculada é declarada na reserva para a vedação em excesso de demanda (BID-06). Art. 2º, X e XI: profissional e qualificado atestam a condição por escrito (BID-05). Art. 75: a distribuição parcial não se aplica a ofertas exclusivas para profissionais (BID-05), sem distinção por categoria no modelo. Arts. 69, § 1º, e 65, § 5º: a desistência depois do fechamento nasce de modificação ou divergência de prospectos (BID-15); fica fora do Scope, porque a modificação exigiria cancelamento com prazo mínimo de cinco dias úteis. Art. 76, II: encerramento quando a totalidade é colocada antes do fim do prazo (BID-18), base do fechamento antecipado; o anúncio de encerramento fica fora do Scope. Art. 68: a revogação torna ineficazes as aceitações (BID-23). Art. 64 delimita o Scope.
 - [Resolução CVM 30](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/001/resol030consolid.pdf), lida em 2026-09-05. Arts. 11 e 12: investidor profissional e qualificado atestam a condição por escrito (BID-05).
 - Referências terminológicas em inglês para `Bid`, sem valor normativo, lidas em 2026-09-13: comunicados de placement da [Lloyds TSB Group](https://www.sec.gov/Archives/edgar/data/0001160106/000119163808001657/lloy200809196k2.htm), da [Argo Blockchain](https://www.sec.gov/Archives/edgar/data/1841675/000165495423009326/a4294g.htm) e da [Renalytix](https://www.sec.gov/Archives/edgar/data/1811115/000119312524230319/d896405dex992.htm), que usam, entre eles, "to bid in the Bookbuild" e "bids may be scaled down".

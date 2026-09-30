@@ -31,7 +31,7 @@ Ficam fora:
 
 ## Assumptions
 
-- **Os identificadores em inglês do Glossary são propostas, exceto os desfechos e `ScaledBack`, justificados em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Escolha: os identificadores da tabela. Se um for rejeitado, o nome muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
+- **Os identificadores em inglês do Glossary são propostas, exceto os desfechos e `ScaledBack`, justificados em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
 
 ## Glossary
 
@@ -107,54 +107,54 @@ flowchart TD
 
 ### Gatilho, entrada e execução
 
-- **ALLOC-01** O fechamento do livro (BID-18, BID-20) cria o processamento da oferta em `Pending` na mesma operação atômica.
-- **ALLOC-02** A entrada exclusiva do processamento é a definição publicada da oferta, recebida em `OfferPublished`, e o livro fechado (BID-21).
-- **ALLOC-03** Enquanto o processamento está em `Pending`, uma tentativa que falha é repetida automaticamente, sem ação do operador, até a conclusão (ALLOC-30) ou a interrupção (ALLOC-05).
-- **ALLOC-04** Cada oferta produz no máximo um `BookProcessed`.
-- **ALLOC-05** Se o BookBuilding receber `OfferRevoked` com o processamento em `Pending`, o processamento passa a `Interrupted` na mesma operação atômica em que as reservas passam a `Void` (BID-23), e nenhum resultado é aplicado nem evento registrado.
-- **ALLOC-06** `OfferRevoked` recebido depois de `Completed` não altera o desfecho emitido.
-- **ALLOC-07** O processamento é determinístico: a mesma oferta e o mesmo livro fechado produzem exatamente o mesmo resultado, em qualquer tentativa.
+- **ALLOC-01** — O fechamento do livro (BID-18, BID-20) cria o processamento da oferta em `Pending` na mesma operação atômica.
+- **ALLOC-02** — A entrada exclusiva do processamento é a definição publicada da oferta, recebida em `OfferPublished`, e o livro fechado (BID-21).
+- **ALLOC-03** — Enquanto o processamento está em `Pending`, uma tentativa que falha é repetida automaticamente, sem ação do operador, até a conclusão (ALLOC-30) ou a interrupção (ALLOC-05).
+- **ALLOC-04** — Cada oferta produz no máximo um `BookProcessed`.
+- **ALLOC-05** — Se o BookBuilding receber `OfferRevoked` com o processamento em `Pending`, o processamento passa a `Interrupted` na mesma operação atômica em que as reservas passam a `Void` (BID-23), e nenhum resultado é aplicado nem evento registrado.
+- **ALLOC-06** — `OfferRevoked` recebido depois de `Completed` não altera o desfecho emitido.
+- **ALLOC-07** — O processamento é determinístico: a mesma oferta e o mesmo livro fechado produzem exatamente o mesmo resultado, em qualquer tentativa.
 
 ### Consolidação e vedação
 
-- **ALLOC-08** `D` é a soma de `q` de todas as reservas do livro fechado; `Dn` é a soma de `q` das reservas sem declaração de vínculo.
-- **ALLOC-09** Se `D > B × 4/3` e `Dn ≥ B`, as reservas com declaração de vínculo são excluídas: quantidade alocada zero, motivo `ExcludedRelatedParty`.
-- **ALLOC-10** Se `D > B × 4/3` e `Dn < B`, nenhuma reserva é excluída, e o processamento segue em colocação limitada (ALLOC-23).
-- **ALLOC-11** `D'` é a soma de `q` das reservas não excluídas.
+- **ALLOC-08** — `D` é a soma de `q` de todas as reservas do livro fechado; `Dn` é a soma de `q` das reservas sem declaração de vínculo.
+- **ALLOC-09** — Se `D > B × 4/3` e `Dn ≥ B`, as reservas com declaração de vínculo são excluídas: quantidade alocada zero, motivo `ExcludedRelatedParty`.
+- **ALLOC-10** — Se `D > B × 4/3` e `Dn < B`, nenhuma reserva é excluída, e o processamento segue em colocação limitada (ALLOC-23).
+- **ALLOC-11** — `D'` é a soma de `q` das reservas não excluídas.
 
 ### Formação
 
-- **ALLOC-12** Se `D' < M`, a oferta não se forma: desfecho `Lapsed`, e toda reserva recebe zero com motivo `Void`.
-- **ALLOC-13** Se `D' ≥ M`, a oferta se forma (desfecho `Unconditional`) e `E = min(D', B)`. `E` é apurado uma vez e não é recalculado depois do condicionamento.
+- **ALLOC-12** — Se `D' < M`, a oferta não se forma: desfecho `Lapsed`, e toda reserva recebe zero com motivo `Void`.
+- **ALLOC-13** — Se `D' ≥ M`, a oferta se forma (desfecho `Unconditional`) e `E = min(D', B)`. `E` é apurado uma vez e não é recalculado depois do condicionamento.
 
 ### Distribuição parcial (`M ≤ D' < B`)
 
 Em oferta que não admite distribuição parcial (`M = B`, OFF-13), este ramo não ocorre, porque `D' < B` implica `D' < M`.
 
-- **ALLOC-14** Opção 1, condicionada à colocação total da quantidade base: a reserva não é atendida, recebe zero e motivo `CancelledByCondition`.
-- **ALLOC-15** Opção 2, condicionada ao montante mínimo com recebimento da totalidade: a reserva recebe `q`, motivo `Filled`.
-- **ALLOC-16** Opção 3, condicionada ao montante mínimo com recebimento proporcional: a reserva recebe `⌊q × E / B⌋`, truncado para baixo, motivo `PartiallyFilledByCondition`. Zero é resultado válido e mantém esse motivo.
+- **ALLOC-14** — Opção 1, condicionada à colocação total da quantidade base: a reserva não é atendida, recebe zero e motivo `CancelledByCondition`.
+- **ALLOC-15** — Opção 2, condicionada ao montante mínimo com recebimento da totalidade: a reserva recebe `q`, motivo `Filled`.
+- **ALLOC-16** — Opção 3, condicionada ao montante mínimo com recebimento proporcional: a reserva recebe `⌊q × E / B⌋`, truncado para baixo, motivo `PartiallyFilledByCondition`. Zero é resultado válido e mantém esse motivo.
 
 ### Colocação integral (`D' = B`)
 
-- **ALLOC-17** Cada reserva não excluída recebe `q`, motivo `Filled`; a opção de condicionamento é ignorada.
+- **ALLOC-17** — Cada reserva não excluída recebe `q`, motivo `Filled`; a opção de condicionamento é ignorada.
 
 ### Excesso de demanda (`D' > B`)
 
-- **ALLOC-18** Cada reserva do conjunto rateado recebe `⌊q × R / Dr⌋`, com `Dr` a soma de `q` do conjunto rateado. No caso geral o conjunto é o das reservas não excluídas, `R = B` e `Dr = D'`. O motivo é `ScaledBack`, mesmo quando ALLOC-19 leva a quantidade a `q`.
-- **ALLOC-19** O resto do arredondamento, `R` menos a soma de ALLOC-18, é distribuído uma cota por reserva do conjunto rateado, em ordem decrescente da parte fracionária de `q × R / Dr`. O empate é desfeito pela ordem de registro, mais antiga primeiro (BID-17).
-- **ALLOC-20** Nenhuma reserva recebe mais que `q`.
-- **ALLOC-21** Em excesso de demanda, a soma das quantidades alocadas é exatamente `B`.
-- **ALLOC-22** O condicionamento não se aplica em excesso de demanda; a opção declarada é ignorada.
-- **ALLOC-23** Em colocação limitada (ALLOC-10), cada reserva não vinculada recebe `q` com motivo `Filled`; o conjunto rateado é o das vinculadas, `R = B − Dn`, `Dr` é a soma de `q` das vinculadas, e ALLOC-18 a ALLOC-20 se aplicam a esse conjunto. ALLOC-21 vale para o total.
+- **ALLOC-18** — Cada reserva do conjunto rateado recebe `⌊q × R / Dr⌋`, com `Dr` a soma de `q` do conjunto rateado. No caso geral o conjunto é o das reservas não excluídas, `R = B` e `Dr = D'`. O motivo é `ScaledBack`, mesmo quando ALLOC-19 leva a quantidade a `q`.
+- **ALLOC-19** — O resto do arredondamento, `R` menos a soma de ALLOC-18, é distribuído uma cota por reserva do conjunto rateado, em ordem decrescente da parte fracionária de `q × R / Dr`. O empate é desfeito pela ordem de registro, mais antiga primeiro (BID-17).
+- **ALLOC-20** — Nenhuma reserva recebe mais que `q`.
+- **ALLOC-21** — Em excesso de demanda, a soma das quantidades alocadas é exatamente `B`.
+- **ALLOC-22** — O condicionamento não se aplica em excesso de demanda; a opção declarada é ignorada.
+- **ALLOC-23** — Em colocação limitada (ALLOC-10), cada reserva não vinculada recebe `q` com motivo `Filled`; o conjunto rateado é o das vinculadas, `R = B − Dn`, `Dr` é a soma de `q` das vinculadas, e ALLOC-18 a ALLOC-20 se aplicam a esse conjunto. ALLOC-21 vale para o total.
 
 ### Resultado
 
-- **ALLOC-24** Toda quantidade alocada é inteira e maior ou igual a zero.
-- **ALLOC-25** Em qualquer ramo, a soma das quantidades alocadas é menor ou igual a `B`.
-- **ALLOC-26** Investimento mínimo por reserva e máximo por posição valem no registro (BID-03, BID-04), não na alocação: rateio e proporcional podem alocar abaixo do mínimo, inclusive zero. O motivo é a regra aplicada, não a quantidade.
-- **ALLOC-27** O resultado por reserva carrega a quantidade alocada e um motivo da tabela de motivos.
-- **ALLOC-28** O `BookProcessed` identifica a oferta e o instante da conclusão e carrega o desfecho, `D`, `Dn`, `D'`, `E`, o ramo aplicado e a lista identificável de resultados por reserva (ALLOC-27). `E` só é apurado em ALLOC-13; na não formação é não aplicável.
+- **ALLOC-24** — Toda quantidade alocada é inteira e maior ou igual a zero.
+- **ALLOC-25** — Em qualquer ramo, a soma das quantidades alocadas é menor ou igual a `B`.
+- **ALLOC-26** — Investimento mínimo por reserva e máximo por posição valem no registro (BID-03, BID-04), não na alocação: rateio e proporcional podem alocar abaixo do mínimo, inclusive zero. O motivo é a regra aplicada, não a quantidade.
+- **ALLOC-27** — O resultado por reserva carrega a quantidade alocada e um motivo da tabela de motivos.
+- **ALLOC-28** — O `BookProcessed` identifica a oferta e o instante da conclusão e carrega o desfecho, `D`, `Dn`, `D'`, `E`, o ramo aplicado e a lista identificável de resultados por reserva (ALLOC-27). `E` só é apurado em ALLOC-13; na não formação é não aplicável.
 
 | Outcome | Identifier | Meaning |
 | --- | --- | --- |
@@ -182,11 +182,11 @@ Os identificadores dos ramos e dos motivos compostos são nomes descritivos do m
 
 ### Integridade e rastreabilidade
 
-- **ALLOC-29** A aritmética é exata: nenhum valor intermediário é arredondado, e todo truncamento é para baixo.
-- **ALLOC-30** A conclusão é uma operação atômica: a aplicação dos resultados às reservas (BID-22), a passagem a `Completed` e o registro de `BookProcessed` ocorrem juntos, ou nenhum ocorre.
-- **ALLOC-31** O `BookProcessed` registrado é entregue ao Offering ao menos uma vez, inclusive depois de falha do BookBuilding ou do transporte.
-- **ALLOC-32** Cada quantidade alocada é recalculável pelas fórmulas do ramo informado, a partir do livro fechado (BID-21), da quantidade base e do montante mínimo da definição publicada e dos valores de ALLOC-28.
-- **ALLOC-33** O processamento, cada tentativa e o registro de `BookProcessed` levam o identificador da oferta aos rastros de execução; a tentativa que falha registra também a falha.
+- **ALLOC-29** — A aritmética é exata: nenhum valor intermediário é arredondado, e todo truncamento é para baixo.
+- **ALLOC-30** — A conclusão é uma operação atômica: a aplicação dos resultados às reservas (BID-22), a passagem a `Completed` e o registro de `BookProcessed` ocorrem juntos, ou nenhum ocorre.
+- **ALLOC-31** — O `BookProcessed` registrado é entregue ao Offering ao menos uma vez, inclusive depois de falha do BookBuilding ou do transporte.
+- **ALLOC-32** — Cada quantidade alocada é recalculável pelas fórmulas do ramo informado, a partir do livro fechado (BID-21), da quantidade base e do montante mínimo da definição publicada e dos valores de ALLOC-28.
+- **ALLOC-33** — O processamento, cada tentativa e o registro de `BookProcessed` levam o identificador da oferta aos rastros de execução; a tentativa que falha registra também a falha.
 
 ## Domain Events
 
@@ -232,15 +232,15 @@ O processamento consome `OfferPublished` (ALLOC-02) e `OfferRevoked` (ALLOC-05, 
 | --- | --- |
 | Evento `BookProcessed` | ALLOC-28 e Domain Events |
 | Consulta do resultado, do desfecho e da situação do processamento | Pelo [Livro de Reservas](../bid-book/spec.md) (BID-22, BID-26, BID-27) |
-| Validação e limites | ALLOC-20 e ALLOC-24 a ALLOC-26 |
-| Transições de estado | Diagrama da situação do processamento; ALLOC-01, ALLOC-03, ALLOC-05 e ALLOC-30 |
-| Falha e falha parcial | ALLOC-03, ALLOC-30 e ALLOC-31 |
-| Idempotência e duplicação | ALLOC-04 e ALLOC-07; o Offering descarta `BookProcessed` repetido (OFF-25) |
-| Concorrência e ordenação | Revogação durante o processamento, aplicada junto com a revogação das reservas (ALLOC-05) |
-| Consistência entre capabilities | Entrada exclusiva (ALLOC-02); conclusão atômica (ALLOC-30); entrega ao menos uma vez (ALLOC-31) |
-| Observabilidade | ALLOC-32 e ALLOC-33 |
-| Ciclo de vida dos dados | O resultado fica nas reservas (BID-22) e, depois de revogação, no histórico delas (BID-23) |
-| `n/a` | API, tela, autorização e limite de taxa: o processamento não expõe operação própria e é disparado pelo fechamento (BID-18); falha de dependência externa: sem integração externa |
+| Validation and limits | ALLOC-20 e ALLOC-24 a ALLOC-26 |
+| State transitions | Diagrama da situação do processamento; ALLOC-01, ALLOC-03, ALLOC-05 e ALLOC-30 |
+| Failure and partial failure | ALLOC-03, ALLOC-30 e ALLOC-31 |
+| Idempotency and duplication | ALLOC-04 e ALLOC-07; o Offering descarta `BookProcessed` repetido (OFF-25) |
+| Concurrency and ordering | Revogação durante o processamento, aplicada junto com a revogação das reservas (ALLOC-05) |
+| Cross-capability consistency | Entrada exclusiva (ALLOC-02); conclusão atômica (ALLOC-30); entrega ao menos uma vez (ALLOC-31) |
+| Observability | ALLOC-32 e ALLOC-33 |
+| Data lifecycle | O resultado fica nas reservas (BID-22) e, depois de revogação, no histórico delas (BID-23) |
+| `n/a` | Authorization: o processamento não expõe operação a nenhum chamador; Rate limiting: o processamento roda uma vez por livro fechado, sem chamada que o dispare de fora; External dependency failure: sem integração externa |
 
 ## Trade-offs
 

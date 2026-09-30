@@ -34,9 +34,12 @@ Ficam fora:
 
 ## Assumptions
 
-- **Os identificadores em inglês do Glossary são propostas.** Nenhum tipo de domínio em `src/Offering` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Escolha: os identificadores da tabela. Se um for rejeitado, o nome muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
-- **A API do operador responde em JSON com os identificadores do Glossary e sinaliza rejeições com ProblemDetails: 400 para violação de validação, 404 para oferta inexistente e 409 para operação não permitida no estado corrente.** Nenhuma decisão de produto fixa o formato das respostas nem os códigos; os serviços já registram ProblemDetails (`src/ServiceDefaults/ApiDefaultsExtensions.cs:23`) e versionamento por segmento de URL (`src/ServiceDefaults/ApiDefaultsExtensions.cs:19`). Escolha: esses códigos, com as violações de OFF-16 listadas no corpo, e `v1` como primeira versão, com mudança incompatível publicada em nova versão. Se for falsa, mudam os códigos e o corpo das respostas antes de existir consumidor da API. Confirmed? n
-- **A lista de ofertas do operador (OFF-20) inclui todos os estados, segue a ordem de criação e é vazia quando não há ofertas.** Nenhuma decisão de produto define a apresentação da lista; o operador precisa ver os Drafts para editá-los (OFF-02). Se for falsa, muda só a apresentação da consulta. Confirmed? n
+- **Enquanto a lacuna de autenticação e autorização do operador estiver aberta, a API aceita toda chamada como feita pelo operador, sem identidade individual, e o registro de OFF-31 identifica o autor só como operador ou contexto.** Nenhum serviço em `src` configura autenticação. Choice: o comportamento provisório que mantém o estado atual do código. If false: as operações passam a exigir identidade, e OFF-31 passa a registrar a identidade autenticada. Confirmed? n
+- **Enquanto a lacuna do tratamento dos espaços nas bordas estiver aberta, a publicação que informa a identificação das cotas com espaços nas bordas é rejeitada (OFF-05).** Rejeitar preserva o Draft e o dado informado; remover os espaços alteraria o dado sem decisão. Choice: rejeitar a publicação, com a violação listada por OFF-16. If false: a publicação passa a remover os espaços, e a violação deixa de existir. Confirmed? n
+- **Enquanto a lacuna do conjunto de opções informado em oferta que não admite distribuição parcial estiver aberta, a publicação que informa um conjunto não vazio nesse caso é rejeitada (OFF-13).** Rejeitar preserva o Draft e não descarta o que o operador informou; é também o tratamento da opção fora da condição na reserva (BID-09). Choice: rejeitar a publicação, com a violação listada por OFF-16. If false: a publicação passa a ignorar o conjunto, e a definição levada por `OfferPublished` sai sem opções. Confirmed? n
+- **A API do operador responde em JSON com os identificadores do Glossary e sinaliza rejeições com ProblemDetails: 400 para violação de validação, 404 para oferta inexistente e 409 para operação não permitida no estado corrente.** Nenhuma decisão de produto fixa o formato das respostas nem os códigos; os serviços já registram ProblemDetails (`src/ServiceDefaults/ApiDefaultsExtensions.cs:23`) e versionamento por segmento de URL (`src/ServiceDefaults/ApiDefaultsExtensions.cs:19`). Choice: esses códigos, com as violações de OFF-16 listadas no corpo, e `v1` como primeira versão, com mudança incompatível publicada em nova versão. If false: mudam os códigos e o corpo das respostas antes de existir consumidor da API. Confirmed? n
+- **A lista de ofertas do operador (OFF-20) inclui todos os estados, segue a ordem de criação e é vazia quando não há ofertas.** Nenhuma decisão de produto define a apresentação da lista; o operador precisa ver os Drafts para editá-los (OFF-02). Choice: todos os estados, em ordem de criação. If false: muda só a apresentação da consulta. Confirmed? n
+- **Os identificadores em inglês do Glossary são propostas.** Nenhum tipo de domínio em `src/Offering` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
 
 ## Gaps
 
@@ -97,28 +100,28 @@ stateDiagram-v2
 
 ### Draft
 
-- **OFF-01** Toda oferta nasce como Draft; não há criação em outro estado.
-- **OFF-02** Draft aceita qualquer combinação de atributos, inclusive ausentes ou inconsistentes, e pode ser editado e descartado sem restrição.
+- **OFF-01** — Toda oferta nasce como Draft; não há criação em outro estado.
+- **OFF-02** — Draft aceita qualquer combinação de atributos, inclusive ausentes ou inconsistentes, e pode ser editado e descartado sem restrição.
 
 ### Definição e atributos
 
 Os requisitos desta seção e da seguinte são as regras que a publicação valida (OFF-15); em Draft vale OFF-02.
 
-- **OFF-03** O nome está presente e não é vazio.
-- **OFF-04** A identificação das cotas está presente: fundo, classe e número da emissão são obrigatórios, e a subclasse é opcional.
-- **OFF-05** A identificação das cotas de uma oferta publicada não tem espaços nas bordas. O tratamento dos espaços informados está em Gaps.
-- **OFF-06** A publicação não exige que o nome nem a identificação das cotas sejam únicos entre as ofertas e não valida a identificação contra cadastro.
-- **OFF-07** O preço por cota está presente, é estritamente positivo e é decimal exato com até 8 casas.
-- **OFF-08** A quantidade base está presente, é inteira e é maior ou igual a 1.
-- **OFF-09** O investimento mínimo por investidor está presente, é inteiro, maior ou igual a 1 e menor ou igual ao investimento máximo.
-- **OFF-10** O investimento máximo por investidor está presente, é inteiro e é menor ou igual à quantidade base.
-- **OFF-11** O período de reserva tem início e fim presentes, com fim posterior ao início; o início pode estar no passado na publicação. O intervalo é fechado: um instante pertence ao período quando início ≤ instante ≤ fim, e o período terminou quando instante > fim.
+- **OFF-03** — O nome está presente e não é vazio.
+- **OFF-04** — A identificação das cotas está presente: fundo, classe e número da emissão são obrigatórios, e a subclasse é opcional.
+- **OFF-05** — A identificação das cotas de uma oferta publicada não tem espaços nas bordas. A publicação que os informa é rejeitada, comportamento provisório da premissa "Enquanto a lacuna do tratamento dos espaços nas bordas estiver aberta…".
+- **OFF-06** — A publicação não exige que o nome nem a identificação das cotas sejam únicos entre as ofertas e não valida a identificação contra cadastro.
+- **OFF-07** — O preço por cota está presente, é estritamente positivo e é decimal exato com até 8 casas.
+- **OFF-08** — A quantidade base está presente, é inteira e é maior ou igual a 1.
+- **OFF-09** — O investimento mínimo por investidor está presente, é inteiro, maior ou igual a 1 e menor ou igual ao investimento máximo.
+- **OFF-10** — O investimento máximo por investidor está presente, é inteiro e é menor ou igual à quantidade base.
+- **OFF-11** — O período de reserva tem início e fim presentes, com fim posterior ao início; o início pode estar no passado na publicação. O intervalo é fechado: um instante pertence ao período quando início ≤ instante ≤ fim, e o período terminou quando instante > fim.
 
 ### Distribuição parcial e opções
 
-- **OFF-12** O montante mínimo está presente, é inteiro, maior ou igual a 1 e menor ou igual à quantidade base.
-- **OFF-13** Com montante mínimo igual à quantidade base, a oferta não admite distribuição parcial e o conjunto de opções não se aplica. O tratamento de um conjunto informado nesse caso está em Gaps.
-- **OFF-14** Em oferta que admite distribuição parcial, o conjunto de opções aceitas contém obrigatoriamente as opções 1 e 2 e, a critério do ofertante, a 3. Conjunto sem a 1 ou sem a 2 é rejeitado.
+- **OFF-12** — O montante mínimo está presente, é inteiro, maior ou igual a 1 e menor ou igual à quantidade base.
+- **OFF-13** — Com montante mínimo igual à quantidade base, a oferta não admite distribuição parcial e o conjunto de opções não se aplica. A publicação que informa um conjunto não vazio nesse caso é rejeitada, comportamento provisório da premissa "Enquanto a lacuna do conjunto de opções informado…".
+- **OFF-14** — Em oferta que admite distribuição parcial, o conjunto de opções aceitas contém obrigatoriamente as opções 1 e 2 e, a critério do ofertante, a 3. Conjunto sem a 1 ou sem a 2 é rejeitado.
 
 O efeito de cada opção na alocação pertence ao [Processamento do Livro](../book-processing/spec.md).
 
@@ -130,36 +133,36 @@ O efeito de cada opção na alocação pertence ao [Processamento do Livro](../b
 
 ### Publicação e consulta
 
-- **OFF-15** Publicar é ação explícita, distinta da edição: valida todos os atributos como uma unidade e só leva a oferta a `Open` se nenhuma regra for violada.
-- **OFF-16** A rejeição da publicação informa todas as violações de OFF-03 a OFF-14 e de OFF-17, com o atributo e a regra de cada uma.
-- **OFF-17** A publicação é rejeitada se o fim do período de reserva já passou no instante da publicação.
-- **OFF-18** A alteração de atributo de oferta publicada é rejeitada, com o estado corrente, e a definição permanece a publicada.
-- **OFF-19** Nenhum evento é emitido para oferta em Draft; os demais contextos só conhecem a oferta a partir de `OfferPublished`.
-- **OFF-20** O operador consulta qualquer oferta e lista as ofertas, inclusive em Draft, com os atributos e o estado corrente.
+- **OFF-15** — Publicar é ação explícita, distinta da edição: valida todos os atributos como uma unidade e só leva a oferta a `Open` se nenhuma regra for violada.
+- **OFF-16** — A rejeição da publicação informa todas as violações de OFF-03 a OFF-14 e de OFF-17, com o atributo e a regra de cada uma.
+- **OFF-17** — A publicação é rejeitada se o fim do período de reserva já passou no instante da publicação.
+- **OFF-18** — A alteração de atributo de oferta publicada é rejeitada, com o estado corrente, e a definição permanece a publicada.
+- **OFF-19** — Nenhum evento é emitido para oferta em Draft; os demais contextos só conhecem a oferta a partir de `OfferPublished`.
+- **OFF-20** — O operador consulta qualquer oferta e lista as ofertas, inclusive em Draft, com os atributos e o estado corrente.
 
 ### Estados
 
-- **OFF-21** As únicas transições são as do diagrama. Qualquer outra transição solicitada pelo operador é rejeitada, com o estado corrente e a transição tentada; o desfecho recebido fora de `Open` segue OFF-25.
+- **OFF-21** — As únicas transições são as do diagrama. Qualquer outra transição solicitada pelo operador é rejeitada, com o estado corrente e a transição tentada; o desfecho recebido fora de `Open` segue OFF-25.
 
 ### Revogação
 
-- **OFF-22** Revogar é ação explícita do operador, permitida em `Open` e `Unconditional`.
+- **OFF-22** — Revogar é ação explícita do operador, permitida em `Open` e `Unconditional`.
 
 ### Desfecho
 
-- **OFF-23** Oferta `Open` que recebe o desfecho não formada passa a `Lapsed`, terminal.
-- **OFF-24** Oferta `Open` que recebe o desfecho formada passa a `Unconditional`, fim do ciclo de sucesso.
-- **OFF-25** O desfecho só é aceito em `Open`, o que o torna único por oferta. Recebido em qualquer outro estado, inclusive `Revoked` ou depois de outro desfecho, é ignorado sem alterar a oferta e registrado como descartado.
+- **OFF-23** — Oferta `Open` que recebe o desfecho não formada passa a `Lapsed`, terminal.
+- **OFF-24** — Oferta `Open` que recebe o desfecho formada passa a `Unconditional`, fim do ciclo de sucesso.
+- **OFF-25** — O desfecho só é aceito em `Open`, o que o torna único por oferta. Recebido em qualquer outro estado, inclusive `Revoked` ou depois de outro desfecho, é ignorado sem alterar a oferta e registrado como descartado.
 
 ### Integridade, eventos e rastreabilidade
 
-- **OFF-26** A validação da publicação e cada transição de estado são atômicas.
-- **OFF-27** A publicação e a revogação aceitas registram o evento correspondente na mesma operação atômica: não existe publicação ou revogação sem o evento, nem evento de operação rejeitada ou desfeita.
-- **OFF-28** Cada evento registrado é entregue aos consumidores ao menos uma vez, inclusive depois de falha do Offering ou do transporte.
-- **OFF-29** A recepção de `BookProcessed` que falha é repetida até o desfecho ser aplicado (OFF-23, OFF-24) ou descartado (OFF-25).
-- **OFF-30** As operações sobre a mesma oferta (edição, publicação, revogação e recepção do desfecho) são aplicadas uma de cada vez: cada uma parte do estado deixado pela anterior.
-- **OFF-31** Toda transição registra quem ou qual contexto a disparou e quando; o desfecho descartado (OFF-25) também.
-- **OFF-32** O preço por cota é armazenado e devolvido sem arredondamento binário.
+- **OFF-26** — A validação da publicação e cada transição de estado são atômicas.
+- **OFF-27** — A publicação e a revogação aceitas registram o evento correspondente na mesma operação atômica: não existe publicação ou revogação sem o evento, nem evento de operação rejeitada ou desfeita.
+- **OFF-28** — Cada evento registrado é entregue aos consumidores ao menos uma vez, inclusive depois de falha do Offering ou do transporte.
+- **OFF-29** — A recepção de `BookProcessed` que falha é repetida até o desfecho ser aplicado (OFF-23, OFF-24) ou descartado (OFF-25).
+- **OFF-30** — As operações sobre a mesma oferta (edição, publicação, revogação e recepção do desfecho) são aplicadas uma de cada vez: cada uma parte do estado deixado pela anterior.
+- **OFF-31** — Toda transição registra quem ou qual contexto a disparou e quando; o desfecho descartado (OFF-25) também.
+- **OFF-32** — O preço por cota é armazenado e devolvido sem arredondamento binário.
 
 ### Interação com o BookBuilding
 
@@ -219,6 +222,7 @@ Base válida: identificação completa, nome preenchido, preço 100, quantidade 
 | Período expirado | Início anteontem; fim ontem | Período válido; instante > fim | OFF-17 | Publicação rejeitada |
 | Preço exato | Preço 96,53420001 | Oito casas decimais | OFF-07, OFF-32 | A consulta devolve 96,53420001 |
 | Sem distribuição parcial | Montante mínimo 1000; opções vazias | Montante mínimo = quantidade base | OFF-13 | Publicação aceita |
+| Opções fora da condição | Montante mínimo 1000; opções {1, 2} | Montante mínimo = quantidade base | OFF-13 | Publicação rejeitada; Draft preservado |
 | Opções incompletas | Montante mínimo 600; opções vazias ou {1, 3} | Falta opção obrigatória | OFF-14 | Publicação rejeitada |
 | Opções obrigatórias | Montante mínimo 600; opções {1, 2} | Opção 3 omitida | OFF-14 | Publicação aceita |
 | Edição após publicação | Alteração de um atributo | Oferta `Open` | OFF-18 | Alteração rejeitada com o estado `Open`; definição idêntica |
@@ -241,19 +245,19 @@ Base válida: identificação completa, nome preenchido, preço 100, quantidade 
 | Surface or dimension | Landing |
 | --- | --- |
 | API do operador: operações | Criar, editar e descartar Draft (OFF-01, OFF-02), publicar (OFF-15), revogar (OFF-22), consultar e listar (OFF-20) |
-| API do operador: formato da resposta, do erro e códigos | Premissa do contrato HTTP; conteúdo das rejeições em OFF-16, OFF-18 e OFF-21 |
-| API do operador: versionamento e compatibilidade | Premissa do contrato HTTP |
-| Consulta: estado vazio e ordenação | Premissa da lista de ofertas |
-| Autorização | Lacuna de autenticação e autorização do operador |
-| Validação e limites | OFF-03 a OFF-14 e OFF-17; OFF-02 dispensa validação em Draft |
-| Transições de estado | OFF-21 e o diagrama; OFF-22 a OFF-25 |
-| Falha e falha parcial | OFF-26 a OFF-29 |
-| Idempotência e duplicação | Desfecho repetido é descartado (OFF-25); publicar ou revogar de novo é transição fora do diagrama (OFF-21); os consumidores tratam eventos repetidos (Domain Events) |
-| Concorrência e ordenação | OFF-30; eventos sem ordem garantida (Domain Events) |
-| Consistência entre capabilities | OFF-27 a OFF-29 e as regras de recepção dos consumidores (Domain Events) |
-| Observabilidade | OFF-31 |
-| Ciclo de vida dos dados | Draft descartável (OFF-02); definição publicada imutável (OFF-18) |
-| `n/a` | Tela: o operador usa a API; limite de taxa: plataforma demonstrativa operada só pela corretora; falha de dependência externa: sem integração externa |
+| API do operador: formato da resposta, do erro e códigos | Premissa "A API do operador responde em JSON…"; conteúdo das rejeições em OFF-16, OFF-18 e OFF-21 |
+| API do operador: versionamento e compatibilidade | Premissa "A API do operador responde em JSON…" |
+| Consulta: estado vazio e ordenação | Premissa "A lista de ofertas do operador (OFF-20)…" |
+| Authorization | Lacuna "Autenticação e autorização do operador"; comportamento provisório na premissa "Enquanto a lacuna de autenticação e autorização do operador estiver aberta…" |
+| Validation and limits | OFF-03 a OFF-14 e OFF-17; OFF-02 dispensa validação em Draft |
+| State transitions | OFF-21 e o diagrama; OFF-22 a OFF-25 |
+| Failure and partial failure | OFF-26 a OFF-29 |
+| Idempotency and duplication | Desfecho repetido é descartado (OFF-25); publicar ou revogar de novo é transição fora do diagrama (OFF-21); os consumidores tratam eventos repetidos (Domain Events) |
+| Concurrency and ordering | OFF-30; eventos sem ordem garantida (Domain Events) |
+| Cross-capability consistency | OFF-27 a OFF-29 e as regras de recepção dos consumidores (Domain Events) |
+| Observability | OFF-31 |
+| Data lifecycle | Draft descartável (OFF-02); definição publicada imutável (OFF-18) |
+| `n/a` | Rate limiting: plataforma demonstrativa operada só pela corretora; External dependency failure: sem integração externa |
 
 ## Trade-offs
 

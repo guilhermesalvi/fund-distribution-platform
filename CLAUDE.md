@@ -62,7 +62,7 @@ Trabalhe na `main`. Não crie branches auxiliares nem recrie branches ou tags re
 - `docs/adr`: decisões que valem para mais de uma capability.
 - `docs/specs`: uma spec por capability, fonte canônica do produto.
 
-Planos, specs e demais artefatos técnicos ficam onde a skill `sdd` define.
+Planos, specs e demais artefatos técnicos ficam onde a skill `sdd` define. A numeração dos requisitos recomeçou no commit `37442173`: ao conferir que um ID novo nunca existiu, busque só a partir dele, com `git log -S "<ID>" 37442173..`.
 
 Todo arquivo versionado aparece no Solution Explorer. Arquivos internos a projetos são exibidos pelo projeto; os demais entram no `FundDistributionPlatform.slnx`, exceto o próprio `.slnx`. Arquivos na raiz ficam em `/SolutionItems/`. Cada diretório documental vira `<Folder Name="/caminho/completo/">`, inclusive pais vazios. Cada arquivo usa `<File Path="caminho/relativo" />`; os projetos ficam em `/src/` e `/tests/`, sem pasta própria por projeto. Ordene pastas e itens alfabeticamente, sem distinção de caixa.
 

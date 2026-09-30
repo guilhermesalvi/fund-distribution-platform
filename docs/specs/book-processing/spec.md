@@ -31,7 +31,7 @@ Ficam fora:
 
 ## Assumptions
 
-- **Os identificadores em inglês do Glossary são propostas, exceto os desfechos e `ScaledBack`, justificados em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? n
+- **Os identificadores em inglês do Glossary são propostas, exceto os desfechos e `ScaledBack`, justificados em Trade-offs.** Nenhum tipo de domínio em `src/BookBuilding` os fixa, e a convenção do projeto pede o identificador canônico antes de o nome entrar no código. Choice: os identificadores da tabela. If false: o identificador rejeitado muda sem custo de migração enquanto nenhum tipo o usar. Confirmed? y (Autor, 2026-09-30)
 
 ## Glossary
 

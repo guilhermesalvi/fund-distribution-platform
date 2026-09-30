@@ -7,7 +7,7 @@ Plataforma composta por dois serviços, um por contexto de domínio, e um worker
 | Projeto | Tipo | Responsabilidade prevista |
 | --- | --- | --- |
 | `Offering` | API | [Ciclo de Vida da Oferta](docs/specs/offer-lifecycle/spec.md) |
-| `BookBuilding` | API | [Livro de Reservas](docs/specs/bid-lifecycle/spec.md) e [Processamento do Livro](docs/specs/book-processing/spec.md) |
+| `BookBuilding` | API | [Livro de Reservas](docs/specs/bid-book/spec.md) e [Processamento do Livro](docs/specs/book-processing/spec.md) |
 | `DataMigration` | Worker | Migração de dados. Não expõe HTTP. |
 
 O que já existe e roda: AppHost do Aspire com os três projetos, `ServiceDefaults` (OpenTelemetry, service discovery, resiliência HTTP, health checks, versionamento de API, ProblemDetails e OpenAPI) e os endpoints de diagnóstico listados abaixo.
@@ -59,6 +59,7 @@ No Windows, use `-r win-x64` com o Build Tools do Visual Studio instalado.
 .
 ├── .github/workflows/                # CI: build, testes e publicação AOT
 ├── docs/
+│   ├── adr/                          # decisões que valem para mais de uma capability
 │   └── specs/                        # uma spec por capability
 ├── src/
 │   ├── CLAUDE.md                     # instruções do código de produção

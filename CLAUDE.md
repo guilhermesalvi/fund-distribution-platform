@@ -59,6 +59,7 @@ Trabalhe na `main`. Não crie branches auxiliares nem recrie branches ou tags re
 - `src/DataMigration`: worker sem HTTP nem Native AOT.
 - `tests/UnitTests`: xUnit, lógica sem host; domínio futuro organizado por contexto.
 - `tests/IntegrationTests`: xUnit e `Aspire.Hosting.Testing`; exige Aspire CLI porque o AppHost usa `AspireUseCliBundle`.
+- `docs/adr`: decisões que valem para mais de uma capability.
 - `docs/specs`: uma spec por capability, fonte canônica do produto.
 
 Planos, specs e demais artefatos técnicos ficam onde a skill `sdd` define.

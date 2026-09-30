@@ -1,13 +1,13 @@
 # Fund Distribution Platform
 
-Modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de classe fechada a investidor final. Não há liquidação financeira nem integração externa; o investidor não acessa a plataforma, e o operador da corretora age em seu nome. O domínio está descrito nos PRDs de `docs/prd`, a partir da [visão geral](docs/prd/0000-platform-overview.md); cada PRD registra suas decisões, com custo e motivo, e as fontes regulatórias.
+Modelo executável do comportamento regulado pela Resolução CVM 160 (ofertas públicas) e pela Resolução CVM 175 (fundos), reduzido ao mínimo viável, para o caso de uso de corretora distribuindo cotas de classe fechada a investidor final. Não há liquidação financeira nem integração externa; o investidor não acessa a plataforma, e o operador da corretora age em seu nome. O domínio está descrito em `docs/specs`, uma spec por capability; cada spec registra suas regras, suas decisões, com custo e motivo, e as fontes regulatórias.
 
-Plataforma composta por dois serviços, um por contexto de domínio, e um worker de migração de dados. O comportamento de negócio ainda não está implementado: os serviços são o esqueleto de composição (`Program.cs` com `ServiceDefaults`), sem endpoints nem regras de domínio, e o worker é o modelo do template. O que cada projeto fará está nos PRDs:
+Plataforma composta por dois serviços, um por contexto de domínio, e um worker de migração de dados. Cada contexto mantém sua persistência, e os dois se comunicam por eventos: o Offering é upstream, e o BookBuilding consome a definição e o estado da oferta e devolve o desfecho do livro. O comportamento de negócio ainda não está implementado: os serviços são o esqueleto de composição (`Program.cs` com `ServiceDefaults`), sem endpoints nem regras de domínio, e o worker é o modelo do template. O que cada projeto fará está nas specs:
 
 | Projeto | Tipo | Responsabilidade prevista |
 | --- | --- | --- |
-| `Offering` | API | Definição e ciclo de vida da oferta ([PRD 0001](docs/prd/0001-offering-offer-lifecycle.md)) |
-| `BookBuilding` | API | Reservas, fechamento e processamento do livro ([PRD 0002](docs/prd/0002-book-building-bid-lifecycle.md), [PRD 0003](docs/prd/0003-book-building-book-processing.md)) |
+| `Offering` | API | [Ciclo de Vida da Oferta](docs/specs/offer-lifecycle/spec.md) |
+| `BookBuilding` | API | [Livro de Reservas](docs/specs/bid-lifecycle/spec.md) e [Processamento do Livro](docs/specs/book-processing/spec.md) |
 | `DataMigration` | Worker | Migração de dados. Não expõe HTTP. |
 
 O que já existe e roda: AppHost do Aspire com os três projetos, `ServiceDefaults` (OpenTelemetry, service discovery, resiliência HTTP, health checks, versionamento de API, ProblemDetails e OpenAPI) e os endpoints de diagnóstico listados abaixo.
@@ -59,7 +59,7 @@ No Windows, use `-r win-x64` com o Build Tools do Visual Studio instalado.
 .
 ├── .github/workflows/                # CI: build, testes e publicação AOT
 ├── docs/
-│   └── prd/                          # overview e PRDs das capabilities
+│   └── specs/                        # uma spec por capability
 ├── src/
 │   ├── CLAUDE.md                     # instruções do código de produção
 │   ├── AppHost/                      # Aspire AppHost; ponto de entrada local
@@ -86,7 +86,7 @@ As convenções do repositório e as instruções do Claude Code partem do [CLAU
 
 Para trabalhar com Claude Code, inicie a sessão na raiz do repositório. O repositório não fixa modelo, esforço, permissões, hooks ou MCP; a conta e o ambiente determinam a disponibilidade e as permissões.
 
-As skills `prd` e `sdd` vêm do plugin `ai-skills`, instalado uma vez no escopo do usuário:
+A skill `sdd` vem do plugin `ai-skills`, instalado uma vez no escopo do usuário:
 
 ```bash
 claude plugin marketplace add guilhermesalvi/ai-skills

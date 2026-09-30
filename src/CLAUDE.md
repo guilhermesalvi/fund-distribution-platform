@@ -15,11 +15,11 @@ Comente apenas o que o código não mostra, como o motivo de uma escolha ou uma 
 
 ## Linguagem e fronteiras do domínio
 
-Use no código os identificadores canônicos do glossário do PRD dono. Se faltar um conceito ou equivalente em inglês, complete o glossário do PRD dono antes de introduzir o nome no código.
+Use no código os identificadores canônicos do glossário da spec dona. Se faltar um conceito ou equivalente em inglês, complete o glossário da spec dona antes de introduzir o nome no código.
 
 Operações de negócio são nomeadas pelo motivo da mudança, como fechar ou revogar; evite `SetX` e `UpdateX`, com setters privados por padrão.
 
-Cada contexto persiste sua visão e seus modelos. Integração ocorre por evento ou consulta ao dono, sem tabelas ou modelos compartilhados. O PRD 0000 determina a direção das dependências e lista produtor e consumidores de cada evento; o conteúdo do evento está no PRD produtor.
+Cada contexto persiste sua visão e seus modelos. Integração ocorre por evento ou consulta ao dono, sem tabelas ou modelos compartilhados. O Offering é upstream do BookBuilding. A spec produtora define cada evento, com conteúdo e consumidores, e a spec consumidora o cita.
 
 ## Verificação de Native AOT
 

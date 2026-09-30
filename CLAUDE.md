@@ -1,6 +1,6 @@
 # Convenções do repositório
 
-Plataforma demonstrativa em .NET 10 e Aspire. O [README](README.md) descreve o estado técnico e o [PRD 0000](docs/prd/0000-platform-overview.md) apresenta o contrato do produto.
+Plataforma demonstrativa em .NET 10 e Aspire. O [README](README.md) descreve o estado técnico, e as specs das capabilities em `docs/specs` definem o contrato do produto.
 
 O projeto é pessoal e não recebe contribuições externas. O README apresenta a solução, seu estado técnico, setup e execução; não inclua convites para contribuir nem instruções de fork ou clonagem como fluxo de contribuição.
 
@@ -8,7 +8,7 @@ O projeto é pessoal e não recebe contribuições externas. O README apresenta 
 
 - Código de produção, inclusive revisão sem edição: [src/CLAUDE.md](src/CLAUDE.md).
 - Código de testes: [tests/CLAUDE.md](tests/CLAUDE.md).
-- Requisitos de produto: [docs/prd/CLAUDE.md](docs/prd/CLAUDE.md) e o PRD da capability afetada.
+- Requisitos e comportamento: a spec da capability afetada, conforme a skill `sdd`.
 - Setup e execução local: [README](README.md).
 - Mudança de comportamento, nome ou fronteira: consulte os requisitos, decisões e histórico pertinentes. Uma edição localizada não exige ler todos os documentos.
 
@@ -20,17 +20,17 @@ Cada regra tem uma única fonte, escolhida pelo objeto que governa: convenções
 
 Não repita nem cite regra já carregada, como as deste arquivo, sempre em contexto, e as do `CLAUDE.md` da área em que Claude trabalha. Cite outra fonte só quando o leitor precisar lê-la para agir, e prefira o nome estável (skill, arquivo, ID, rótulo de contrato ou evento) a caminhos com âncora de seção.
 
-As skills `prd` (produto) e `sdd` (trabalho técnico) vêm do plugin `ai-skills`, instalado na conta, e são invocadas com `/ai-skills:prd` e `/ai-skills:sdd` ou pela descrição. Correções mecânicas de documentação não usam esses fluxos.
+A skill `sdd` vem do plugin `ai-skills`, instalado na conta, e é invocada com `/ai-skills:sdd` ou pela descrição. Correções mecânicas de documentação não usam esse fluxo.
 
 <!--
 Notas de manutenção. Comentários HTML em bloco não entram no contexto do Claude Code.
 
 - Carregamento: o Claude Code carrega ao iniciar o CLAUDE.md do diretório de trabalho e dos ancestrais, e o de um subdiretório quando lê arquivos nele (https://code.claude.com/docs/en/memory). Não recriar docs/development para essas orientações.
-- Skills: prd e sdd vêm do plugin ai-skills@ai-skills, instalado no escopo do usuário; o repositório não versiona skills (https://code.claude.com/docs/en/plugins).
+- Skills: sdd vem do plugin ai-skills@ai-skills, instalado no escopo do usuário; o repositório não versiona skills (https://code.claude.com/docs/en/plugins).
 - Instrução ou skill ausente: conferir o diretório de início, os Memory files em /context, o menu / e o plugin ai-skills em /plugin; reiniciar a sessão.
-- Duplicidade ou divergência: conferir ~/.claude/CLAUDE.md, CLAUDE.local.md, ~/.claude/skills e plugins da conta antes de editar o projeto. Skill pessoal ou de projeto de mesmo nome carrega junto com a do plugin e responde por /prd ou /sdd; a do plugin continua em /ai-skills:<skill> (https://code.claude.com/docs/en/skills). Não copiar configurações pessoais para compensar falha de carregamento.
+- Duplicidade ou divergência: conferir ~/.claude/CLAUDE.md, CLAUDE.local.md, ~/.claude/skills e plugins da conta antes de editar o projeto. Skill pessoal ou de projeto de mesmo nome carrega junto com a do plugin e responde por /sdd; a do plugin continua em /ai-skills:<skill> (https://code.claude.com/docs/en/skills). Não copiar configurações pessoais para compensar falha de carregamento.
 - Permissões, hooks e servidores MCP ficam nas configurações do Claude Code (https://code.claude.com/docs/en/settings e https://code.claude.com/docs/en/permissions). Um .claude/settings.json compartilhado precisa de necessidade concreta; CLAUDE.local.md e .claude/settings.local.json ficam fora do Git.
-- Após mudar instruções ou skills, conferir em sessões novas, pelos Memory files de /context: revisão de produção iniciada na raiz e em src/Offering; revisão de testes em tests; revisão editorial em docs/prd; seleção de /ai-skills:prd e /ai-skills:sdd conforme o pedido, sem acioná-las em correções mecânicas de README. Registrar o comportamento observado, não apenas a presença dos arquivos no contexto.
+- Após mudar instruções ou skills, conferir em sessões novas, pelos Memory files de /context: revisão de produção iniciada na raiz e em src/Offering; revisão de testes em tests; revisão editorial em docs/specs; seleção de /ai-skills:sdd conforme o pedido, sem acioná-la em correções mecânicas de README. Registrar o comportamento observado, não apenas a presença dos arquivos no contexto.
 -->
 
 ## Escopo e decisões
@@ -59,7 +59,7 @@ Trabalhe na `main`. Não crie branches auxiliares nem recrie branches ou tags re
 - `src/DataMigration`: worker sem HTTP nem Native AOT.
 - `tests/UnitTests`: xUnit, lógica sem host; domínio futuro organizado por contexto.
 - `tests/IntegrationTests`: xUnit e `Aspire.Hosting.Testing`; exige Aspire CLI porque o AppHost usa `AspireUseCliBundle`.
-- `docs/prd`: visão geral e um PRD por capability.
+- `docs/specs`: uma spec por capability, fonte canônica do produto.
 
 Planos, specs e demais artefatos técnicos ficam onde a skill `sdd` define.
 

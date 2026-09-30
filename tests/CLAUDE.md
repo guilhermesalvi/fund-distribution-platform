@@ -12,4 +12,4 @@ Não afrouxe uma asserção para ocultar falha; se o teste estiver incorreto, co
 
 ## Processamento do livro
 
-A tabela de [Acceptance Criteria do PRD 0003](../docs/prd/0003-book-building-book-processing.md#acceptance-criteria) é a fonte dos casos de processamento: cada linha corresponde a um teste com as mesmas entradas e o mesmo resultado, e o teste cita o nome do caso para ser encontrado por busca. Ao implementar o processamento, crie esses testes; depois, altere-os junto com a tabela.
+A tabela de Acceptance Scenarios da spec [Processamento do Livro](../docs/specs/book-processing/spec.md) é a fonte dos casos de processamento: cada linha corresponde a um teste com as mesmas entradas e o mesmo resultado, e o teste cita o nome do cenário para ser encontrado por busca. Ao implementar o processamento, crie esses testes; depois, altere-os junto com a tabela.

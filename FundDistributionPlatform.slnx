@@ -3,6 +3,20 @@
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/ci.yml" />
   </Folder>
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/adr/">
+    <File Path="docs/adr/0001-bookbuilding-context-name.md" />
+  </Folder>
+  <Folder Name="/docs/specs/" />
+  <Folder Name="/docs/specs/bid-book/">
+    <File Path="docs/specs/bid-book/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/book-processing/">
+    <File Path="docs/specs/book-processing/spec.md" />
+  </Folder>
+  <Folder Name="/docs/specs/offer-lifecycle/">
+    <File Path="docs/specs/offer-lifecycle/spec.md" />
+  </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />

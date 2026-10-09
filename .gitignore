@@ -397,7 +397,7 @@ FodyWeavers.xsd
 # DS_Store files
 .DS_Store
 
-# Claude Code local overrides, local settings and worktrees
+# Claude Code local instructions, local settings and worktrees
 CLAUDE.local.md
 .claude/settings.local.json
 /.claude/worktrees/

@@ -6,32 +6,21 @@ O projeto é pessoal e não recebe contribuições externas. O README apresenta 
 
 ## Leitura por tarefa
 
-- Código de produção, inclusive revisão sem edição: [src/CLAUDE.md](src/CLAUDE.md).
-- Código de testes: [tests/CLAUDE.md](tests/CLAUDE.md).
+- Código de produção, inclusive revisão sem edição: leia [src/CLAUDE.md](src/CLAUDE.md) antes de atuar em `src/`.
+- Código de testes: leia [tests/CLAUDE.md](tests/CLAUDE.md) antes de atuar em `tests/`.
 - Requisitos e comportamento: a spec da capability afetada, conforme a skill `sdd`.
 - Setup e execução local: [README](README.md).
 - Mudança de comportamento, nome ou fronteira: consulte os requisitos, decisões e histórico pertinentes. Uma edição localizada não exige ler todos os documentos.
 
-Execute os comandos do repositório a partir da raiz, mesmo quando a tarefa começar em um subdiretório. O `CLAUDE.md` de um subdiretório entra no contexto quando a sessão começa nele ou abaixo dele, ou quando Claude lê um arquivo ali; para tratar de uma área sem ler seus arquivos, leia antes o `CLAUDE.md` dela.
+Execute os comandos do repositório a partir da raiz, mesmo quando a tarefa começar em um subdiretório. O Claude Code carrega ao iniciar o `CLAUDE.md` do diretório de trabalho e dos ancestrais; o de um subdiretório abaixo dele entra no contexto só quando Claude lê, escreve ou edita um arquivo ali. Para tratar de uma área sem tocar seus arquivos, ou ao passar a atuar em outra área durante a sessão, leia primeiro o `CLAUDE.md` dela.
 
 ## Instruções e skills do Claude Code
 
 Cada regra tem uma única fonte, escolhida pelo objeto que governa: convenções gerais neste arquivo, código de produção em `src/CLAUDE.md`, testes em `tests/CLAUDE.md` e documentos gerados por uma skill na própria skill. Git, commits e publicação ficam só neste arquivo. Outras áreas seguem o mesmo critério de responsabilidade. Ao mover uma regra, retire a definição anterior.
 
-Não repita nem cite regra já carregada, como as deste arquivo, sempre em contexto, e as do `CLAUDE.md` da área em que Claude trabalha. Cite outra fonte só quando o leitor precisar lê-la para agir, e prefira o nome estável (skill, arquivo, ID, rótulo de contrato ou evento) a caminhos com âncora de seção.
+Não repita nem cite regra já carregada. Cite outra fonte só quando o leitor precisar lê-la para agir, e prefira o nome estável (skill, arquivo, ID, rótulo de contrato ou evento) a caminhos com âncora de seção.
 
-A skill `sdd` vem do plugin `ai-skills`, instalado na conta, e é invocada com `/ai-skills:sdd` ou pela descrição. Correções mecânicas de documentação não usam esse fluxo.
-
-<!--
-Notas de manutenção. Comentários HTML em bloco não entram no contexto do Claude Code.
-
-- Carregamento: o Claude Code carrega ao iniciar o CLAUDE.md do diretório de trabalho e dos ancestrais, e o de um subdiretório quando lê arquivos nele (https://code.claude.com/docs/en/memory). Não recriar docs/development para essas orientações.
-- Skills: sdd vem do plugin ai-skills@ai-skills, instalado no escopo do usuário; o repositório não versiona skills (https://code.claude.com/docs/en/plugins).
-- Instrução ou skill ausente: conferir o diretório de início, os Memory files em /context, o menu / e o plugin ai-skills em /plugin; reiniciar a sessão.
-- Duplicidade ou divergência: conferir ~/.claude/CLAUDE.md, CLAUDE.local.md, ~/.claude/skills e plugins da conta antes de editar o projeto. Skill pessoal ou de projeto de mesmo nome carrega junto com a do plugin e responde por /sdd; a do plugin continua em /ai-skills:<skill> (https://code.claude.com/docs/en/skills). Não copiar configurações pessoais para compensar falha de carregamento.
-- Permissões, hooks e servidores MCP ficam nas configurações do Claude Code (https://code.claude.com/docs/en/settings e https://code.claude.com/docs/en/permissions). Um .claude/settings.json compartilhado precisa de necessidade concreta; CLAUDE.local.md e .claude/settings.local.json ficam fora do Git.
-- Após mudar instruções ou skills, conferir em sessões novas, pelos Memory files de /context: revisão de produção iniciada na raiz e em src/Offering; revisão de testes em tests; revisão editorial em docs/specs; seleção de /ai-skills:sdd conforme o pedido, sem acioná-la em correções mecânicas de README. Registrar o comportamento observado, não apenas a presença dos arquivos no contexto.
--->
+A skill `sdd` vem do plugin `ai-skills`, instalado na conta; invoque-a com `/ai-skills:sdd` ou pela descrição. O repositório não versiona cópias dessa skill. Correções mecânicas de documentação não usam esse fluxo. Se a skill necessária não estiver disponível, informe a lacuna e siga o setup do [README](README.md); não invente seu contrato.
 
 ## Escopo e decisões
 
